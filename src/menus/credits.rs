@@ -34,9 +34,7 @@ fn spawn_credits_menu(mut commands: Commands) {
 }
 
 fn created_by() -> impl Bundle {
-    grid(vec![
-        ["Studio Funkus", "Made the game"],
-    ])
+    grid(vec![["Studio Funkus", "Made the game"]])
 }
 
 fn assets() -> impl Bundle {
