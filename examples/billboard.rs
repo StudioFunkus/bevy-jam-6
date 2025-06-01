@@ -1,3 +1,5 @@
+use core::f32;
+
 use bevy::{color::palettes::tailwind, input::common_conditions::input_just_released, prelude::*};
 use bevy_inspector_egui::{bevy_egui::EguiPlugin, quick::WorldInspectorPlugin};
 use bevy_panorbit_camera::{PanOrbitCamera, PanOrbitCameraPlugin};
@@ -141,15 +143,15 @@ fn setup(
     };
 
     commands.spawn((
+        Name::new("Fred"),
         Sprite3dBuilder {
             image: billboard_asset.image.clone(),
             pixels_per_metre: 16.0,
-            double_sided: true,
+            double_sided: false,
             ..default()
         }
         .bundle_with_atlas(&mut sprite_params, atlas),
-        Transform::from_xyz(0.0, 1.0, 0.0)
-            .with_rotation(Quat::from_rotation_y(3.0 * std::f32::consts::PI / 4.0)),
+        Transform::from_xyz(0.0, 1.0, 0.0),
         FaceCamera,
     ));
 
@@ -161,26 +163,46 @@ fn face_camera(
     mut query: Query<&mut Transform, (With<FaceCamera>, Without<Camera>)>,
 ) {
     for mut transform in query.iter_mut() {
-        // let mut delta = cam_transform.translation - transform.translation;
-        // delta.y = 0.0;
-        // delta += transform.translation;
-        // transform.look_at(delta, Vec3::Y);
-
         let mut target = cam_transform.translation;
         target.y = transform.translation.y;
-        transform.look_at(target, Vec3::Y);
+        transform.look_at(-target, Vec3::Y);
     }
 }
 
+/// Note that some accomodations need be made for Fred's sprite sheet.
 fn update_fred(mut fred: Query<(&Transform, &mut Sprite3d), With<FaceCamera>>) -> Result {
     let (transform, mut sprite) = fred.single_mut()?;
-
-    info!("{}", transform.rotation);
-
-    let rotation_offset = transform.rotation.y + f32::to_radians(45.0);
-    let index = (rotation_offset % (std::f32::consts::PI / 2.0)) as usize;
-
     let atlas = sprite.texture_atlas.as_mut().unwrap();
+
+    let (axis, angle) = transform.rotation.to_axis_angle();
+    let mut angle = (angle * axis.y) + (f32::consts::PI / 4.0); // Offset angle by 45 degrees
+
+    // Rotation runs from -2*PI to 2*PI, which is 2 full rotations
+    // If negative, offset by a single rotation to get the positive
+    if angle < 0.0 {
+        angle += 2.0 * f32::consts::PI;
+    }
+    // Since we're offseting the rotation by 45 degrees above, we
+    // now need to clamp adjust so that rotations above 2*PI roll
+    // over to zero.
+    if angle > (2.0 * f32::consts::PI) {
+        angle -= 2.0 * f32::consts::PI;
+    }
+
+    let mut index = (angle / (std::f32::consts::PI / 2.0)) as usize;
+
+    // Required to accomodate fred's sprite sheet
+    // Ideally, sprites would be ordered, front > left > back > right,
+    // but Fred's is front > back > left > right, so we need to swap 1 and 2.
+    if index == 1 {
+        index = 2;
+    } else if index == 2 {
+        index = 1;
+    }
+
+    // Then multiply by 6, which is the number of columns in the atlas
+    index *= 6;
+
     atlas.index = index;
 
     Ok(())
