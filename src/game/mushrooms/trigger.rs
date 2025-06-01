@@ -11,6 +11,7 @@ use crate::{
             resources::SelectedMushroomType,
         },
         resources::GameState,
+        visual_effects::{SpawnTriggerEffect, SpawnDirectionalPulse},
     },
 };
 
@@ -60,6 +61,8 @@ fn update_trigger_queue(
     mut trigger_queue: ResMut<TriggerQueue>,
     mut trigger_events: EventReader<TriggerMushroomEvent>,
     mut game_state: ResMut<GameState>,
+    mut visual_effects: EventWriter<SpawnTriggerEffect>,
+    mut directional_effects: EventWriter<SpawnDirectionalPulse>,
     game_grid_config: Res<GridConfig>,
     mushrooms: Query<(Entity, &GridPosition, &MushroomType), With<Mushroom>>,
     cooldowns: Query<&MushroomCooldown>,
@@ -87,6 +90,12 @@ fn update_trigger_queue(
             continue;
         }
 
+        // Spawn visual effect for trigger
+        visual_effects.send(SpawnTriggerEffect {
+            position: event.position,
+            color: mushroom_type.color(),
+        });
+
         // Set cooldown
         commands.entity(entity).insert(MushroomCooldown {
             timer: Timer::from_seconds(mushroom_type.cooldown_time(), TimerMode::Once),
@@ -96,7 +105,7 @@ fn update_trigger_queue(
         let production =
             mushroom_type.base_production() * event.energy * trigger_queue.current_multiplier;
 
-            game_state.add_spores(production);
+        game_state.add_spores(production);
 
         // Update chain stats
         if matches!(event.source, TriggerSource::MushroomTrigger(_)) {
@@ -117,9 +126,16 @@ fn update_trigger_queue(
             &directions,
         );
 
-        // Add delayed triggers
+        // Add delayed triggers and spawn directional pulses
         for (i, (pos, energy, direction)) in triggers.into_iter().enumerate() {
             let delay = 0.1 + (i as f32 * 0.05); // Stagger triggers
+
+            // Spawn directional pulse effect
+            directional_effects.send(SpawnDirectionalPulse {
+                from_position: event.position,
+                to_position: pos,
+                color: mushroom_type.color(),
+            });
 
             trigger_queue.delayed.push(DelayedTrigger {
                 event: TriggerMushroomEvent {

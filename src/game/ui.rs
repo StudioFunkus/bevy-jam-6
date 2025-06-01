@@ -88,7 +88,7 @@ fn spawn_game_ui(mut commands: Commands) {
             ),
             (
                 Name::new("Instructions"),
-                Text::new("Click mushrooms to trigger them!\nThere are other ways to trigger mushrooms too!"),
+                Text::new("Click mushrooms to trigger them!\nShift+Click to rotate directional mushrooms\nRight-click to delete (50% refund)"),
                 TextFont::from_font_size(16.0),
                 TextColor(ui_palette::LABEL_TEXT),
             ),

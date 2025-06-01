@@ -5,7 +5,10 @@ use trigger::{TriggerQueue, TriggerSource};
 
 use crate::{
     PausableSystems,
-    game::resources::{GameState, UnlockedMushrooms},
+    game::{
+        resources::{GameState, UnlockedMushrooms},
+        visual_effects::SpawnClickEffect,
+    },
 };
 
 use super::grid::{GridClickEvent, GridConfig, GridPosition, find_mushroom_at};
@@ -106,7 +109,7 @@ pub enum MushroomDirection {
 }
 
 impl MushroomDirection {
-    fn to_offset(&self) -> (i32, i32) {
+    pub fn to_offset(&self) -> (i32, i32) {
         match self {
             MushroomDirection::Up => (0, 1),
             MushroomDirection::Right => (1, 0),
@@ -115,7 +118,7 @@ impl MushroomDirection {
         }
     }
 
-    fn rotate_clockwise(&self) -> MushroomDirection {
+    pub fn rotate_clockwise(&self) -> MushroomDirection {
         match self {
             MushroomDirection::Up => MushroomDirection::Right,
             MushroomDirection::Right => MushroomDirection::Down,
@@ -137,6 +140,7 @@ fn handle_grid_clicks(
     mut grid_events: EventReader<GridClickEvent>,
     mut spawn_events: EventWriter<SpawnMushroomEvent>,
     mut trigger_events: EventWriter<TriggerMushroomEvent>,
+    mut click_effects: EventWriter<SpawnClickEffect>,
     selected_type: Res<SelectedMushroomType>,
     grid_config: Res<GridConfig>,
     keyboard: Res<ButtonInput<KeyCode>>,
@@ -150,6 +154,11 @@ fn handle_grid_clicks(
         if !event.position.in_bounds(&grid_config) {
             continue;
         }
+
+        // Spawn click effect for visual feedback
+        click_effects.send(SpawnClickEffect {
+            position: event.position,
+        });
 
         // Handle right-click for deletion
         if event.button == PointerButton::Secondary {
@@ -183,6 +192,7 @@ fn handle_grid_clicks(
                 if matches!(mushroom_type, MushroomType::Pulse) {
                     if let Ok(mut direction) = directions.get_mut(entity) {
                         *direction = direction.rotate_clockwise();
+                        info!("Rotated mushroom to {:?}", *direction);
                     }
                 }
                 continue; // Don't trigger when rotating
@@ -190,10 +200,11 @@ fn handle_grid_clicks(
             
             // Check cooldown for triggering
             if cooldowns.get(entity).is_ok() {
+                info!("Mushroom on cooldown");
                 continue;
             }
             
-            trigger_events.write(TriggerMushroomEvent {
+            trigger_events.send(TriggerMushroomEvent {
                 position: event.position,
                 source: TriggerSource::PlayerClick,
                 energy: 1.0,
@@ -231,12 +242,13 @@ fn place_mushroom(
     // Check cost
     let cost = selected_type.mushroom_type.cost();
     if !game_state.spend_spores(cost) {
+        info!("Not enough spores to place mushroom");
         return;
     }
 
     let entity = commands.spawn_empty().id();
 
-    spawn_events.write(SpawnMushroomEvent {
+    spawn_events.send(SpawnMushroomEvent {
         position,
         mushroom_type: selected_type.mushroom_type,
         entity,
@@ -288,13 +300,19 @@ fn spawn_mushrooms(
 fn update_mushroom_cooldowns(
     time: Res<Time>,
     mut commands: Commands,
-    mut cooldowns: Query<(Entity, &mut MushroomCooldown)>,
+    mut cooldowns: Query<(Entity, &mut MushroomCooldown, &mut Sprite), With<Mushroom>>,
 ) {
-    for (entity, mut cooldown) in &mut cooldowns {
+    for (entity, mut cooldown, mut sprite) in &mut cooldowns {
         cooldown.timer.tick(time.delta());
+
+        // Visual feedback for cooldown
+        let cooldown_progress = cooldown.timer.fraction_remaining();
+        let base_color = sprite.color;
+        sprite.color = base_color.with_alpha(0.5 + 0.5 * (1.0 - cooldown_progress));
 
         // Remove finished cooldowns
         if cooldown.timer.finished() {
+            sprite.color = base_color.with_alpha(1.0);
             commands.entity(entity).remove::<MushroomCooldown>();
         }
     }
