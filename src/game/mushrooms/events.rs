@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::game::grid::GridPosition;
 
-use super::{trigger::TriggerSource, Direction, MushroomType};
+use super::{trigger::TriggerSource, MushroomDirection, MushroomType};
 
 pub(super) fn plugin(app: &mut App) {
     app.add_event::<SpawnMushroomEvent>();
@@ -24,7 +24,7 @@ pub struct TriggerMushroomEvent {
     pub position: GridPosition,
     pub source: TriggerSource,
     pub energy: f64,
-    pub direction: Option<Direction>,
+    pub direction: Option<MushroomDirection>,
 }
 
 /// Event to remove a mushroom

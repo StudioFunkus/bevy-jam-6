@@ -1,7 +1,10 @@
 use bevy::{prelude::*};
-use bevy_spatial::{AutomaticUpdate, SpatialStructure};
+use bevy_spatial::{kdtree::KDTree2, AutomaticUpdate, SpatialStructure};
 
-use super::mushrooms::Mushroom;
+use super::mushrooms::{Mushroom, MushroomType};
+
+// Type alias for the spatial data structure
+pub type MushroomSpatial = KDTree2<Mushroom>;
 
 pub(super) fn plugin(app: &mut App) {
     app.init_resource::<GridConfig>();
@@ -100,6 +103,7 @@ fn handle_grid_clicks(
 ) {
     for event in click_events.read() {
         if let Ok(cell) = grid_cells.get(event.target) {
+            println!("Grid cell clicked at position: {:?}", cell.position);
             grid_click_events.write(GridClickEvent {
                 position: cell.position,
                 button: event.button,
@@ -108,3 +112,12 @@ fn handle_grid_clicks(
     }
 }
 
+/// Spatial mushroom lookup
+pub fn find_mushroom_at(
+    position: GridPosition,
+    mushrooms: &Query<(Entity, &GridPosition, &MushroomType), With<Mushroom>>
+) -> Option<(Entity, MushroomType)> {
+    mushrooms.iter()
+        .find(|(_, pos, _)| **pos == position)
+        .map(|(e, _, t)| (e, *t))
+}
