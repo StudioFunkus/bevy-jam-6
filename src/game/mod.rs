@@ -5,11 +5,13 @@ use bevy::prelude::*;
 pub(crate) mod level;
 mod grid;
 mod mushrooms;
+mod ui;
 
 pub(super) fn plugin(app: &mut App) {
     app.add_plugins((
         grid::plugin,
         level::plugin,
         mushrooms::plugin,
+        ui::plugin,
     ));
 }

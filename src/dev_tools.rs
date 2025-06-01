@@ -4,12 +4,17 @@ use bevy::{
     dev_tools::states::log_transitions, input::common_conditions::input_just_pressed, prelude::*,
     ui::UiDebugOptions,
 };
+use bevy_inspector_egui::{bevy_egui::EguiPlugin, quick::WorldInspectorPlugin};
 
 use crate::screens::Screen;
 
 pub(super) fn plugin(app: &mut App) {
     // Log `Screen` state transitions.
     app.add_systems(Update, log_transitions::<Screen>);
+
+    // Add Bevy Inspector egui
+    app.add_plugins(EguiPlugin { enable_multipass_for_primary_context: true })
+        .add_plugins(WorldInspectorPlugin::new());
 
     // Toggle the debug overlay for UI.
     app.add_systems(

@@ -5,7 +5,7 @@ use trigger::TriggerQueue;
 
 mod events;
 mod trigger;
-mod resources;
+pub(crate) mod resources;
 
 pub(super) fn plugin(app: &mut App) {
     app.add_plugins((
@@ -58,6 +58,13 @@ impl MushroomType {
         match self {
             MushroomType::Basic => 10.0,
             MushroomType::Pulse => 2.0,
+        }
+    }
+
+    pub fn description(&self) -> &'static str {
+        match self {
+            MushroomType::Basic => "Produces spores when clicked.",
+            MushroomType::Pulse => "Triggers an adjacent mushroom.",
         }
     }
 }
