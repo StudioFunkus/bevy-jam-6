@@ -1,5 +1,5 @@
 use bevy::{prelude::*};
-use bevy_spatial::{kdtree::KDTree2, AutomaticUpdate, SpatialStructure};
+use bevy_spatial::{AutomaticUpdate, SpatialStructure};
 
 use super::mushrooms::Mushroom;
 

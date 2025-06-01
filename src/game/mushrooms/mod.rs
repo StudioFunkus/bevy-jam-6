@@ -1,7 +1,19 @@
 
 use bevy::prelude::*;
+use resources::SelectedMushroomType;
+use trigger::TriggerQueue;
+
+mod events;
+mod trigger;
+mod resources;
 
 pub(super) fn plugin(app: &mut App) {
+    app.add_plugins((
+        events::plugin,
+    ));
+
+    app.init_resource::<SelectedMushroomType>();
+    app.init_resource::<TriggerQueue>();
 }
 
 /// Different types of mushrooms
@@ -53,3 +65,13 @@ impl MushroomType {
 /// Marker component for mushrooms
 #[derive(Component)]
 pub struct Mushroom;
+
+/// Facing direction for mushrooms
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Direction {
+    Up,
+    Right,
+    Down,
+    Left,
+}
+
