@@ -1,6 +1,6 @@
 use core::f32;
 
-use bevy::{color::palettes::tailwind, input::common_conditions::input_just_released, prelude::*};
+use bevy::{color::palettes::tailwind, prelude::*};
 use bevy_inspector_egui::{bevy_egui::EguiPlugin, quick::WorldInspectorPlugin};
 use bevy_panorbit_camera::{PanOrbitCamera, PanOrbitCameraPlugin};
 use bevy_sprite3d::{Sprite3d, Sprite3dBuilder, Sprite3dParams, Sprite3dPlugin};
@@ -139,7 +139,7 @@ fn setup(
     // Spawn Billboard Sprite
     let atlas = TextureAtlas {
         layout: billboard_asset.layout.clone(),
-        index: 1 as usize,
+        index: 1_usize,
     };
 
     commands.spawn((
