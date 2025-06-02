@@ -2,11 +2,11 @@
 
 use bevy::prelude::*;
 
-pub(crate) mod level;
 mod grid;
+pub(crate) mod level;
 mod mushrooms;
-mod ui;
 mod resources;
+mod ui;
 mod visual_effects;
 
 pub(super) fn plugin(app: &mut App) {

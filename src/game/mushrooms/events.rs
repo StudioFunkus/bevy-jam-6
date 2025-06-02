@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::game::grid::GridPosition;
 
-use super::{trigger::TriggerSource, MushroomDirection, MushroomType};
+use super::{MushroomDirection, MushroomType, trigger::TriggerSource};
 
 pub(super) fn plugin(app: &mut App) {
     app.add_event::<SpawnMushroomEvent>();

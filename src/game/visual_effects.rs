@@ -1,19 +1,19 @@
 //! Visual effects and feedback for game interactions
 
-use bevy::prelude::*;
 use crate::{
     PausableSystems,
     game::{
-        grid::{GridPosition, GridConfig},
+        grid::{GridConfig, GridPosition},
         mushrooms::{Mushroom, MushroomDirection, MushroomType},
     },
 };
+use bevy::prelude::*;
 
 pub(super) fn plugin(app: &mut App) {
     app.add_event::<SpawnTriggerEffect>();
     app.add_event::<SpawnDirectionalPulse>();
     app.add_event::<SpawnClickEffect>();
-    
+
     app.add_systems(
         Update,
         (
@@ -84,8 +84,10 @@ fn spawn_trigger_effects(
                 custom_size: Some(Vec2::splat(40.0)),
                 ..default()
             },
-            Transform::from_translation(event.position.to_world(&grid_config) + Vec3::new(0.0, 0.0, 1.0))
-                .with_scale(Vec3::splat(0.5)),
+            Transform::from_translation(
+                event.position.to_world(&grid_config) + Vec3::new(0.0, 0.0, 1.0),
+            )
+            .with_scale(Vec3::splat(0.5)),
             VisualEffect {
                 lifetime: Timer::from_seconds(0.5, TimerMode::Once),
             },
@@ -96,7 +98,7 @@ fn spawn_trigger_effects(
                 end_alpha: 0.2,
             },
         ));
-        
+
         // Spawn inner pulse
         commands.spawn((
             Name::new("Trigger Pulse"),
@@ -105,8 +107,10 @@ fn spawn_trigger_effects(
                 custom_size: Some(Vec2::splat(30.0)),
                 ..default()
             },
-            Transform::from_translation(event.position.to_world(&grid_config) + Vec3::new(0.0, 0.0, 1.1))
-                .with_scale(Vec3::splat(0.3)),
+            Transform::from_translation(
+                event.position.to_world(&grid_config) + Vec3::new(0.0, 0.0, 1.1),
+            )
+            .with_scale(Vec3::splat(0.3)),
             VisualEffect {
                 lifetime: Timer::from_seconds(0.3, TimerMode::Once),
             },
@@ -130,12 +134,12 @@ fn spawn_directional_pulses(
         let from_world = event.from_position.to_world(&grid_config);
         let to_world = event.to_position.to_world(&grid_config);
         let direction = (to_world - from_world).normalize();
-        
+
         // Spawn traveling pulse
         for i in 0..3 {
             let delay = i as f32 * 0.1;
             let start_pos = from_world + direction * 40.0;
-            
+
             commands.spawn((
                 Name::new("Directional Pulse"),
                 Sprite {
@@ -181,7 +185,9 @@ fn spawn_click_effects(
                 custom_size: Some(Vec2::splat(20.0)),
                 ..default()
             },
-            Transform::from_translation(event.position.to_world(&grid_config) + Vec3::new(0.0, 0.0, 1.3)),
+            Transform::from_translation(
+                event.position.to_world(&grid_config) + Vec3::new(0.0, 0.0, 1.3),
+            ),
             VisualEffect {
                 lifetime: Timer::from_seconds(0.2, TimerMode::Once),
             },
@@ -198,7 +204,10 @@ fn spawn_click_effects(
 /// Update directional indicators for mushrooms
 fn update_directional_indicators(
     mut commands: Commands,
-    mushrooms: Query<(Entity, &GridPosition, &MushroomDirection, &MushroomType), (With<Mushroom>, Changed<MushroomDirection>)>,
+    mushrooms: Query<
+        (Entity, &GridPosition, &MushroomDirection, &MushroomType),
+        (With<Mushroom>, Changed<MushroomDirection>),
+    >,
     existing_indicators: Query<(Entity, &ChildOf), With<DirectionalIndicator>>,
     grid_config: Res<GridConfig>,
 ) {
@@ -209,7 +218,7 @@ fn update_directional_indicators(
                 commands.entity(indicator_entity).despawn();
             }
         }
-        
+
         // Only show indicators for directional mushrooms
         if matches!(mushroom_type, MushroomType::Pulse) {
             let arrow_offset = match direction {
@@ -218,27 +227,29 @@ fn update_directional_indicators(
                 MushroomDirection::Down => Vec3::new(0.0, -20.0, 0.0),
                 MushroomDirection::Left => Vec3::new(-20.0, 0.0, 0.0),
             };
-            
+
             let rotation = match direction {
                 MushroomDirection::Up => 0.0,
                 MushroomDirection::Right => -std::f32::consts::FRAC_PI_2,
                 MushroomDirection::Down => std::f32::consts::PI,
                 MushroomDirection::Left => std::f32::consts::FRAC_PI_2,
             };
-            
+
             // Spawn arrow indicator as child of mushroom
-            let indicator = commands.spawn((
-                Name::new("Direction Indicator"),
-                DirectionalIndicator,
-                Sprite {
-                    color: Color::srgba(1.0, 1.0, 1.0, 0.7),
-                    custom_size: Some(Vec2::new(10.0, 15.0)),
-                    ..default()
-                },
-                Transform::from_translation(arrow_offset)
-                    .with_rotation(Quat::from_rotation_z(rotation)),
-            )).id();
-            
+            let indicator = commands
+                .spawn((
+                    Name::new("Direction Indicator"),
+                    DirectionalIndicator,
+                    Sprite {
+                        color: Color::srgba(1.0, 1.0, 1.0, 0.7),
+                        custom_size: Some(Vec2::new(10.0, 15.0)),
+                        ..default()
+                    },
+                    Transform::from_translation(arrow_offset)
+                        .with_rotation(Quat::from_rotation_z(rotation)),
+                ))
+                .id();
+
             commands.entity(mushroom_entity).add_child(indicator);
         }
     }
@@ -253,21 +264,21 @@ fn animate_effects(
     // Animate scaling/fading effects
     for (mut transform, mut sprite, effect, animated) in &mut effects {
         let progress = effect.lifetime.fraction();
-        
+
         // Interpolate scale
         let scale = animated.start_scale.lerp(animated.end_scale, progress);
         transform.scale = scale;
-        
+
         // Interpolate alpha
         // let alpha = animated.start_alpha + (animated.end_alpha - animated.start_alpha) * progress;
         // sprite.color.set_alpha(alpha);
     }
-    
+
     // Animate traveling pulses
     for (mut transform, pulse, effect) in &mut pulses {
         let mut progress = pulse.progress + time.delta_secs() * 3.0; // Speed of travel
         progress = progress.clamp(0.0, 1.0);
-        
+
         let pos = pulse.start_pos.lerp(pulse.end_pos, progress);
         transform.translation = pos + Vec3::new(0.0, 0.0, 1.2);
     }
@@ -281,7 +292,7 @@ fn cleanup_expired_effects(
 ) {
     for (entity, mut effect) in &mut effects {
         effect.lifetime.tick(time.delta());
-        
+
         if effect.lifetime.finished() {
             commands.entity(entity).despawn();
         }

@@ -3,7 +3,9 @@
 use bevy::{ecs::spawn::SpawnWith, picking::prelude::*, prelude::*};
 
 use crate::{
-    game::resources::{GameState, UnlockedMushrooms}, screens::Screen, theme::{interaction::InteractionPalette, palette as ui_palette}
+    game::resources::{GameState, UnlockedMushrooms},
+    screens::Screen,
+    theme::{interaction::InteractionPalette, palette as ui_palette},
 };
 
 use super::mushrooms::{MushroomType, resources::SelectedMushroomType};
@@ -172,9 +174,8 @@ fn update_spore_display(
     // Update stats
     if let Ok(mut text) = stats_display.single_mut() {
         text.0 = format!(
-            "Triggers: {} | Chains: {}", 
-            game_state.total_triggers,
-            game_state.chain_triggers,
+            "Triggers: {} | Chains: {}",
+            game_state.total_triggers, game_state.chain_triggers,
         );
     }
 }
@@ -183,7 +184,12 @@ fn update_mushroom_buttons(
     game_state: Res<GameState>,
     unlocked: Res<UnlockedMushrooms>,
     selected: Res<SelectedMushroomType>,
-    mut buttons: Query<(&MushroomButton, &mut BorderColor, &mut Visibility, &Children)>,
+    mut buttons: Query<(
+        &MushroomButton,
+        &mut BorderColor,
+        &mut Visibility,
+        &Children,
+    )>,
     mut text_colors: Query<&mut TextColor>,
 ) {
     for (button, mut border_color, mut visibility, children) in &mut buttons {

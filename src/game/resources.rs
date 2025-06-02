@@ -65,10 +65,7 @@ pub struct UnlockedMushrooms {
 }
 
 /// Check and update mushroom unlocks
-fn check_unlocks(
-    game_state: Res<GameState>,
-    mut unlocked: ResMut<UnlockedMushrooms>,
-) {
+fn check_unlocks(game_state: Res<GameState>, mut unlocked: ResMut<UnlockedMushrooms>) {
     if !unlocked.button {
         unlocked.button = true;
         info!("Unlocked Button Mushroom!");

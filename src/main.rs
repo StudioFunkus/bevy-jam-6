@@ -5,9 +5,9 @@
 
 mod asset_tracking;
 mod audio;
-mod game;
 #[cfg(feature = "dev")]
 mod dev_tools;
+mod game;
 mod menus;
 mod screens;
 mod theme;
