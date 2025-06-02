@@ -11,7 +11,7 @@ use crate::{
     },
 };
 
-use super::grid::{GridClickEvent, GridConfig, GridPosition, find_mushroom_at};
+use super::grid::{Grid, GridClickEvent, GridConfig, GridPosition, find_mushroom_at};
 
 mod events;
 pub(crate) mod resources;
@@ -97,7 +97,7 @@ impl MushroomType {
 
 /// Marker component for mushrooms
 #[derive(Component)]
-pub struct Mushroom;
+pub struct Mushroom(MushroomType);
 
 /// Facing direction for mushrooms
 #[derive(Component, Clone, Copy, Debug, PartialEq, Eq)]
@@ -142,36 +142,38 @@ fn handle_grid_clicks(
     mut trigger_events: EventWriter<TriggerMushroomEvent>,
     mut click_effects: EventWriter<SpawnClickEffect>,
     selected_type: Res<SelectedMushroomType>,
+    mut grid: ResMut<Grid>,
     grid_config: Res<GridConfig>,
     keyboard: Res<ButtonInput<KeyCode>>,
-    mushrooms: Query<(Entity, &GridPosition, &MushroomType), With<Mushroom>>,
+    mushrooms: Query<&Mushroom>,
     cooldowns: Query<&MushroomCooldown>,
     mut directions: Query<&mut MushroomDirection>,
     mut game_state: ResMut<GameState>,
     unlocked: Res<UnlockedMushrooms>,
-) {
+) -> Result {
     for event in grid_events.read() {
         if !event.position.in_bounds(&grid_config) {
             continue;
         }
 
         // Spawn click effect for visual feedback
-        click_effects.send(SpawnClickEffect {
+        click_effects.write(SpawnClickEffect {
             position: event.position,
         });
 
         // Handle right-click for deletion
         if event.button == PointerButton::Secondary {
-            if let Some((entity, mushroom_type)) = find_mushroom_at(event.position, &mushrooms) {
+            if let Some(entity) = find_mushroom_at(event.position, &grid) {
+                let mushroom = mushrooms.get(entity)?;
+
                 // Refund half the cost
-                let refund = mushroom_type.cost() * 0.5;
+                let refund = mushroom.0.cost() * 0.5;
                 game_state.add_spores(refund);
 
-                info!(
-                    "Deleted {} - refunded {} spores",
-                    mushroom_type.name(),
-                    refund
-                );
+                info!("Deleted {} - refunded {} spores", mushroom.0.name(), refund);
+
+                // Update grid
+                grid.0.remove(&event.position);
 
                 // Despawn the mushroom entity
                 commands.entity(entity).despawn();
@@ -185,11 +187,13 @@ fn handle_grid_clicks(
         }
 
         // If cell has a mushroom, try to trigger it
-        if let Some((entity, mushroom_type)) = find_mushroom_at(event.position, &mushrooms) {
+        if let Some(entity) = find_mushroom_at(event.position, &grid) {
+            let mushroom = mushrooms.get(entity)?;
+
             // Check if shift is held for rotation
             if keyboard.pressed(KeyCode::ShiftLeft) || keyboard.pressed(KeyCode::ShiftRight) {
                 // Rotate directional mushroom
-                if matches!(mushroom_type, MushroomType::Pulse) {
+                if matches!(mushroom.0, MushroomType::Pulse) {
                     if let Ok(mut direction) = directions.get_mut(entity) {
                         *direction = direction.rotate_clockwise();
                         info!("Rotated mushroom to {:?}", *direction);
@@ -197,14 +201,14 @@ fn handle_grid_clicks(
                 }
                 continue; // Don't trigger when rotating
             }
-            
+
             // Check cooldown for triggering
             if cooldowns.get(entity).is_ok() {
                 info!("Mushroom on cooldown");
                 continue;
             }
-            
-            trigger_events.send(TriggerMushroomEvent {
+
+            trigger_events.write(TriggerMushroomEvent {
                 position: event.position,
                 source: TriggerSource::PlayerClick,
                 energy: 1.0,
@@ -223,6 +227,8 @@ fn handle_grid_clicks(
             event.position,
         );
     }
+
+    Ok(())
 }
 
 // Trigger an event to place a mushroom
@@ -248,7 +254,7 @@ fn place_mushroom(
 
     let entity = commands.spawn_empty().id();
 
-    spawn_events.send(SpawnMushroomEvent {
+    spawn_events.write(SpawnMushroomEvent {
         position,
         mushroom_type: selected_type.mushroom_type,
         entity,
@@ -260,6 +266,7 @@ fn spawn_mushrooms(
     mut commands: Commands,
     mut spawn_events: EventReader<SpawnMushroomEvent>,
     grid_config: Res<GridConfig>,
+    mut grid: ResMut<Grid>,
 ) {
     for event in spawn_events.read() {
         let base_scale = 1.0;
@@ -267,24 +274,28 @@ fn spawn_mushrooms(
         let mut entity_commands = commands.entity(event.entity);
 
         // Insert core components
-        entity_commands.insert((
-            Name::new(format!(
-                "{} at ({}, {})",
-                event.mushroom_type.name(),
-                event.position.x,
-                event.position.y
-            )),
-            Mushroom,
-            event.position,
-            event.mushroom_type,
-            Sprite {
-                color: event.mushroom_type.color(),
-                custom_size: Some(Vec2::splat(60.0)),
-                ..default()
-            },
-            Transform::from_translation(event.position.to_world(&grid_config))
-                .with_scale(Vec3::splat(base_scale)),
-        ));
+        let mushroom = entity_commands
+            .insert((
+                Name::new(format!(
+                    "{} at ({}, {})",
+                    event.mushroom_type.name(),
+                    event.position.x,
+                    event.position.y
+                )),
+                Mushroom(event.mushroom_type),
+                event.position,
+                Sprite {
+                    color: event.mushroom_type.color(),
+                    custom_size: Some(Vec2::splat(60.0)),
+                    ..default()
+                },
+                Transform::from_translation(event.position.to_world(&grid_config))
+                    .with_scale(Vec3::splat(base_scale)),
+            ))
+            .id();
+
+        // Add the mushroom to the grid
+        grid.0.insert(event.position, mushroom);
 
         // Add type-specific components
         match event.mushroom_type {

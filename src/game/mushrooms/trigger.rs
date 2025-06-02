@@ -5,13 +5,13 @@ use bevy::prelude::*;
 use crate::{
     PausableSystems,
     game::{
-        grid::{GridConfig, GridPosition, MushroomSpatial, find_mushroom_at},
+        grid::{Grid, GridConfig, GridPosition, find_mushroom_at},
         mushrooms::{
             Mushroom, MushroomCooldown, MushroomDirection, MushroomType,
             resources::SelectedMushroomType,
         },
         resources::GameState,
-        visual_effects::{SpawnTriggerEffect, SpawnDirectionalPulse},
+        visual_effects::{SpawnDirectionalPulse, SpawnTriggerEffect},
     },
 };
 
@@ -63,11 +63,12 @@ fn update_trigger_queue(
     mut game_state: ResMut<GameState>,
     mut visual_effects: EventWriter<SpawnTriggerEffect>,
     mut directional_effects: EventWriter<SpawnDirectionalPulse>,
-    game_grid_config: Res<GridConfig>,
-    mushrooms: Query<(Entity, &GridPosition, &MushroomType), With<Mushroom>>,
+    mut grid: ResMut<Grid>,
+    grid_config: Res<GridConfig>,
+    mushrooms: Query<&Mushroom>,
     cooldowns: Query<&MushroomCooldown>,
     directions: Query<&MushroomDirection>,
-) {
+) -> Result {
     // Add new triggers to immediate queue
     for event in trigger_events.read() {
         trigger_queue.immediate.push_back(event.clone());
@@ -81,9 +82,10 @@ fn update_trigger_queue(
 
     // Process immediate triggers
     while let Some(event) = trigger_queue.immediate.pop_front() {
-        let Some((entity, mushroom_type)) = find_mushroom_at(event.position, &mushrooms) else {
+        let Some(entity) = find_mushroom_at(event.position, &grid) else {
             continue;
         };
+        let mushroom = mushrooms.get(entity)?;
 
         // Check if mushroom is on cooldown
         if cooldowns.get(entity).is_ok() {
@@ -91,19 +93,19 @@ fn update_trigger_queue(
         }
 
         // Spawn visual effect for trigger
-        visual_effects.send(SpawnTriggerEffect {
+        visual_effects.write(SpawnTriggerEffect {
             position: event.position,
-            color: mushroom_type.color(),
+            color: mushroom.0.color(),
         });
 
         // Set cooldown
         commands.entity(entity).insert(MushroomCooldown {
-            timer: Timer::from_seconds(mushroom_type.cooldown_time(), TimerMode::Once),
+            timer: Timer::from_seconds(mushroom.0.cooldown_time(), TimerMode::Once),
         });
 
         // Calculate production with multiplier
         let production =
-            mushroom_type.base_production() * event.energy * trigger_queue.current_multiplier;
+            mushroom.0.base_production() * event.energy * trigger_queue.current_multiplier;
 
         game_state.add_spores(production);
 
@@ -118,11 +120,11 @@ fn update_trigger_queue(
 
         // Process trigger pattern
         let triggers = process_mushroom_trigger(
-            mushroom_type,
+            mushroom.0,
             event.position,
             &event,
             entity,
-            &game_grid_config,
+            &grid_config,
             &directions,
         );
 
@@ -131,10 +133,10 @@ fn update_trigger_queue(
             let delay = 0.1 + (i as f32 * 0.05); // Stagger triggers
 
             // Spawn directional pulse effect
-            directional_effects.send(SpawnDirectionalPulse {
+            directional_effects.write(SpawnDirectionalPulse {
                 from_position: event.position,
                 to_position: pos,
-                color: mushroom_type.color(),
+                color: mushroom.0.color(),
             });
 
             trigger_queue.delayed.push(DelayedTrigger {
@@ -148,6 +150,8 @@ fn update_trigger_queue(
             });
         }
     }
+
+    Ok(())
 }
 
 fn process_mushroom_trigger(

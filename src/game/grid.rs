@@ -1,23 +1,18 @@
-use bevy::{prelude::*};
-use bevy_spatial::{kdtree::KDTree2, AutomaticUpdate, SpatialStructure};
+use bevy::{platform::collections::HashMap, prelude::*};
 
 use super::mushrooms::{Mushroom, MushroomType};
 
-// Type alias for the spatial data structure
-pub type MushroomSpatial = KDTree2<Mushroom>;
-
 pub(super) fn plugin(app: &mut App) {
     app.init_resource::<GridConfig>();
+    app.init_resource::<Grid>();
     app.add_event::<GridClickEvent>();
-    
-    // Add spatial acceleration structure for mushrooms
-    app.add_plugins(
-        AutomaticUpdate::<Mushroom>::new()
-            .with_spatial_ds(SpatialStructure::KDTree2)
-    );
-    
+
     app.add_systems(Update, handle_grid_clicks);
 }
+
+// Type alias for the spatial data structure
+#[derive(Resource, Default)]
+pub struct Grid(pub HashMap<GridPosition, Entity>); // Should this be &Entity?
 
 /// Grid configuration
 #[derive(Resource)]
@@ -52,13 +47,40 @@ impl GridPosition {
         Self { x, y }
     }
 
-    /// Get all adjacent positions (orthogonal only)
-    pub fn adjacent(&self) -> [GridPosition; 4] {
+    /// Get all adjacent positions
+    #[allow(dead_code)]
+    pub fn adjacent(&self) -> [GridPosition; 8] {
         [
             GridPosition::new(self.x - 1, self.y),
             GridPosition::new(self.x + 1, self.y),
             GridPosition::new(self.x, self.y - 1),
             GridPosition::new(self.x, self.y + 1),
+            GridPosition::new(self.x - 1, self.y - 1),
+            GridPosition::new(self.x + 1, self.y - 1),
+            GridPosition::new(self.x + 1, self.y + 1),
+            GridPosition::new(self.x - 1, self.y + 1),
+        ]
+    }
+
+    /// Get all adjacent cardinal positions
+    #[allow(dead_code)]
+    pub fn adjacent_cardinal(&self) -> [GridPosition; 4] {
+        [
+            GridPosition::new(self.x - 1, self.y),
+            GridPosition::new(self.x + 1, self.y),
+            GridPosition::new(self.x, self.y - 1),
+            GridPosition::new(self.x, self.y + 1),
+        ]
+    }
+
+    /// Get all adjacent diagonal positions
+    #[allow(dead_code)]
+    pub fn adjacent_diagonal(&self) -> [GridPosition; 4] {
+        [
+            GridPosition::new(self.x - 1, self.y - 1),
+            GridPosition::new(self.x + 1, self.y - 1),
+            GridPosition::new(self.x + 1, self.y + 1),
+            GridPosition::new(self.x - 1, self.y + 1),
         ]
     }
 
@@ -69,7 +91,7 @@ impl GridPosition {
         let grid_height = config.height as f32 * total_cell_size - config.cell_spacing;
         let offset_x = -grid_width / 2.0 + config.cell_size / 2.0;
         let offset_y = -grid_height / 2.0 + config.cell_size / 2.0;
-        
+
         Vec3::new(
             offset_x + self.x as f32 * total_cell_size,
             offset_y + self.y as f32 * total_cell_size,
@@ -113,11 +135,6 @@ fn handle_grid_clicks(
 }
 
 /// Spatial mushroom lookup
-pub fn find_mushroom_at(
-    position: GridPosition,
-    mushrooms: &Query<(Entity, &GridPosition, &MushroomType), With<Mushroom>>
-) -> Option<(Entity, MushroomType)> {
-    mushrooms.iter()
-        .find(|(_, pos, _)| **pos == position)
-        .map(|(e, _, t)| (e, *t))
+pub fn find_mushroom_at(position: GridPosition, grid: &ResMut<Grid>) -> Option<Entity> {
+    grid.0.get(&position).copied()
 }
