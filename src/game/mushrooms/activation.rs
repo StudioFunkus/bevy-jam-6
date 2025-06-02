@@ -14,9 +14,9 @@ use crate::{
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(
-        Update,
+        FixedUpdate,
         (
-            process_mushroom_activations ,
+            process_mushroom_activations,
             process_scheduled_events::<ActivateMushroomEvent>,
         )
             .chain()

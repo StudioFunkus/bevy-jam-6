@@ -4,7 +4,7 @@
 
 use bevy::{audio::Volume, input::common_conditions::input_just_pressed, prelude::*, ui::Val::*};
 
-use crate::{menus::Menu, screens::Screen, theme::prelude::*};
+use crate::{game::fixed_timestep::FixedTimestepConfig, menus::Menu, screens::Screen, theme::prelude::*};
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(OnEnter(Menu::Settings), spawn_settings_menu);
@@ -14,9 +14,10 @@ pub(super) fn plugin(app: &mut App) {
     );
 
     app.register_type::<GlobalVolumeLabel>();
+    app.register_type::<TimestepLabel>();
     app.add_systems(
         Update,
-        update_global_volume_label.run_if(in_state(Menu::Settings)),
+        (update_global_volume_label, update_timestep_label).run_if(in_state(Menu::Settings)),
     );
 }
 
@@ -52,6 +53,14 @@ fn settings_grid() -> impl Bundle {
                 }
             ),
             global_volume_widget(),
+            (
+                widget::label("Game Speed (Hz)"),
+                Node {
+                    justify_self: JustifySelf::End,
+                    ..default()
+                }
+            ),
+            timestep_widget(),
         ],
     )
 }
@@ -122,4 +131,50 @@ fn go_back(screen: Res<State<Screen>>, mut next_menu: ResMut<NextState<Menu>>) {
     } else {
         Menu::Pause
     });
+}
+
+fn timestep_widget() -> impl Bundle {
+    (
+        Name::new("Timestep Widget"),
+        Node {
+            justify_self: JustifySelf::Start,
+            ..default()
+        },
+        children![
+            widget::button_small("-", lower_timestep),
+            (
+                Name::new("Current Timestep"),
+                Node {
+                    padding: UiRect::horizontal(Px(10.0)),
+                    justify_content: JustifyContent::Center,
+                    min_width: Val::Px(60.0),
+                    ..default()
+                },
+                children![(widget::label(""), TimestepLabel)],
+            ),
+            widget::button_small("+", raise_timestep),
+        ],
+    )
+}
+
+fn lower_timestep(_: Trigger<Pointer<Click>>, mut config: ResMut<FixedTimestepConfig>) {
+    let new_hz = (config.target_hz - 5.0).max(config.min_hz);
+    config.set_hz(new_hz);
+}
+
+fn raise_timestep(_: Trigger<Pointer<Click>>, mut config: ResMut<FixedTimestepConfig>) {
+    let new_hz = (config.target_hz + 5.0).min(config.max_hz);
+    config.set_hz(new_hz);
+}
+
+#[derive(Component, Reflect)]
+#[reflect(Component)]
+struct TimestepLabel;
+
+fn update_timestep_label(
+    config: Res<FixedTimestepConfig>,
+    mut label: Single<&mut Text, With<TimestepLabel>>,
+) {
+    let speed_mult = config.speed_multiplier();
+    label.0 = format!("{:.0} Hz ({:.1}x)", config.target_hz, speed_mult);
 }

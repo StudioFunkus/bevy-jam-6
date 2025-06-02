@@ -4,6 +4,7 @@ use resources::SelectedMushroomType;
 
 use crate::{
     game::{
+        fixed_timestep::GameTime,
         mushrooms::events::ActivateMushroomEvent, resources::{GameState, UnlockedMushrooms}, visual_effects::SpawnClickEffect
     }, PausableSystems
 };
@@ -22,10 +23,14 @@ pub(super) fn plugin(app: &mut App) {
         (
             handle_grid_clicks,
             spawn_mushrooms,
-            update_mushroom_cooldowns,
         )
             .chain()
             .in_set(PausableSystems),
+    );
+    
+    app.add_systems(
+        FixedUpdate,
+        update_mushroom_cooldowns.in_set(PausableSystems),
     );
 
     app.init_resource::<SelectedMushroomType>();
@@ -305,12 +310,12 @@ fn spawn_mushrooms(
 
 /// Update mushroom cooldowns
 fn update_mushroom_cooldowns(
-    time: Res<Time>,
+    game_time: Res<GameTime>,
     mut commands: Commands,
     mut cooldowns: Query<(Entity, &mut MushroomCooldown, &mut Sprite), With<Mushroom>>,
 ) {
     for (entity, mut cooldown, mut sprite) in &mut cooldowns {
-        cooldown.timer.tick(time.delta());
+        game_time.tick_timer(&mut cooldown.timer);
 
         // Visual feedback for cooldown
         let cooldown_progress = cooldown.timer.fraction_remaining();

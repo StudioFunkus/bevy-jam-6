@@ -2,6 +2,8 @@ use std::collections::VecDeque;
 
 use bevy::prelude::*;
 
+use crate::game::fixed_timestep::GameTime;
+
 /// Queue for processing events
 #[derive(Resource, Default)]
 pub struct EventQueue<T: Event> {
@@ -19,14 +21,14 @@ pub struct ScheduledEvent<T: Event> {
 
 /// Process scheduled events
 pub fn process_scheduled_events<T: Event + Clone>(
-    time: Res<Time>,
+    game_time: Res<GameTime>,
     mut event_queue: ResMut<EventQueue<T>>,
 ) {
     // Update timers and collect ready events
     let mut ready_events = vec![];
 
     event_queue.scheduled.retain_mut(|scheduled| {
-        scheduled.delay.tick(time.delta());
+        game_time.tick_timer(&mut scheduled.delay);
 
         if scheduled.delay.just_finished() {
             ready_events.push(scheduled.event.clone());
@@ -41,4 +43,3 @@ pub fn process_scheduled_events<T: Event + Clone>(
         event_queue.immediate.push_back(event);
     }
 }
-
