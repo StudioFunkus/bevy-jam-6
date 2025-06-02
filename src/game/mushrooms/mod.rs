@@ -1,24 +1,21 @@
 use bevy::prelude::*;
-use events::{SpawnMushroomEvent, TriggerMushroomEvent};
+use events::{SpawnMushroomEvent};
 use resources::SelectedMushroomType;
-use trigger::{TriggerQueue, TriggerSource};
 
 use crate::{
-    PausableSystems,
     game::{
-        resources::{GameState, UnlockedMushrooms},
-        visual_effects::SpawnClickEffect,
-    },
+        mushrooms::events::ActivateMushroomEvent, resources::{GameState, UnlockedMushrooms}, visual_effects::SpawnClickEffect
+    }, PausableSystems
 };
 
 use super::grid::{Grid, GridClickEvent, GridConfig, GridPosition, find_mushroom_at};
 
 mod events;
 pub(crate) mod resources;
-mod trigger;
+mod activation;
 
 pub(super) fn plugin(app: &mut App) {
-    app.add_plugins((events::plugin, trigger::plugin));
+    app.add_plugins((events::plugin, activation::plugin));
 
     app.add_systems(
         Update,
@@ -32,7 +29,6 @@ pub(super) fn plugin(app: &mut App) {
     );
 
     app.init_resource::<SelectedMushroomType>();
-    app.init_resource::<TriggerQueue>();
 }
 
 /// Different types of mushrooms
@@ -42,6 +38,14 @@ pub enum MushroomType {
     #[default]
     Basic,
     Pulse,
+}
+
+/// Activation source for mushroom effects
+#[derive(Clone, Copy, Debug, Default)]
+pub enum ActivationSource {
+    #[default]
+    PlayerClick,
+    Mushroom
 }
 
 impl MushroomType {
@@ -139,7 +143,7 @@ fn handle_grid_clicks(
     mut commands: Commands,
     mut grid_events: EventReader<GridClickEvent>,
     mut spawn_events: EventWriter<SpawnMushroomEvent>,
-    mut trigger_events: EventWriter<TriggerMushroomEvent>,
+    mut activation_events: EventWriter<ActivateMushroomEvent>,
     mut click_effects: EventWriter<SpawnClickEffect>,
     selected_type: Res<SelectedMushroomType>,
     mut grid: ResMut<Grid>,
@@ -207,19 +211,17 @@ fn handle_grid_clicks(
                 info!("Mushroom on cooldown");
                 continue;
             }
-
-            trigger_events.write(TriggerMushroomEvent {
+            
+            activation_events.write(ActivateMushroomEvent {
                 position: event.position,
-                source: TriggerSource::PlayerClick,
+                source: ActivationSource::PlayerClick,
                 energy: 1.0,
-                direction: None,
             });
             continue;
         }
 
         // Try to place a new mushroom
         place_mushroom(
-            &mut commands,
             &mut spawn_events,
             &mut game_state,
             &selected_type,
@@ -231,9 +233,8 @@ fn handle_grid_clicks(
     Ok(())
 }
 
-// Trigger an event to place a mushroom
+// If possible, write an event to spawn a mushroom
 fn place_mushroom(
-    commands: &mut Commands,
     spawn_events: &mut EventWriter<SpawnMushroomEvent>,
     game_state: &mut ResMut<GameState>,
     selected_type: &Res<SelectedMushroomType>,
@@ -252,12 +253,9 @@ fn place_mushroom(
         return;
     }
 
-    let entity = commands.spawn_empty().id();
-
     spawn_events.write(SpawnMushroomEvent {
         position,
         mushroom_type: selected_type.mushroom_type,
-        entity,
     });
 }
 
@@ -271,11 +269,9 @@ fn spawn_mushrooms(
     for event in spawn_events.read() {
         let base_scale = 1.0;
 
-        let mut entity_commands = commands.entity(event.entity);
-
         // Insert core components
-        let mushroom = entity_commands
-            .insert((
+        let mushroom = commands
+            .spawn((
                 Name::new(format!(
                     "{} at ({}, {})",
                     event.mushroom_type.name(),
@@ -300,7 +296,7 @@ fn spawn_mushrooms(
         // Add type-specific components
         match event.mushroom_type {
             MushroomType::Pulse => {
-                entity_commands.insert(MushroomDirection::Up);
+                commands.entity(mushroom).insert(MushroomDirection::Up);
             }
             _ => {}
         }

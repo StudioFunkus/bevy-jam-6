@@ -16,10 +16,10 @@ pub struct GameState {
     pub spores: f64,
     /// Total spores earned all time
     pub total_spores_earned: f64,
-    /// Number of triggers this session
-    pub total_triggers: u64,
-    /// Number of chain triggers (mushroom triggered by another mushroom)
-    pub chain_triggers: u64,
+    /// Number of activations this session
+    pub total_activations: u64,
+    /// Number of chain activations (mushroom activated by another mushroom)
+    pub chain_activations: u64,
 }
 
 impl Default for GameState {
@@ -27,8 +27,8 @@ impl Default for GameState {
         Self {
             spores: 25.0,
             total_spores_earned: 25.0,
-            total_triggers: 0,
-            chain_triggers: 0,
+            total_activations: 0,
+            chain_activations: 0,
         }
     }
 }
@@ -48,10 +48,10 @@ impl GameState {
         }
     }
 
-    pub fn record_trigger(&mut self, is_chain: bool) {
-        self.total_triggers += 1;
+    pub fn record_activation(&mut self, is_chain: bool) {
+        self.total_activations += 1;
         if is_chain {
-            self.chain_triggers += 1;
+            self.chain_activations += 1;
         }
     }
 }

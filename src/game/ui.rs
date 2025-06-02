@@ -58,7 +58,7 @@ fn spawn_game_ui(mut commands: Commands) {
             ),
             (
                 Name::new("Stats"),
-                Text::new("Triggers: 0 | Chains: 0"),
+                Text::new("Activations: 0 | Chains: 0"),
                 TextFont::from_font_size(20.0),
                 TextColor(ui_palette::LABEL_TEXT),
                 StatsDisplay,
@@ -90,7 +90,7 @@ fn spawn_game_ui(mut commands: Commands) {
             ),
             (
                 Name::new("Instructions"),
-                Text::new("Click mushrooms to trigger them!\nShift+Click to rotate directional mushrooms\nRight-click to delete (50% refund)"),
+                Text::new("Click mushrooms to activate them!\nShift+Click to rotate directional mushrooms\nRight-click to delete (50% refund)"),
                 TextFont::from_font_size(16.0),
                 TextColor(ui_palette::LABEL_TEXT),
             ),
@@ -174,8 +174,8 @@ fn update_spore_display(
     // Update stats
     if let Ok(mut text) = stats_display.single_mut() {
         text.0 = format!(
-            "Triggers: {} | Chains: {}",
-            game_state.total_triggers, game_state.chain_triggers,
+            "Activations: {} | Chains: {}",
+            game_state.total_activations, game_state.chain_activations,
         );
     }
 }

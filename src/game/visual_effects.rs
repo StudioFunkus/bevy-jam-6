@@ -10,14 +10,14 @@ use crate::{
 use bevy::prelude::*;
 
 pub(super) fn plugin(app: &mut App) {
-    app.add_event::<SpawnTriggerEffect>();
+    app.add_event::<SpawnActionEffect>();
     app.add_event::<SpawnDirectionalPulse>();
     app.add_event::<SpawnClickEffect>();
 
     app.add_systems(
         Update,
         (
-            spawn_trigger_effects,
+            spawn_action_effects,
             spawn_directional_pulses,
             spawn_click_effects,
             update_directional_indicators,
@@ -29,9 +29,9 @@ pub(super) fn plugin(app: &mut App) {
     );
 }
 
-/// Event to spawn a trigger effect at a position
+/// Event to spawn an action effect at a position
 #[derive(Event)]
-pub struct SpawnTriggerEffect {
+pub struct SpawnActionEffect {
     pub position: GridPosition,
     pub color: Color,
 }
@@ -70,9 +70,9 @@ struct AnimatedEffect {
 struct DirectionalIndicator;
 
 /// Spawn trigger effects when mushrooms are activated
-fn spawn_trigger_effects(
+fn spawn_action_effects(
     mut commands: Commands,
-    mut events: EventReader<SpawnTriggerEffect>,
+    mut events: EventReader<SpawnActionEffect>,
     grid_config: Res<GridConfig>,
 ) {
     for event in events.read() {
@@ -205,13 +205,12 @@ fn spawn_click_effects(
 fn update_directional_indicators(
     mut commands: Commands,
     mushrooms: Query<
-        (Entity, &GridPosition, &MushroomDirection, &MushroomType),
+        (Entity, &MushroomDirection, &MushroomType),
         (With<Mushroom>, Changed<MushroomDirection>),
     >,
     existing_indicators: Query<(Entity, &ChildOf), With<DirectionalIndicator>>,
-    grid_config: Res<GridConfig>,
 ) {
-    for (mushroom_entity, position, direction, mushroom_type) in &mushrooms {
+    for (mushroom_entity, direction, mushroom_type) in &mushrooms {
         // Remove existing indicator if any
         for (indicator_entity, child_of) in &existing_indicators {
             if child_of.parent() == mushroom_entity {

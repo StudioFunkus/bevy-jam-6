@@ -35,7 +35,7 @@ impl Default for GridConfig {
 }
 
 /// Position on the grid
-#[derive(Component, Copy, Clone, Debug, PartialEq, Eq, Hash, Reflect)]
+#[derive(Component, Copy, Clone, Debug, PartialEq, Eq, Hash, Reflect, Default)]
 #[reflect(Component)]
 pub struct GridPosition {
     pub x: i32,
@@ -135,6 +135,6 @@ fn handle_grid_clicks(
 }
 
 /// Spatial mushroom lookup
-pub fn find_mushroom_at(position: GridPosition, grid: &ResMut<Grid>) -> Option<Entity> {
+pub fn find_mushroom_at(position: GridPosition, grid: &Grid) -> Option<Entity> {
     grid.0.get(&position).copied()
 }
