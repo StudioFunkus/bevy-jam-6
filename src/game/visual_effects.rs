@@ -17,9 +17,6 @@ pub(super) fn plugin(app: &mut App) {
     app.add_systems(
         Update,
         (
-            spawn_action_effects,
-            spawn_directional_pulses,
-            spawn_click_effects,
             update_directional_indicators,
             animate_effects,
             cleanup_expired_effects,
@@ -27,6 +24,10 @@ pub(super) fn plugin(app: &mut App) {
             .chain()
             .in_set(PausableSystems),
     );
+
+    app.add_observer(spawn_action_effects)
+        .add_observer(spawn_directional_pulses)
+        .add_observer(spawn_click_effects);
 }
 
 /// Event to spawn an action effect at a position
@@ -58,6 +59,7 @@ struct VisualEffect {
 
 /// Component for animated effects
 #[derive(Component)]
+#[allow(dead_code)]
 struct AnimatedEffect {
     start_scale: Vec3,
     end_scale: Vec3,
@@ -71,94 +73,95 @@ struct DirectionalIndicator;
 
 /// Spawn trigger effects when mushrooms are activated
 fn spawn_action_effects(
+    trigger: Trigger<SpawnActionEffect>,
     mut commands: Commands,
-    mut events: EventReader<SpawnActionEffect>,
     grid_config: Res<GridConfig>,
 ) {
-    for event in events.read() {
-        // Spawn expanding ring effect
-        commands.spawn((
-            Name::new("Trigger Effect"),
-            Sprite {
-                color: event.color.with_alpha(0.8),
-                custom_size: Some(Vec2::splat(40.0)),
-                ..default()
-            },
-            Transform::from_translation(
-                event.position.to_world(&grid_config) + Vec3::new(0.0, 0.0, 1.0),
-            )
-            .with_scale(Vec3::splat(0.5)),
-            VisualEffect {
-                lifetime: Timer::from_seconds(0.5, TimerMode::Once),
-            },
-            AnimatedEffect {
-                start_scale: Vec3::splat(0.5),
-                end_scale: Vec3::splat(1.5),
-                start_alpha: 0.8,
-                end_alpha: 0.2,
-            },
-        ));
+    info!("System triggered: spawn_action_effects");
 
-        // Spawn inner pulse
-        commands.spawn((
-            Name::new("Trigger Pulse"),
-            Sprite {
-                color: Color::WHITE.with_alpha(0.5),
-                custom_size: Some(Vec2::splat(30.0)),
-                ..default()
-            },
-            Transform::from_translation(
-                event.position.to_world(&grid_config) + Vec3::new(0.0, 0.0, 1.1),
-            )
-            .with_scale(Vec3::splat(0.3)),
-            VisualEffect {
-                lifetime: Timer::from_seconds(0.3, TimerMode::Once),
-            },
-            AnimatedEffect {
-                start_scale: Vec3::splat(0.3),
-                end_scale: Vec3::splat(1.0),
-                start_alpha: 1.0,
-                end_alpha: 1.0,
-            },
-        ));
-    }
+    // Spawn expanding ring effect
+    commands.spawn((
+        Name::new("Trigger Effect"),
+        Sprite {
+            color: trigger.color.with_alpha(0.8),
+            custom_size: Some(Vec2::splat(40.0)),
+            ..default()
+        },
+        Transform::from_translation(
+            trigger.position.to_world(&grid_config) + Vec3::new(0.0, 0.0, 1.0),
+        )
+        .with_scale(Vec3::splat(0.5)),
+        VisualEffect {
+            lifetime: Timer::from_seconds(0.5, TimerMode::Once),
+        },
+        AnimatedEffect {
+            start_scale: Vec3::splat(0.5),
+            end_scale: Vec3::splat(1.5),
+            start_alpha: 0.8,
+            end_alpha: 0.2,
+        },
+    ));
+
+    // Spawn inner pulse
+    commands.spawn((
+        Name::new("Trigger Pulse"),
+        Sprite {
+            color: Color::WHITE.with_alpha(0.5),
+            custom_size: Some(Vec2::splat(30.0)),
+            ..default()
+        },
+        Transform::from_translation(
+            trigger.position.to_world(&grid_config) + Vec3::new(0.0, 0.0, 1.1),
+        )
+        .with_scale(Vec3::splat(0.3)),
+        VisualEffect {
+            lifetime: Timer::from_seconds(0.3, TimerMode::Once),
+        },
+        AnimatedEffect {
+            start_scale: Vec3::splat(0.3),
+            end_scale: Vec3::splat(1.0),
+            start_alpha: 1.0,
+            end_alpha: 1.0,
+        },
+    ));
 }
 
 /// Spawn directional pulse effects
+#[tracing::instrument(name = "Spawn directional pulses", skip_all)]
 fn spawn_directional_pulses(
+    trigger: Trigger<SpawnDirectionalPulse>,
     mut commands: Commands,
-    mut events: EventReader<SpawnDirectionalPulse>,
     grid_config: Res<GridConfig>,
 ) {
-    for event in events.read() {
-        let from_world = event.from_position.to_world(&grid_config);
-        let to_world = event.to_position.to_world(&grid_config);
-        let direction = (to_world - from_world).normalize();
+    info!("System triggered: spawn_directional_pulses");
 
-        // Spawn traveling pulse
-        for i in 0..3 {
-            let delay = i as f32 * 0.1;
-            let start_pos = from_world + direction * 40.0;
+    let from_world = trigger.from_position.to_world(&grid_config);
+    let to_world = trigger.to_position.to_world(&grid_config);
+    let direction = (to_world - from_world).normalize();
 
-            commands.spawn((
-                Name::new("Directional Pulse"),
-                Sprite {
-                    color: event.color.with_alpha(0.6),
-                    custom_size: Some(Vec2::new(20.0, 10.0)),
-                    ..default()
-                },
-                Transform::from_translation(start_pos + Vec3::new(0.0, 0.0, 1.2))
-                    .with_rotation(Quat::from_rotation_z(direction.y.atan2(direction.x))),
-                VisualEffect {
-                    lifetime: Timer::from_seconds(0.5 + delay, TimerMode::Once),
-                },
-                TravelingPulse {
-                    start_pos,
-                    end_pos: to_world,
-                    progress: -delay * 2.0,
-                },
-            ));
-        }
+    // Spawn traveling pulse
+    for i in 0..3 {
+        let delay = i as f32 * 0.1;
+        let start_pos = from_world + direction * 40.0;
+
+        commands.spawn((
+            Name::new("Directional Pulse"),
+            Sprite {
+                color: trigger.color.with_alpha(0.6),
+                custom_size: Some(Vec2::new(20.0, 10.0)),
+                ..default()
+            },
+            Transform::from_translation(start_pos + Vec3::new(0.0, 0.0, 1.2))
+                .with_rotation(Quat::from_rotation_z(direction.y.atan2(direction.x))),
+            VisualEffect {
+                lifetime: Timer::from_seconds(0.5 + delay, TimerMode::Once),
+            },
+            TravelingPulse {
+                start_pos,
+                end_pos: to_world,
+                progress: -delay * 2.0,
+            },
+        ));
     }
 }
 
@@ -171,37 +174,39 @@ struct TravelingPulse {
 }
 
 /// Spawn click effects
+#[tracing::instrument(name = "Spawn click effects", skip_all)]
 fn spawn_click_effects(
+    trigger: Trigger<SpawnClickEffect>,
     mut commands: Commands,
-    mut events: EventReader<SpawnClickEffect>,
     grid_config: Res<GridConfig>,
 ) {
-    for event in events.read() {
-        // Spawn click ripple
-        commands.spawn((
-            Name::new("Click Effect"),
-            Sprite {
-                color: Color::srgba(1.0, 1.0, 1.0, 0.3),
-                custom_size: Some(Vec2::splat(20.0)),
-                ..default()
-            },
-            Transform::from_translation(
-                event.position.to_world(&grid_config) + Vec3::new(0.0, 0.0, 1.3),
-            ),
-            VisualEffect {
-                lifetime: Timer::from_seconds(0.2, TimerMode::Once),
-            },
-            AnimatedEffect {
-                start_scale: Vec3::splat(0.2),
-                end_scale: Vec3::splat(0.8),
-                start_alpha: 0.3,
-                end_alpha: 0.3,
-            },
-        ));
-    }
+    info!("System triggered: spawn_click_effects");
+
+    // Spawn click ripple
+    commands.spawn((
+        Name::new("Click Effect"),
+        Sprite {
+            color: Color::srgba(1.0, 1.0, 1.0, 0.3),
+            custom_size: Some(Vec2::splat(20.0)),
+            ..default()
+        },
+        Transform::from_translation(
+            trigger.position.to_world(&grid_config) + Vec3::new(0.0, 0.0, 1.3),
+        ),
+        VisualEffect {
+            lifetime: Timer::from_seconds(0.2, TimerMode::Once),
+        },
+        AnimatedEffect {
+            start_scale: Vec3::splat(0.2),
+            end_scale: Vec3::splat(0.8),
+            start_alpha: 0.3,
+            end_alpha: 0.3,
+        },
+    ));
 }
 
 /// Update directional indicators for mushrooms
+#[tracing::instrument(name = "Update directional indicators", skip_all)]
 fn update_directional_indicators(
     mut commands: Commands,
     mushrooms: Query<
@@ -255,13 +260,14 @@ fn update_directional_indicators(
 }
 
 /// Animate visual effects
+#[tracing::instrument(name = "Animate effects", skip_all)]
 fn animate_effects(
     time: Res<Time>,
     mut effects: Query<(&mut Transform, &mut Sprite, &VisualEffect, &AnimatedEffect)>,
     mut pulses: Query<(&mut Transform, &TravelingPulse, &VisualEffect), Without<AnimatedEffect>>,
 ) {
     // Animate scaling/fading effects
-    for (mut transform, mut sprite, effect, animated) in &mut effects {
+    for (mut transform, mut _sprite, effect, animated) in &mut effects {
         let progress = effect.lifetime.fraction();
 
         // Interpolate scale
@@ -274,7 +280,7 @@ fn animate_effects(
     }
 
     // Animate traveling pulses
-    for (mut transform, pulse, effect) in &mut pulses {
+    for (mut transform, pulse, _effect) in &mut pulses {
         let mut progress = pulse.progress + time.delta_secs() * 3.0; // Speed of travel
         progress = progress.clamp(0.0, 1.0);
 
@@ -284,6 +290,7 @@ fn animate_effects(
 }
 
 /// Update effect lifetimes and remove expired ones
+#[tracing::instrument(name = "Cleanup expired effects", skip_all)]
 fn cleanup_expired_effects(
     mut commands: Commands,
     time: Res<Time>,

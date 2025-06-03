@@ -27,6 +27,7 @@ impl FromWorld for LevelAssets {
 }
 
 /// Spawn the main game level
+#[tracing::instrument(name = "Spawn level", skip_all)]
 pub fn spawn_level(
     mut commands: Commands,
     level_assets: Res<LevelAssets>,
@@ -44,6 +45,7 @@ pub fn spawn_level(
 }
 
 /// Spawn the game grid
+#[tracing::instrument(name = "Spawn game grid", skip_all)]
 fn spawn_game_grid(commands: &mut Commands, config: &GridConfig) {
     let grid_entity = commands
         .spawn((
