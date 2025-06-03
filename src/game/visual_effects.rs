@@ -6,6 +6,7 @@ use crate::{
         grid::{GridConfig, GridPosition},
         mushrooms::{Mushroom, MushroomDirection, MushroomType},
     },
+    screens::Screen,
 };
 use bevy::prelude::*;
 
@@ -100,6 +101,7 @@ fn spawn_action_effects(
             start_alpha: 0.8,
             end_alpha: 0.2,
         },
+        StateScoped(Screen::Gameplay), // Add this!
     ));
 
     // Spawn inner pulse
@@ -123,6 +125,7 @@ fn spawn_action_effects(
             start_alpha: 1.0,
             end_alpha: 1.0,
         },
+        StateScoped(Screen::Gameplay),
     ));
 }
 
@@ -161,6 +164,7 @@ fn spawn_directional_pulses(
                 end_pos: to_world,
                 progress: -delay * 2.0,
             },
+            StateScoped(Screen::Gameplay),
         ));
     }
 }

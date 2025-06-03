@@ -8,7 +8,11 @@ use bevy_inspector_egui::{bevy_egui::EguiPlugin, quick::WorldInspectorPlugin};
 
 use crate::screens::Screen;
 
+mod turn_manager;
+
 pub(super) fn plugin(app: &mut App) {
+    app.add_plugins(turn_manager::plugin);
+
     // Log `Screen` state transitions.
     app.add_systems(Update, log_transitions::<Screen>);
 
