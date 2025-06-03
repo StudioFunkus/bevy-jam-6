@@ -5,10 +5,10 @@ use bevy::prelude::*;
 use crate::{
     audio::music,
     game::{
+        game_flow::{CurrentLevel, LevelState},
         grid::{GridCell, GridConfig, GridPosition},
         level::definitions::LevelDefinitions,
         mushrooms::events::SpawnMushroomEvent,
-        game_flow::{CurrentLevel, LevelState},
     },
     screens::Screen,
 };

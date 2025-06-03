@@ -6,9 +6,7 @@ use crate::{
     game::{
         event_queue::EventQueue,
         grid::{Grid, GridConfig},
-        level::{
-            definitions::{LevelDefinitions, load_level_config},
-        },
+        level::definitions::{LevelDefinitions, load_level_config},
         mushrooms::events::ActivateMushroomEvent,
         resources::GameState,
     },

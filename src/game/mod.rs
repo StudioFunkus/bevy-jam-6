@@ -4,9 +4,9 @@ use bevy::prelude::*;
 
 mod event_queue;
 pub(crate) mod fixed_timestep;
+pub(crate) mod game_flow;
 pub(crate) mod grid;
 pub(crate) mod level;
-pub(crate) mod game_flow;
 mod mushrooms;
 mod resources;
 mod ui;
