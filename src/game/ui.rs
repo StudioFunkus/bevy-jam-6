@@ -261,7 +261,7 @@ fn update_turn_phase_display(
             LevelState::NotPlaying => "Not in game",
         };
 
-        text.0 = format!("Phase: {}", phase_text);
+        text.0 = format!("Phase: {phase_text}");
 
         // Change color based on phase
         if let Some(ref phase) = current_phase {

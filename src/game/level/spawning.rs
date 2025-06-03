@@ -105,7 +105,7 @@ pub fn spawn_game_grid(commands: &mut Commands, config: &GridConfig) {
             let position = GridPosition::new(x, y);
             let cell = commands
                 .spawn((
-                    Name::new(format!("Grid Cell ({}, {})", x, y)),
+                    Name::new(format!("Grid Cell ({x}, {y})")),
                     GridCell { position },
                     Sprite {
                         color: Color::srgba(0.2, 0.2, 0.2, 0.5),
