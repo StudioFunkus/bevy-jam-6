@@ -11,7 +11,6 @@ use crate::{
         game_flow::{LevelState, TurnData, TurnPhase},
         visual_effects::SpawnClickEffect,
     },
-    screens::Screen,
 };
 
 use super::grid::{Grid, GridClickEvent, GridConfig, GridPosition, find_mushroom_at};

@@ -242,7 +242,7 @@ fn update_turn_phase_display(
         (With<TurnPhaseDisplay>, Without<LevelProgressDisplay>),
     >,
 ) {
-    if let Ok((mut text, mut text_color)) = phase_display.get_single_mut() {
+    if let Ok((mut text, mut text_color)) = phase_display.single_mut() {
         let phase_text = match current_level_state.get() {
             LevelState::Playing => {
                 if let Some(ref phase) = current_phase {
@@ -281,7 +281,7 @@ fn update_phase_button(
     mut button: Query<(&Children, &mut Visibility), With<PhaseAdvanceButton>>,
     mut texts: Query<&mut Text>,
 ) {
-    if let Ok((children, mut visibility)) = button.get_single_mut() {
+    if let Ok((children, mut visibility)) = button.single_mut() {
         // Update button visibility
         *visibility = if *current_level_state.get() == LevelState::Playing {
             Visibility::Inherited

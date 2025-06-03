@@ -5,10 +5,9 @@ use bevy::prelude::*;
 use crate::{
     game::{
         event_queue::EventQueue,
-        grid::{Grid, GridCell, GridConfig},
+        grid::{Grid, GridConfig},
         level::{
             definitions::{LevelDefinitions, load_level_config},
-            spawning::GameGrid,
         },
         mushrooms::events::ActivateMushroomEvent,
         resources::GameState,
@@ -379,7 +378,7 @@ fn manual_phase_advance(
 /// Automatically advance phases based on completion conditions
 fn check_phase_completion(
     current_phase: Option<Res<State<TurnPhase>>>,
-    mut next_phase: ResMut<NextState<TurnPhase>>,
+    mut _next_phase: ResMut<NextState<TurnPhase>>,
     // TODO: Add queries for checking completion conditions
 ) {
     // Only check if we're actually in a game phase
