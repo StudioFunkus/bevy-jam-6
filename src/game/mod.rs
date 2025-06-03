@@ -2,14 +2,14 @@
 
 use bevy::prelude::*;
 
+mod event_queue;
+pub(crate) mod fixed_timestep;
 mod grid;
 pub(crate) mod level;
 mod mushrooms;
 mod resources;
 mod ui;
 mod visual_effects;
-mod event_queue;
-pub(crate) mod fixed_timestep;
 
 pub(super) fn plugin(app: &mut App) {
     app.add_plugins((
