@@ -4,6 +4,7 @@ use crate::{
     PausableSystems,
     game::{
         event_queue::{EventQueue, ScheduledEvent, process_scheduled_events},
+        game_flow::{CurrentLevel, TurnData},
         grid::{Grid, GridConfig, GridPosition, find_mushroom_at},
         mushrooms::{
             ActivationSource, Mushroom, MushroomCooldown, MushroomDirection, MushroomType,
@@ -54,6 +55,8 @@ fn process_mushroom_activations(
     mushrooms: Query<&Mushroom>,
     cooldowns: Query<&MushroomCooldown>,
     directions: Query<&MushroomDirection>,
+    mut turn_data: ResMut<TurnData>,
+    mut current_level: ResMut<CurrentLevel>,
 ) -> Result {
     // Process immediate actions
     while let Some(event) = action_queue.immediate.pop_front() {
@@ -82,6 +85,10 @@ fn process_mushroom_activations(
         let production = mushroom.0.base_production() * event.energy;
 
         game_state.add_spores(production);
+
+        // Update turn tracking
+        turn_data.spores_this_chain += production;
+        current_level.total_spores_earned += production;
 
         // Update chain stats
         if matches!(event.source, ActivationSource::Mushroom) {

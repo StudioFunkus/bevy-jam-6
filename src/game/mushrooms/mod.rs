@@ -6,6 +6,7 @@ use crate::{
     PausableSystems,
     game::{
         fixed_timestep::GameTime,
+        game_flow::{LevelState, TurnData, TurnPhase},
         mushrooms::events::ActivateMushroomEvent,
         resources::{GameState, UnlockedMushrooms},
         visual_effects::SpawnClickEffect,
@@ -15,7 +16,7 @@ use crate::{
 use super::grid::{Grid, GridClickEvent, GridConfig, GridPosition, find_mushroom_at};
 
 mod activation;
-mod events;
+pub(crate) mod events;
 pub(crate) mod resources;
 
 pub(super) fn plugin(app: &mut App) {
@@ -153,6 +154,8 @@ fn handle_grid_clicks(
     mut directions: Query<&mut MushroomDirection>,
     mut game_state: ResMut<GameState>,
     unlocked: Res<UnlockedMushrooms>,
+    current_phase: Option<Res<State<TurnPhase>>>,
+    mut turn_data: ResMut<TurnData>,
 ) -> Result {
     info!("System triggered: handle_grid_clicks");
 
@@ -160,14 +163,25 @@ fn handle_grid_clicks(
         return Ok(());
     }
 
+    // Check if we're in a phase that allows interaction
+    let Some(phase_state) = current_phase else {
+        info!("Not in a game turn phase");
+        return Ok(());
+    };
+
     // Spawn click effect for visual feedback
     info!("Triggering event: SpawnClickEffect");
     commands.trigger(SpawnClickEffect {
         position: trigger.position,
     });
 
-    // Handle right-click for deletion
+    // Handle right-click for deletion (only during planting phase)
     if trigger.button == PointerButton::Secondary {
+        if *phase_state.get() != TurnPhase::Planting {
+            info!("Can only delete mushrooms during planting phase");
+            return Ok(());
+        }
+
         if let Some(entity) = find_mushroom_at(trigger.position, &grid) {
             let mushroom = mushrooms.get(entity)?;
 
@@ -191,45 +205,66 @@ fn handle_grid_clicks(
         return Ok(());
     }
 
-    // If cell has a mushroom, try to trigger it
-    if let Some(entity) = find_mushroom_at(trigger.position, &grid) {
-        let mushroom = mushrooms.get(entity)?;
+    // Different behavior based on current phase
+    match phase_state.get() {
+        TurnPhase::Planting => {
+            // If cell has a mushroom, handle rotation
+            if let Some(entity) = find_mushroom_at(trigger.position, &grid) {
+                let mushroom = mushrooms.get(entity)?;
 
-        // Check if shift is held for rotation
-        if keyboard.pressed(KeyCode::ShiftLeft) || keyboard.pressed(KeyCode::ShiftRight) {
-            // Rotate directional mushroom
-            if matches!(mushroom.0, MushroomType::Pulse) {
-                if let Ok(mut direction) = directions.get_mut(entity) {
-                    *direction = direction.rotate_clockwise();
-                    info!("Rotated mushroom to {:?}", *direction);
+                // Check if shift is held for rotation
+                if keyboard.pressed(KeyCode::ShiftLeft) || keyboard.pressed(KeyCode::ShiftRight) {
+                    // Rotate directional mushroom
+                    if matches!(mushroom.0, MushroomType::Pulse) {
+                        if let Ok(mut direction) = directions.get_mut(entity) {
+                            *direction = direction.rotate_clockwise();
+                            info!("Rotated mushroom to {:?}", *direction);
+                        }
+                    }
                 }
+                return Ok(()); // Don't place over existing mushroom
             }
-            return Ok(()); // Don't trigger when rotating
+
+            // Try to place a new mushroom
+            place_mushroom(
+                commands,
+                &mut game_state,
+                &selected_type,
+                &unlocked,
+                trigger.position,
+            )?;
         }
 
-        // Check cooldown for triggering
-        if cooldowns.get(entity).is_ok() {
-            info!("Mushroom on cooldown");
-            return Ok(());
+        TurnPhase::Chain => {
+            // If cell has a mushroom, try to activate it
+            if let Some(entity) = find_mushroom_at(trigger.position, &grid) {
+                // Check cooldown for activation
+                if cooldowns.get(entity).is_ok() {
+                    info!("Mushroom on cooldown");
+                    return Ok(());
+                }
+
+                info!("Triggering event: ActivateMushroomEvent");
+                commands.trigger(ActivateMushroomEvent {
+                    position: trigger.position,
+                    source: ActivationSource::PlayerClick,
+                    energy: 1.0,
+                });
+
+                // Track activation
+                turn_data.activations_this_chain += 1;
+            } else {
+                info!("No mushroom at this position to activate");
+            }
         }
 
-        info!("Triggering event: ActivateMushroomEvent");
-        commands.trigger(ActivateMushroomEvent {
-            position: trigger.position,
-            source: ActivationSource::PlayerClick,
-            energy: 1.0,
-        });
-        return Ok(());
+        _ => {
+            info!(
+                "Cannot interact with mushrooms during {:?} phase",
+                phase_state.get()
+            );
+        }
     }
-
-    // Try to place a new mushroom
-    place_mushroom(
-        commands,
-        &mut game_state,
-        &selected_type,
-        &unlocked,
-        trigger.position,
-    )?;
 
     Ok(())
 }
@@ -297,6 +332,7 @@ fn spawn_mushroom(
             },
             Transform::from_translation(trigger.position.to_world(&grid_config))
                 .with_scale(Vec3::splat(base_scale)),
+            StateScoped(LevelState::Playing),
         ))
         .id();
 

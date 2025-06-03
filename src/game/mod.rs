@@ -4,7 +4,8 @@ use bevy::prelude::*;
 
 mod event_queue;
 pub(crate) mod fixed_timestep;
-mod grid;
+pub(crate) mod game_flow;
+pub(crate) mod grid;
 pub(crate) mod level;
 mod mushrooms;
 mod resources;
@@ -19,6 +20,7 @@ pub(super) fn plugin(app: &mut App) {
         mushrooms::plugin,
         visual_effects::plugin,
         level::plugin,
+        game_flow::plugin,
         ui::plugin,
     ));
 }

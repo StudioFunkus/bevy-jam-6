@@ -1,11 +1,15 @@
 use bevy::{platform::collections::HashMap, prelude::*};
+use bevy_inspector_egui::bevy_egui::input::egui_wants_any_pointer_input;
 
 pub(super) fn plugin(app: &mut App) {
     app.init_resource::<GridConfig>();
     app.init_resource::<Grid>();
     app.add_event::<GridClickEvent>();
 
-    app.add_systems(Update, handle_grid_clicks);
+    app.add_systems(
+        Update,
+        handle_grid_clicks.run_if(not(egui_wants_any_pointer_input)),
+    );
 }
 
 // Type alias for the spatial data structure
@@ -24,8 +28,8 @@ pub struct GridConfig {
 impl Default for GridConfig {
     fn default() -> Self {
         Self {
-            width: 128,
-            height: 128,
+            width: 6,
+            height: 6,
             cell_size: 64.0,
             cell_spacing: 4.0,
         }
@@ -125,7 +129,7 @@ fn handle_grid_clicks(
     for event in click_events.read() {
         if let Ok(cell) = grid_cells.get(event.target) {
             info!("Grid cell clicked at position: {:?}", cell.position);
-            info!("Triggering event: GridClickEvent");
+            info!("Triggering observers of GridClickEvent");
             commands.trigger(GridClickEvent {
                 position: cell.position,
                 button: event.button,

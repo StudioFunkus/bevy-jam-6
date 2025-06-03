@@ -8,7 +8,11 @@ use bevy_inspector_egui::{bevy_egui::EguiPlugin, quick::WorldInspectorPlugin};
 
 use crate::screens::Screen;
 
+mod game_flow;
+
 pub(super) fn plugin(app: &mut App) {
+    app.add_plugins(game_flow::plugin);
+
     // Log `Screen` state transitions.
     app.add_systems(Update, log_transitions::<Screen>);
 
