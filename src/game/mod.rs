@@ -2,6 +2,7 @@
 
 use bevy::prelude::*;
 
+pub mod carddeck;
 mod event_queue;
 pub(crate) mod fixed_timestep;
 pub(crate) mod game_flow;
@@ -22,5 +23,6 @@ pub(super) fn plugin(app: &mut App) {
         level::plugin,
         game_flow::plugin,
         ui::plugin,
+        carddeck::plugin,
     ));
 }
