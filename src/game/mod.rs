@@ -6,9 +6,9 @@ mod event_queue;
 pub(crate) mod fixed_timestep;
 pub(crate) mod grid;
 pub(crate) mod level;
+pub(crate) mod game_flow;
 mod mushrooms;
 mod resources;
-pub(crate) mod turn_manager;
 mod ui;
 mod visual_effects;
 
@@ -20,7 +20,7 @@ pub(super) fn plugin(app: &mut App) {
         mushrooms::plugin,
         visual_effects::plugin,
         level::plugin,
-        turn_manager::plugin,
+        game_flow::plugin,
         ui::plugin,
     ));
 }

@@ -7,7 +7,7 @@ use bevy_inspector_egui::{
 };
 
 use crate::{
-    game::turn_manager::{CurrentLevel, LevelState, TurnData, TurnPhase},
+    game::game_flow::{CurrentLevel, LevelState, TurnData, TurnPhase},
     screens::Screen,
 };
 

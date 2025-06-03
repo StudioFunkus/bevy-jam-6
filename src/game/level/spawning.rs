@@ -8,7 +8,7 @@ use crate::{
         grid::{GridCell, GridConfig, GridPosition},
         level::definitions::LevelDefinitions,
         mushrooms::events::SpawnMushroomEvent,
-        turn_manager::{CurrentLevel, LevelState},
+        game_flow::{CurrentLevel, LevelState},
     },
     screens::Screen,
 };

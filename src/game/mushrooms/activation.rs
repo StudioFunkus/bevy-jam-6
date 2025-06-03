@@ -10,7 +10,7 @@ use crate::{
             events::ActivateMushroomEvent,
         },
         resources::GameState,
-        turn_manager::{CurrentLevel, TurnData},
+        game_flow::{CurrentLevel, TurnData},
         visual_effects::{SpawnActionEffect, SpawnDirectionalPulse},
     },
 };

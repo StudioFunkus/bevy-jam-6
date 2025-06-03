@@ -8,7 +8,7 @@ use crate::{
         fixed_timestep::GameTime,
         mushrooms::events::ActivateMushroomEvent,
         resources::{GameState, UnlockedMushrooms},
-        turn_manager::{LevelState, TurnData, TurnPhase},
+        game_flow::{LevelState, TurnData, TurnPhase},
         visual_effects::SpawnClickEffect,
     },
     screens::Screen,
