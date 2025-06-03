@@ -260,14 +260,16 @@ fn handle_level_complete_action(
         LevelCompleteAction::RetryLevel => {
             info!("Retrying level {}", current_level.level_index + 1);
 
-             if load_level(
-                 current_level.level_index,
-                 &level_definitions,
-                 &mut grid_config,
-                 &mut current_level,
-                 &mut turn_data,
-                 &mut game_state,
-             ).is_ok() {
+            if load_level(
+                current_level.level_index,
+                &level_definitions,
+                &mut grid_config,
+                &mut current_level,
+                &mut turn_data,
+                &mut game_state,
+            )
+            .is_ok()
+            {
                 // Transition from Success/Failed -> Playing directly
                 // StateScoped entities will be cleaned up automatically
                 level_state.set(LevelState::Playing);
