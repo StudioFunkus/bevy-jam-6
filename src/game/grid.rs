@@ -83,7 +83,7 @@ impl GridPosition {
     }
 
     /// Convert grid position to world coordinates
-    pub fn to_world(&self, config: &GridConfig) -> Vec3 {
+    pub fn to_world(self, config: &GridConfig) -> Vec3 {
         let total_cell_size = config.cell_size + config.cell_spacing;
         let grid_width = config.width as f32 * total_cell_size - config.cell_spacing;
         let grid_height = config.height as f32 * total_cell_size - config.cell_spacing;

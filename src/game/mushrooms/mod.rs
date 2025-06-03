@@ -114,7 +114,7 @@ pub enum MushroomDirection {
 }
 
 impl MushroomDirection {
-    pub fn to_offset(&self) -> (i32, i32) {
+    pub fn to_offset(self) -> (i32, i32) {
         match self {
             MushroomDirection::Up => (0, 1),
             MushroomDirection::Right => (1, 0),
@@ -304,6 +304,7 @@ fn spawn_mushroom(
     grid.0.insert(trigger.position, mushroom);
 
     // Add type-specific components
+    #[allow(clippy::single_match)]
     match trigger.mushroom_type {
         MushroomType::Pulse => {
             commands.entity(mushroom).insert(MushroomDirection::Up);

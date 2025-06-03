@@ -143,7 +143,7 @@ fn process_mushroom_activation(
             // Pulse activates other Mushrooms in the direction it's facing
             let direction = directions
                 .get(entity)
-                .map(|d| *d)
+                .copied()
                 .unwrap_or(MushroomDirection::Up);
             let (dx, dy) = direction.to_offset();
             let target = GridPosition::new(pos.x + dx, pos.y + dy);
