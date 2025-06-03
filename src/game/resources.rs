@@ -9,7 +9,7 @@ pub(super) fn plugin(app: &mut App) {
 }
 
 /// Core game state tracking spores and progression
-#[derive(Resource, Reflect)]
+#[derive(Resource, Reflect, Debug)]
 #[reflect(Resource)]
 pub struct GameState {
     /// Current number of spores
@@ -57,7 +57,7 @@ impl GameState {
 }
 
 /// Mushroom unlock status
-#[derive(Resource, Default, Reflect)]
+#[derive(Resource, Default, Reflect, Debug)]
 #[reflect(Resource)]
 pub struct UnlockedMushrooms {
     pub button: bool,
@@ -65,6 +65,7 @@ pub struct UnlockedMushrooms {
 }
 
 /// Check and update mushroom unlocks
+#[tracing::instrument(name = "Check unlocks", skip_all)]
 fn check_unlocks(game_state: Res<GameState>, mut unlocked: ResMut<UnlockedMushrooms>) {
     if !unlocked.button {
         unlocked.button = true;

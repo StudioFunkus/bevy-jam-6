@@ -1,7 +1,5 @@
 use bevy::{platform::collections::HashMap, prelude::*};
 
-use super::mushrooms::{Mushroom, MushroomType};
-
 pub(super) fn plugin(app: &mut App) {
     app.init_resource::<GridConfig>();
     app.init_resource::<Grid>();
@@ -15,7 +13,7 @@ pub(super) fn plugin(app: &mut App) {
 pub struct Grid(pub HashMap<GridPosition, Entity>); // Should this be &Entity?
 
 /// Grid configuration
-#[derive(Resource)]
+#[derive(Resource, Debug)]
 pub struct GridConfig {
     pub width: i32,
     pub height: i32,
@@ -112,21 +110,23 @@ pub struct GridCell {
 }
 
 /// Event fired when a grid cell is clicked
-#[derive(Event)]
+#[derive(Event, Debug)]
 pub struct GridClickEvent {
     pub position: GridPosition,
     pub button: bevy::picking::pointer::PointerButton,
 }
 
+#[tracing::instrument(name = "Handle grid clicks", skip_all)]
 fn handle_grid_clicks(
     mut click_events: EventReader<Pointer<Click>>,
-    mut grid_click_events: EventWriter<GridClickEvent>,
+    mut commands: Commands,
     grid_cells: Query<&GridCell>,
 ) {
     for event in click_events.read() {
         if let Ok(cell) = grid_cells.get(event.target) {
-            println!("Grid cell clicked at position: {:?}", cell.position);
-            grid_click_events.write(GridClickEvent {
+            info!("Grid cell clicked at position: {:?}", cell.position);
+            info!("Triggering event: GridClickEvent");
+            commands.trigger(GridClickEvent {
                 position: cell.position,
                 button: event.button,
             });
@@ -135,6 +135,7 @@ fn handle_grid_clicks(
 }
 
 /// Spatial mushroom lookup
+#[tracing::instrument(name = "Find mushrooms at GridPosition", skip_all)]
 pub fn find_mushroom_at(position: GridPosition, grid: &Grid) -> Option<Entity> {
     grid.0.get(&position).copied()
 }

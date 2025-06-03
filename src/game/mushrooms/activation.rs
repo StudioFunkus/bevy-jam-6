@@ -1,15 +1,17 @@
 use bevy::prelude::*;
 
 use crate::{
+    PausableSystems,
     game::{
-        event_queue::{process_scheduled_events, EventQueue, ScheduledEvent},
-        grid::{find_mushroom_at, Grid, GridConfig, GridPosition},
+        event_queue::{EventQueue, ScheduledEvent, process_scheduled_events},
+        grid::{Grid, GridConfig, GridPosition, find_mushroom_at},
         mushrooms::{
-            events::ActivateMushroomEvent, ActivationSource, Mushroom, MushroomCooldown, MushroomDirection, MushroomType
+            ActivationSource, Mushroom, MushroomCooldown, MushroomDirection, MushroomType,
+            events::ActivateMushroomEvent,
         },
         resources::GameState,
         visual_effects::{SpawnActionEffect, SpawnDirectionalPulse},
-    }, PausableSystems
+    },
 };
 
 pub(super) fn plugin(app: &mut App) {
@@ -23,28 +25,36 @@ pub(super) fn plugin(app: &mut App) {
             .in_set(PausableSystems),
     );
 
+    app.add_observer(handle_new_immediate_event);
+
     app.init_resource::<EventQueue<ActivateMushroomEvent>>();
 }
 
+/// Push new immediate events to the queue
+#[tracing::instrument(name = "Handle new immediate events", skip_all)]
+fn handle_new_immediate_event(
+    trigger: Trigger<ActivateMushroomEvent>,
+    mut action_queue: ResMut<EventQueue<ActivateMushroomEvent>>,
+) -> Result {
+    info!("System trigger: handle_new_immediate_event");
+
+    action_queue.immediate.push_back(trigger.clone());
+
+    Ok(())
+}
+
 /// Process ActivateMushroomEvents from the action queue
-fn process_mushroom_activations (
+#[tracing::instrument(name = "Process all mushroom activations", skip_all)]
+fn process_mushroom_activations(
     mut commands: Commands,
     mut action_queue: ResMut<EventQueue<ActivateMushroomEvent>>,
-    mut activate_mushroom_events: EventReader<ActivateMushroomEvent>,
     mut game_state: ResMut<GameState>,
-    mut visual_effects: EventWriter<SpawnActionEffect>,
-    mut directional_effects: EventWriter<SpawnDirectionalPulse>,
     grid: Res<Grid>,
     grid_config: Res<GridConfig>,
     mushrooms: Query<&Mushroom>,
     cooldowns: Query<&MushroomCooldown>,
     directions: Query<&MushroomDirection>,
 ) -> Result {
-    // Add new actions to immediate queue
-    for event in activate_mushroom_events.read() {
-        action_queue.immediate.push_back(event.clone());
-    }
-
     // Process immediate actions
     while let Some(event) = action_queue.immediate.pop_front() {
         let Some(entity) = find_mushroom_at(event.position, &grid) else {
@@ -58,7 +68,7 @@ fn process_mushroom_activations (
         }
 
         // Spawn visual effect for action
-        visual_effects.write(SpawnActionEffect {
+        commands.trigger(SpawnActionEffect {
             position: event.position,
             color: mushroom.0.color(),
         });
@@ -95,7 +105,7 @@ fn process_mushroom_activations (
             let delay = 0.1 + (i as f32 * 0.05); // Stagger actions
 
             // Spawn directional pulse effect
-            directional_effects.write(SpawnDirectionalPulse {
+            commands.trigger(SpawnDirectionalPulse {
                 from_position: event.position,
                 to_position: pos,
                 color: mushroom.0.color(),
@@ -115,6 +125,7 @@ fn process_mushroom_activations (
     Ok(())
 }
 
+#[tracing::instrument(name = "Process single mushroom activation", skip_all)]
 fn process_mushroom_activation(
     mushroom_type: MushroomType,
     pos: GridPosition,

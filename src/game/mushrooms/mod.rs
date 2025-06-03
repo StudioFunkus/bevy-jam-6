@@ -1,37 +1,33 @@
 use bevy::prelude::*;
-use events::{SpawnMushroomEvent};
+use events::SpawnMushroomEvent;
 use resources::SelectedMushroomType;
 
 use crate::{
+    PausableSystems,
     game::{
         fixed_timestep::GameTime,
-        mushrooms::events::ActivateMushroomEvent, resources::{GameState, UnlockedMushrooms}, visual_effects::SpawnClickEffect
-    }, PausableSystems
+        mushrooms::events::ActivateMushroomEvent,
+        resources::{GameState, UnlockedMushrooms},
+        visual_effects::SpawnClickEffect,
+    },
 };
 
 use super::grid::{Grid, GridClickEvent, GridConfig, GridPosition, find_mushroom_at};
 
+mod activation;
 mod events;
 pub(crate) mod resources;
-mod activation;
 
 pub(super) fn plugin(app: &mut App) {
     app.add_plugins((events::plugin, activation::plugin));
 
     app.add_systems(
-        Update,
-        (
-            handle_grid_clicks,
-            spawn_mushrooms,
-        )
-            .chain()
-            .in_set(PausableSystems),
-    );
-    
-    app.add_systems(
         FixedUpdate,
         update_mushroom_cooldowns.in_set(PausableSystems),
     );
+
+    app.add_observer(handle_grid_clicks)
+        .add_observer(spawn_mushroom);
 
     app.init_resource::<SelectedMushroomType>();
 }
@@ -50,7 +46,7 @@ pub enum MushroomType {
 pub enum ActivationSource {
     #[default]
     PlayerClick,
-    Mushroom
+    Mushroom,
 }
 
 impl MushroomType {
@@ -144,12 +140,10 @@ pub struct MushroomCooldown {
 }
 
 /// Handle grid clicks (respond to GridClickEvent)
+#[tracing::instrument(name = "Handle grid clicks", skip_all)]
 fn handle_grid_clicks(
+    trigger: Trigger<GridClickEvent>,
     mut commands: Commands,
-    mut grid_events: EventReader<GridClickEvent>,
-    mut spawn_events: EventWriter<SpawnMushroomEvent>,
-    mut activation_events: EventWriter<ActivateMushroomEvent>,
-    mut click_effects: EventWriter<SpawnClickEffect>,
     selected_type: Res<SelectedMushroomType>,
     mut grid: ResMut<Grid>,
     grid_config: Res<GridConfig>,
@@ -160,155 +154,166 @@ fn handle_grid_clicks(
     mut game_state: ResMut<GameState>,
     unlocked: Res<UnlockedMushrooms>,
 ) -> Result {
-    for event in grid_events.read() {
-        if !event.position.in_bounds(&grid_config) {
-            continue;
-        }
+    info!("System triggered: handle_grid_clicks");
 
-        // Spawn click effect for visual feedback
-        click_effects.write(SpawnClickEffect {
-            position: event.position,
-        });
+    if !trigger.position.in_bounds(&grid_config) {
+        return Ok(());
+    }
 
-        // Handle right-click for deletion
-        if event.button == PointerButton::Secondary {
-            if let Some(entity) = find_mushroom_at(event.position, &grid) {
-                let mushroom = mushrooms.get(entity)?;
+    // Spawn click effect for visual feedback
+    info!("Triggering event: SpawnClickEffect");
+    commands.trigger(SpawnClickEffect {
+        position: trigger.position,
+    });
 
-                // Refund half the cost
-                let refund = mushroom.0.cost() * 0.5;
-                game_state.add_spores(refund);
-
-                info!("Deleted {} - refunded {} spores", mushroom.0.name(), refund);
-
-                // Update grid
-                grid.0.remove(&event.position);
-
-                // Despawn the mushroom entity
-                commands.entity(entity).despawn();
-            }
-            continue;
-        }
-
-        // Handle left-click
-        if event.button != PointerButton::Primary {
-            continue;
-        }
-
-        // If cell has a mushroom, try to trigger it
-        if let Some(entity) = find_mushroom_at(event.position, &grid) {
+    // Handle right-click for deletion
+    if trigger.button == PointerButton::Secondary {
+        if let Some(entity) = find_mushroom_at(trigger.position, &grid) {
             let mushroom = mushrooms.get(entity)?;
 
-            // Check if shift is held for rotation
-            if keyboard.pressed(KeyCode::ShiftLeft) || keyboard.pressed(KeyCode::ShiftRight) {
-                // Rotate directional mushroom
-                if matches!(mushroom.0, MushroomType::Pulse) {
-                    if let Ok(mut direction) = directions.get_mut(entity) {
-                        *direction = direction.rotate_clockwise();
-                        info!("Rotated mushroom to {:?}", *direction);
-                    }
-                }
-                continue; // Don't trigger when rotating
-            }
+            // Refund half the cost
+            let refund = mushroom.0.cost() * 0.5;
+            game_state.add_spores(refund);
 
-            // Check cooldown for triggering
-            if cooldowns.get(entity).is_ok() {
-                info!("Mushroom on cooldown");
-                continue;
+            info!("Deleted {} - refunded {} spores", mushroom.0.name(), refund);
+
+            // Update grid
+            grid.0.remove(&trigger.position);
+
+            // Despawn the mushroom entity
+            commands.entity(entity).despawn();
+        }
+        return Ok(());
+    }
+
+    // Handle left-click
+    if trigger.button != PointerButton::Primary {
+        return Ok(());
+    }
+
+    // If cell has a mushroom, try to trigger it
+    if let Some(entity) = find_mushroom_at(trigger.position, &grid) {
+        let mushroom = mushrooms.get(entity)?;
+
+        // Check if shift is held for rotation
+        if keyboard.pressed(KeyCode::ShiftLeft) || keyboard.pressed(KeyCode::ShiftRight) {
+            // Rotate directional mushroom
+            if matches!(mushroom.0, MushroomType::Pulse) {
+                if let Ok(mut direction) = directions.get_mut(entity) {
+                    *direction = direction.rotate_clockwise();
+                    info!("Rotated mushroom to {:?}", *direction);
+                }
             }
-            
-            activation_events.write(ActivateMushroomEvent {
-                position: event.position,
-                source: ActivationSource::PlayerClick,
-                energy: 1.0,
-            });
-            continue;
+            return Ok(()); // Don't trigger when rotating
         }
 
-        // Try to place a new mushroom
-        place_mushroom(
-            &mut spawn_events,
-            &mut game_state,
-            &selected_type,
-            &unlocked,
-            event.position,
-        );
+        // Check cooldown for triggering
+        if cooldowns.get(entity).is_ok() {
+            info!("Mushroom on cooldown");
+            return Ok(());
+        }
+
+        info!("Triggering event: ActivateMushroomEvent");
+        commands.trigger(ActivateMushroomEvent {
+            position: trigger.position,
+            source: ActivationSource::PlayerClick,
+            energy: 1.0,
+        });
+        return Ok(());
     }
+
+    // Try to place a new mushroom
+    place_mushroom(
+        commands,
+        &mut game_state,
+        &selected_type,
+        &unlocked,
+        trigger.position,
+    )?;
 
     Ok(())
 }
 
 // If possible, write an event to spawn a mushroom
+#[tracing::instrument(name = "Place mushroom", skip_all)]
 fn place_mushroom(
-    spawn_events: &mut EventWriter<SpawnMushroomEvent>,
+    mut commands: Commands,
     game_state: &mut ResMut<GameState>,
     selected_type: &Res<SelectedMushroomType>,
     unlocked: &Res<UnlockedMushrooms>,
     position: GridPosition,
-) {
+) -> Result {
+    info!("System triggered: place_mushroom");
+
     // Check if unlocked
     if !selected_type.mushroom_type.is_unlocked(unlocked) {
-        return;
+        info!("Mushroom type not unlocked!");
+        return Ok(());
     }
 
     // Check cost
     let cost = selected_type.mushroom_type.cost();
     if !game_state.spend_spores(cost) {
-        info!("Not enough spores to place mushroom");
-        return;
+        info!("Not enough spores to place mushroom!");
+        return Ok(());
     }
 
-    spawn_events.write(SpawnMushroomEvent {
+    info!("Triggering event: SpawnMushroomEvent");
+    commands.trigger(SpawnMushroomEvent {
         position,
         mushroom_type: selected_type.mushroom_type,
     });
+
+    Ok(())
 }
 
 /// Actually spawn mushroom entities
-fn spawn_mushrooms(
+#[tracing::instrument(name = "Spawn placed mushroom", skip_all)]
+fn spawn_mushroom(
+    trigger: Trigger<SpawnMushroomEvent>,
     mut commands: Commands,
-    mut spawn_events: EventReader<SpawnMushroomEvent>,
     grid_config: Res<GridConfig>,
     mut grid: ResMut<Grid>,
 ) {
-    for event in spawn_events.read() {
-        let base_scale = 1.0;
+    info!("System triggered: spawn_mushrooms");
 
-        // Insert core components
-        let mushroom = commands
-            .spawn((
-                Name::new(format!(
-                    "{} at ({}, {})",
-                    event.mushroom_type.name(),
-                    event.position.x,
-                    event.position.y
-                )),
-                Mushroom(event.mushroom_type),
-                event.position,
-                Sprite {
-                    color: event.mushroom_type.color(),
-                    custom_size: Some(Vec2::splat(60.0)),
-                    ..default()
-                },
-                Transform::from_translation(event.position.to_world(&grid_config))
-                    .with_scale(Vec3::splat(base_scale)),
-            ))
-            .id();
+    let base_scale = 1.0;
 
-        // Add the mushroom to the grid
-        grid.0.insert(event.position, mushroom);
+    // Insert core components
+    let mushroom = commands
+        .spawn((
+            Name::new(format!(
+                "{} at ({}, {})",
+                trigger.mushroom_type.name(),
+                trigger.position.x,
+                trigger.position.y
+            )),
+            Mushroom(trigger.mushroom_type),
+            trigger.position,
+            Sprite {
+                color: trigger.mushroom_type.color(),
+                custom_size: Some(Vec2::splat(60.0)),
+                ..default()
+            },
+            Transform::from_translation(trigger.position.to_world(&grid_config))
+                .with_scale(Vec3::splat(base_scale)),
+        ))
+        .id();
 
-        // Add type-specific components
-        match event.mushroom_type {
-            MushroomType::Pulse => {
-                commands.entity(mushroom).insert(MushroomDirection::Up);
-            }
-            _ => {}
+    // Add the mushroom to the grid
+    grid.0.insert(trigger.position, mushroom);
+
+    // Add type-specific components
+    match trigger.mushroom_type {
+        MushroomType::Pulse => {
+            commands.entity(mushroom).insert(MushroomDirection::Up);
         }
+        _ => {}
     }
 }
 
 /// Update mushroom cooldowns
+#[tracing::instrument(name = "Update mushroom cooldowns", skip_all)]
 fn update_mushroom_cooldowns(
     game_time: Res<GameTime>,
     mut commands: Commands,

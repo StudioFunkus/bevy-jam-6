@@ -20,6 +20,7 @@ pub struct ScheduledEvent<T: Event> {
 }
 
 /// Process scheduled events
+#[tracing::instrument(name = "Process scheduled events", skip_all)]
 pub fn process_scheduled_events<T: Event + Clone>(
     game_time: Res<GameTime>,
     mut event_queue: ResMut<EventQueue<T>>,
