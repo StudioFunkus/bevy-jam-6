@@ -5,7 +5,7 @@ tmp_path="/mnt/c/temp/$dir"
 
 mkdir -p $tmp_path
 
-rsync -rq . $tmp_path --exclude-from=.gitignore
+rsync -rq . $tmp_path --exclude-from=.gitignore --delete
 
 cd $tmp_path
 
