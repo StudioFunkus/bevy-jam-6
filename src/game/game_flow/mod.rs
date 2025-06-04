@@ -4,6 +4,7 @@ use bevy::prelude::*;
 
 use crate::{
     game::{
+        carddeck::events::DrawEvent,
         event_queue::EventQueue,
         grid::{Grid, GridConfig},
         level::definitions::{LevelDefinitions, load_level_config},
@@ -166,7 +167,11 @@ fn enter_first_level(
 }
 
 /// Draw phase - player draws mushrooms from bag
-fn enter_draw_phase(mut turn_data: ResMut<TurnData>, current_level: Res<CurrentLevel>) {
+fn enter_draw_phase(
+    mut commands: Commands,
+    mut turn_data: ResMut<TurnData>,
+    current_level: Res<CurrentLevel>,
+) {
     info!("=== DRAW PHASE ===");
     info!(
         "Turn {}/{}",
@@ -182,6 +187,7 @@ fn enter_draw_phase(mut turn_data: ResMut<TurnData>, current_level: Res<CurrentL
     turn_data.mushrooms_drawn_this_turn = draw_amount;
 
     info!("Drawing {} mushrooms from bag", draw_amount);
+    commands.trigger(DrawEvent(draw_amount));
 }
 
 /// Planting phase - player places mushrooms on grid

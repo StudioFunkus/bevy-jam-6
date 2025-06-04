@@ -9,6 +9,12 @@ use std::collections::VecDeque;
 
 use crate::game::carddeck::card::Card;
 
+pub(super) fn plugin(app: &mut App) {
+    app.register_type::<Deck>();
+
+    app.init_resource::<Deck>();
+}
+
 #[derive(Resource, Default, Debug, Reflect)]
 pub struct Deck {
     cards: VecDeque<Card>,
@@ -51,6 +57,20 @@ impl Deck {
         );
 
         card
+    }
+
+    #[allow(dead_code)]
+    #[tracing::instrument(name = "from deck", skip_all)]
+    pub fn draw_n(&mut self, n: u32) -> VecDeque<Card> {
+        let mut drawn_cards = VecDeque::new();
+
+        for _ in 0..n {
+            if let Some(card) = self.cards.pop_front() {
+                drawn_cards.push_back(card);
+            }
+        }
+
+        drawn_cards
     }
 
     /// Add a card to the bottom of the deck

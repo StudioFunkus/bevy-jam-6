@@ -1,12 +1,12 @@
 use bevy::prelude::*;
 use card::{Card, CardTemplates};
 use deck::Deck;
-use hand::{Hand, draw_one};
+use hand::draw_n;
 use rand::Rng;
 
 use crate::screens::Screen;
 
-use super::mushrooms::MushroomType;
+use crate::game::mushrooms::MushroomType;
 
 mod card;
 mod deck;
@@ -14,16 +14,14 @@ pub(crate) mod events;
 mod hand;
 
 pub(super) fn plugin(app: &mut App) {
-    app.init_resource::<Deck>();
-    app.init_resource::<Hand>();
-    app.init_resource::<CardTemplates>();
+    app.add_plugins((hand::plugin, card::plugin, deck::plugin));
 
     app.add_systems(
         OnEnter(Screen::Gameplay),
         (create_card_definitions, create_test_deck).chain(),
     );
 
-    app.add_observer(draw_one);
+    app.add_observer(draw_n);
 }
 
 #[tracing::instrument(name = "Create card definitions", skip_all)]
@@ -32,10 +30,12 @@ fn create_card_definitions(mut card_templates: ResMut<CardTemplates>) -> Result 
         Card {
             name: "Button".to_string(),
             mushroom_type: MushroomType::Basic,
+            ..default()
         },
         Card {
             name: "Pulcini".to_string(),
             mushroom_type: MushroomType::Pulse,
+            ..default()
         },
     ]);
 

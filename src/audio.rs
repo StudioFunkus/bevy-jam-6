@@ -42,6 +42,7 @@ fn apply_global_volume(
     mut audio_query: Query<(&PlaybackSettings, &mut AudioSink)>,
 ) {
     for (playback, mut sink) in &mut audio_query {
-        sink.set_volume(global_volume.volume * playback.volume);
+        // sink.set_volume(global_volume.volume * playback.volume);
+        sink.set_volume(bevy::audio::Volume::Linear(0.0));
     }
 }

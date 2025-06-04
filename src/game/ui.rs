@@ -4,7 +4,6 @@ use bevy::{color::palettes::tailwind, ecs::spawn::SpawnWith, picking::prelude::*
 
 use crate::{
     game::{
-        carddeck::events::DrawEvent,
         game_flow::{CurrentLevel, LevelState, TurnData, TurnPhase},
         resources::{GameState, UnlockedMushrooms},
     },
@@ -182,12 +181,24 @@ fn spawn_game_ui(mut commands: Commands) {
         Node {
             position_type: PositionType::Absolute,
             bottom: Val::Px(10.0),
+            right: Val::Percent(10.0),
+            ..default()
+        },
+        BackgroundColor(Color::from(tailwind::GRAY_400)),
+        StateScoped(Screen::Gameplay),
+    ));
+
+    // Bottom panel for hand
+    commands.spawn((
+        Name::new("Game UI - Hand"),
+        Node {
+            position_type: PositionType::Absolute,
+            bottom: Val::Px(10.0),
             justify_self: JustifySelf::Center,
             ..default()
         },
         BackgroundColor(Color::from(tailwind::GRAY_400)),
         StateScoped(Screen::Gameplay),
-        children![draw_card_button()],
     ));
 }
 
@@ -426,45 +437,4 @@ fn update_mushroom_buttons(
             }
         }
     }
-}
-
-fn draw_card_button() -> impl Bundle {
-    (
-        Name::new("Draw"),
-        Node::default(),
-        Children::spawn(SpawnWith(move |parent: &mut ChildSpawner| {
-            parent
-                .spawn((
-                    Name::new("Button Inner"),
-                    Button,
-                    Node {
-                        width: Val::Percent(100.0),
-                        padding: UiRect::all(Val::Px(10.0)),
-                        flex_direction: FlexDirection::Column,
-                        align_items: AlignItems::Start,
-                        row_gap: Val::Px(5.0),
-                        ..default()
-                    },
-                    BackgroundColor(Color::srgba(0.3, 0.3, 0.3, 0.8)),
-                    BorderRadius::all(Val::Px(5.0)),
-                    DrawButton,
-                    InteractionPalette {
-                        none: Color::srgba(0.3, 0.3, 0.3, 0.8),
-                        hovered: Color::srgba(0.4, 0.4, 0.4, 0.9),
-                        pressed: Color::srgba(0.5, 0.5, 0.5, 1.0),
-                    },
-                    children![(
-                        Name::new("Draw Label"),
-                        Text::new("Draw!"),
-                        TextFont::from_font_size(20.0),
-                        TextColor(Color::WHITE),
-                        Pickable::IGNORE,
-                    ),],
-                ))
-                .observe(move |_: Trigger<Pointer<Click>>, mut commands: Commands| {
-                    info!("Triggering event - DrawEvent");
-                    commands.trigger(DrawEvent);
-                });
-        })),
-    )
 }

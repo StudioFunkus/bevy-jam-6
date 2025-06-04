@@ -6,4 +6,4 @@ use bevy::prelude::*;
 
 /// Event to fire when a card should be drawn from the deck and into the hand
 #[derive(Event, Debug)]
-pub struct DrawEvent;
+pub struct DrawEvent(pub u32);
