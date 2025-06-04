@@ -1,6 +1,7 @@
 //! Level spawning systems
 
-use bevy::prelude::*;
+use super::super::grid::on_grid_cell_click;
+use bevy::{pbr::NotShadowReceiver, prelude::*};
 
 use crate::{
     audio::music,
@@ -28,6 +29,8 @@ pub fn spawn_level(
     grid_config: Res<GridConfig>,
     current_level: Res<CurrentLevel>,
     level_definitions: Res<LevelDefinitions>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     // Get level definition
     let level_def = level_definitions
@@ -42,7 +45,7 @@ pub fn spawn_level(
     info!("Spawning level: {}", level_name);
 
     // Spawn the game grid with current configuration
-    spawn_game_grid(&mut commands, &grid_config);
+    spawn_game_grid(&mut commands, &grid_config, &mut meshes, &mut materials);
 
     // Spawn starting mushrooms if any are defined
     if let Some(level_def) = level_def {
@@ -87,7 +90,23 @@ pub struct GameGrid;
 
 /// Spawn the game grid
 #[tracing::instrument(name = "Spawn game grid", skip_all)]
-pub fn spawn_game_grid(commands: &mut Commands, config: &GridConfig) {
+pub fn spawn_game_grid(
+    commands: &mut Commands,
+    config: &GridConfig,
+    meshes: &mut ResMut<Assets<Mesh>>,
+    materials: &mut ResMut<Assets<StandardMaterial>>,
+) {
+    commands.spawn((
+        Name::new("Ground Plane"),
+        Mesh3d(meshes.add(Plane3d::default().mesh().size(50.0, 50.0).subdivisions(10))),
+        MeshMaterial3d(materials.add(StandardMaterial {
+            base_color: Color::srgb(0.2, 0.3, 0.2),
+            ..default()
+        })),
+        Transform::from_xyz(0.0, -0.5, 0.0),
+        NotShadowReceiver,
+        StateScoped(LevelState::Playing),
+    ));
     let grid_entity = commands
         .spawn((
             Name::new("Game Grid"),
@@ -103,39 +122,41 @@ pub fn spawn_game_grid(commands: &mut Commands, config: &GridConfig) {
     for y in 0..config.height {
         for x in 0..config.width {
             let position = GridPosition::new(x, y);
+            let world_pos = position.to_world(config);
             let cell = commands
                 .spawn((
                     Name::new(format!("Grid Cell ({x}, {y})")),
                     GridCell { position },
-                    Sprite {
-                        color: Color::srgba(0.2, 0.2, 0.2, 0.5),
-                        custom_size: Some(Vec2::splat(config.cell_size)),
+                    Mesh3d(meshes.add(Rectangle::new(config.cell_size, config.cell_size))),
+                    MeshMaterial3d(materials.add(StandardMaterial {
+                        base_color: Color::srgba(0.2, 0.2, 0.2, 0.5),
+                        alpha_mode: AlphaMode::Opaque,
+                        unlit: false,
                         ..default()
-                    },
-                    Transform::from_translation(
-                        position.to_world(config) - Vec3::new(0.0, 0.0, 1.0),
-                    ),
-                    Pickable::default(),
+                    })),
+                    Transform::from_xyz(world_pos.x, 0.0, -world_pos.y)
+                        .with_rotation(Quat::from_rotation_x(-std::f32::consts::FRAC_PI_2)),
                 ))
+                .observe(on_grid_cell_click)
                 .id();
             cell_entities.push(cell);
         }
     }
 
     // Spawn grid background
-    let grid_width =
-        config.width as f32 * (config.cell_size + config.cell_spacing) - config.cell_spacing;
-    let grid_height =
-        config.height as f32 * (config.cell_size + config.cell_spacing) - config.cell_spacing;
+    let grid_width = config.width as f32 * (config.cell_size + config.cell_spacing);
+    let grid_height = config.height as f32 * (config.cell_size + config.cell_spacing);
     let background = commands
         .spawn((
             Name::new("Grid Background"),
-            Sprite {
-                color: Color::srgb(0.1, 0.1, 0.1),
-                custom_size: Some(Vec2::new(grid_width + 20.0, grid_height + 20.0)),
+            Mesh3d(meshes.add(Rectangle::new(grid_width + 0.2, grid_height + 0.2))),
+            MeshMaterial3d(materials.add(StandardMaterial {
+                base_color: Color::srgb(0.1, 0.1, 0.1),
+                unlit: false,
                 ..default()
-            },
-            Transform::from_translation(Vec3::new(0.0, 0.0, -2.0)),
+            })),
+            Transform::from_xyz(0.0, -0.01, 0.0)
+                .with_rotation(Quat::from_rotation_x(-std::f32::consts::FRAC_PI_2)),
         ))
         .id();
 

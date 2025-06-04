@@ -1,4 +1,5 @@
-use bevy::prelude::*;
+use bevy::{pbr::NotShadowReceiver, prelude::*};
+use bevy_sprite3d::{Sprite3d, Sprite3dBuilder, Sprite3dParams};
 use events::SpawnMushroomEvent;
 use resources::SelectedMushroomType;
 
@@ -7,9 +8,10 @@ use crate::{
     game::{
         fixed_timestep::GameTime,
         game_flow::{LevelState, TurnData, TurnPhase},
+        level::assets::LevelAssets,
         mushrooms::events::ActivateMushroomEvent,
         resources::{GameState, UnlockedMushrooms},
-        visual_effects::SpawnClickEffect,
+        visual_effects::FaceCamera,
     },
 };
 
@@ -103,7 +105,7 @@ impl MushroomType {
 
 /// Marker component for mushrooms
 #[derive(Component)]
-pub struct Mushroom(MushroomType);
+pub struct Mushroom(pub MushroomType);
 
 /// Facing direction for mushrooms
 #[derive(Component, Clone, Copy, Debug, PartialEq, Eq)]
@@ -140,22 +142,22 @@ pub struct MushroomCooldown {
     pub timer: Timer,
 }
 
-/// Handle grid clicks (respond to GridClickEvent)
+/// Routes grid click events to appropriate handlers based on game phase.
 #[tracing::instrument(name = "Handle grid clicks", skip_all)]
 fn handle_grid_clicks(
     trigger: Trigger<GridClickEvent>,
-    mut commands: Commands,
+    commands: Commands,
     selected_type: Res<SelectedMushroomType>,
-    mut grid: ResMut<Grid>,
+    grid: ResMut<Grid>,
     grid_config: Res<GridConfig>,
     keyboard: Res<ButtonInput<KeyCode>>,
     mushrooms: Query<&Mushroom>,
     cooldowns: Query<&MushroomCooldown>,
-    mut directions: Query<&mut MushroomDirection>,
-    mut game_state: ResMut<GameState>,
+    directions: Query<&mut MushroomDirection>,
+    game_state: ResMut<GameState>,
     unlocked: Res<UnlockedMushrooms>,
     current_phase: Option<Res<State<TurnPhase>>>,
-    mut turn_data: ResMut<TurnData>,
+    turn_data: ResMut<TurnData>,
 ) -> Result {
     info!("System triggered: handle_grid_clicks");
 
@@ -169,100 +171,162 @@ fn handle_grid_clicks(
         return Ok(());
     };
 
-    // Spawn click effect for visual feedback
-    info!("Triggering event: SpawnClickEffect");
-    commands.trigger(SpawnClickEffect {
-        position: trigger.position,
-    });
+    // TODO: Add click effect for visual feedback
 
-    // Handle right-click for deletion (only during planting phase)
-    if trigger.button == PointerButton::Secondary {
-        if *phase_state.get() != TurnPhase::Planting {
-            info!("Can only delete mushrooms during planting phase");
-            return Ok(());
-        }
-
-        if let Some(entity) = find_mushroom_at(trigger.position, &grid) {
-            let mushroom = mushrooms.get(entity)?;
-
-            // Refund half the cost
-            let refund = mushroom.0.cost() * 0.5;
-            game_state.add_spores(refund);
-
-            info!("Deleted {} - refunded {} spores", mushroom.0.name(), refund);
-
-            // Update grid
-            grid.0.remove(&trigger.position);
-
-            // Despawn the mushroom entity
-            commands.entity(entity).despawn();
-        }
-        return Ok(());
-    }
-
-    // Handle left-click
-    if trigger.button != PointerButton::Primary {
-        return Ok(());
-    }
-
-    // Different behavior based on current phase
+    // Route to appropriate handler based on phase
     match phase_state.get() {
-        TurnPhase::Planting => {
-            // If cell has a mushroom, handle rotation
-            if let Some(entity) = find_mushroom_at(trigger.position, &grid) {
-                let mushroom = mushrooms.get(entity)?;
-
-                // Check if shift is held for rotation
-                if keyboard.pressed(KeyCode::ShiftLeft) || keyboard.pressed(KeyCode::ShiftRight) {
-                    // Rotate directional mushroom
-                    if matches!(mushroom.0, MushroomType::Pulse) {
-                        if let Ok(mut direction) = directions.get_mut(entity) {
-                            *direction = direction.rotate_clockwise();
-                            info!("Rotated mushroom to {:?}", *direction);
-                        }
-                    }
-                }
-                return Ok(()); // Don't place over existing mushroom
-            }
-
-            // Try to place a new mushroom
-            place_mushroom(
-                commands,
-                &mut game_state,
-                &selected_type,
-                &unlocked,
-                trigger.position,
-            )?;
-        }
-
+        TurnPhase::Planting => handle_planting_phase_click(
+            trigger.event(),
+            commands,
+            selected_type,
+            grid,
+            keyboard,
+            mushrooms,
+            directions,
+            game_state,
+            unlocked,
+        ),
         TurnPhase::Chain => {
-            // If cell has a mushroom, try to activate it
-            if let Some(entity) = find_mushroom_at(trigger.position, &grid) {
-                // Check cooldown for activation
-                if cooldowns.get(entity).is_ok() {
-                    info!("Mushroom on cooldown");
-                    return Ok(());
-                }
-
-                info!("Triggering event: ActivateMushroomEvent");
-                commands.trigger(ActivateMushroomEvent {
-                    position: trigger.position,
-                    source: ActivationSource::PlayerClick,
-                    energy: 1.0,
-                });
-
-                // Track activation
-                turn_data.activations_this_chain += 1;
-            } else {
-                info!("No mushroom at this position to activate");
-            }
+            handle_chain_phase_click(trigger.event(), commands, grid, cooldowns, turn_data)
         }
-
         _ => {
             info!(
                 "Cannot interact with mushrooms during {:?} phase",
                 phase_state.get()
             );
+            Ok(())
+        }
+    }
+}
+
+/// Handles clicks during the planting phase (placing, rotating, deleting mushrooms).
+#[tracing::instrument(name = "Handle planting phase click", skip_all)]
+fn handle_planting_phase_click(
+    event: &GridClickEvent,
+    mut commands: Commands,
+    selected_type: Res<SelectedMushroomType>,
+    mut grid: ResMut<Grid>,
+    keyboard: Res<ButtonInput<KeyCode>>,
+    mushrooms: Query<&Mushroom>,
+    mut directions: Query<&mut MushroomDirection>,
+    mut game_state: ResMut<GameState>,
+    unlocked: Res<UnlockedMushrooms>,
+) -> Result {
+    // Handle right-click for deletion
+    if event.button == PointerButton::Secondary {
+        return delete_mushroom_at(
+            event.position,
+            &mut commands,
+            &mut grid,
+            &mushrooms,
+            &mut game_state,
+        );
+    }
+
+    // Only handle left-clicks from here
+    if event.button != PointerButton::Primary {
+        return Ok(());
+    }
+
+    // Check if there's already a mushroom at this position
+    if let Some(entity) = find_mushroom_at(event.position, &grid) {
+        // Handle rotation if shift is held
+        if keyboard.pressed(KeyCode::ShiftLeft) || keyboard.pressed(KeyCode::ShiftRight) {
+            return rotate_mushroom(entity, &mushrooms, &mut directions);
+        }
+        // Don't place over existing mushroom
+        return Ok(());
+    }
+
+    // Try to place a new mushroom
+    place_mushroom(
+        commands,
+        &mut game_state,
+        &selected_type,
+        &unlocked,
+        event.position,
+    )
+}
+
+/// Handles clicks during the chain phase (activating mushrooms).
+#[tracing::instrument(name = "Handle chain phase click", skip_all)]
+fn handle_chain_phase_click(
+    event: &GridClickEvent,
+    mut commands: Commands,
+    grid: ResMut<Grid>,
+    cooldowns: Query<&MushroomCooldown>,
+    mut turn_data: ResMut<TurnData>,
+) -> Result {
+    // Only handle left-clicks
+    if event.button != PointerButton::Primary {
+        return Ok(());
+    }
+
+    // Try to activate mushroom at clicked position
+    if let Some(entity) = find_mushroom_at(event.position, &grid) {
+        // Check cooldown
+        if cooldowns.get(entity).is_ok() {
+            info!("Mushroom on cooldown");
+            return Ok(());
+        }
+
+        info!("Triggering event: ActivateMushroomEvent");
+        commands.trigger(ActivateMushroomEvent {
+            position: event.position,
+            source: ActivationSource::PlayerClick,
+            energy: 1.0,
+        });
+
+        // Track activation
+        turn_data.activations_this_chain += 1;
+    } else {
+        info!("No mushroom at this position to activate");
+    }
+
+    Ok(())
+}
+
+/// Deletes a mushroom at the given position and refunds half its cost.
+#[tracing::instrument(name = "Delete mushroom", skip_all)]
+fn delete_mushroom_at(
+    position: GridPosition,
+    commands: &mut Commands,
+    grid: &mut ResMut<Grid>,
+    mushrooms: &Query<&Mushroom>,
+    game_state: &mut ResMut<GameState>,
+) -> Result {
+    if let Some(entity) = find_mushroom_at(position, grid) {
+        let mushroom = mushrooms.get(entity)?;
+
+        // Refund half the cost
+        let refund = mushroom.0.cost() * 0.5;
+        game_state.add_spores(refund);
+
+        info!("Deleted {} - refunded {} spores", mushroom.0.name(), refund);
+
+        // Update grid
+        grid.0.remove(&position);
+
+        // Despawn the mushroom entity
+        commands.entity(entity).despawn();
+    }
+    Ok(())
+}
+
+/// Rotates a directional mushroom clockwise.
+#[tracing::instrument(name = "Rotate mushroom", skip_all)]
+fn rotate_mushroom(
+    entity: Entity,
+    mushrooms: &Query<&Mushroom>,
+    directions: &mut Query<&mut MushroomDirection>,
+) -> Result {
+    let mushroom = mushrooms.get(entity)?;
+
+    // Only pulse mushrooms can be rotated
+    if matches!(mushroom.0, MushroomType::Pulse) {
+        if let Ok(mut direction) = directions.get_mut(entity) {
+            *direction = direction.rotate_clockwise();
+            info!("Rotated mushroom to {:?}", *direction);
         }
     }
 
@@ -309,10 +373,38 @@ fn spawn_mushroom(
     mut commands: Commands,
     grid_config: Res<GridConfig>,
     mut grid: ResMut<Grid>,
+    mut sprite_params: Sprite3dParams,
+    level_assets: Res<LevelAssets>,
 ) {
     info!("System triggered: spawn_mushrooms");
 
     let base_scale = 1.0;
+    let world_pos = trigger.position.to_world(&grid_config);
+
+    // Create texture atlas layout for mushroom sprites
+    // Each sprite is 16x16 with 2px padding (18x18 total per cell)
+    let layout = TextureAtlasLayout::from_grid(
+        UVec2::new(16, 16),     // sprite size
+        2,                      // columns (2 directions per mushroom)
+        2,                      // rows (we have 2 mushroom types)
+        Some(UVec2::new(2, 2)), // padding
+        None,                   // offset
+    );
+    let layout_handle = sprite_params.atlas_layouts.add(layout);
+
+    // Determine which row to use based on mushroom type
+    let row = match trigger.mushroom_type {
+        MushroomType::Basic => 0,
+        MushroomType::Pulse => 1,
+    };
+
+    // Start with index 0 (facing camera)
+    let atlas_index = row * 2; // 2 columns per row
+
+    let atlas = TextureAtlas {
+        layout: layout_handle.clone(),
+        index: atlas_index,
+    };
 
     // Insert core components
     let mushroom = commands
@@ -325,13 +417,17 @@ fn spawn_mushroom(
             )),
             Mushroom(trigger.mushroom_type),
             trigger.position,
-            Sprite {
-                color: trigger.mushroom_type.color(),
-                custom_size: Some(Vec2::splat(60.0)),
+            Sprite3dBuilder {
+                image: level_assets.mushroom_texture.clone(),
+                pixels_per_metre: 16.0,
+                double_sided: true,
+                alpha_mode: AlphaMode::Blend,
                 ..default()
-            },
-            Transform::from_translation(trigger.position.to_world(&grid_config))
-                .with_scale(Vec3::splat(base_scale)),
+            }
+            .bundle_with_atlas(&mut sprite_params, atlas),
+            Transform::from_xyz(world_pos.x, 0.5, -world_pos.y).with_scale(Vec3::splat(base_scale)),
+            FaceCamera,
+            NotShadowReceiver,
             StateScoped(LevelState::Playing),
         ))
         .id();
@@ -354,19 +450,13 @@ fn spawn_mushroom(
 fn update_mushroom_cooldowns(
     game_time: Res<GameTime>,
     mut commands: Commands,
-    mut cooldowns: Query<(Entity, &mut MushroomCooldown, &mut Sprite), With<Mushroom>>,
+    mut cooldowns: Query<(Entity, &mut MushroomCooldown, &mut Sprite3d), With<Mushroom>>,
 ) {
-    for (entity, mut cooldown, mut sprite) in &mut cooldowns {
+    for (entity, mut cooldown, mut _sprite3d) in &mut cooldowns {
         game_time.tick_timer(&mut cooldown.timer);
-
-        // Visual feedback for cooldown
-        let cooldown_progress = cooldown.timer.fraction_remaining();
-        let base_color = sprite.color;
-        sprite.color = base_color.with_alpha(0.5 + 0.5 * (1.0 - cooldown_progress));
 
         // Remove finished cooldowns
         if cooldown.timer.finished() {
-            sprite.color = base_color.with_alpha(1.0);
             commands.entity(entity).remove::<MushroomCooldown>();
         }
     }

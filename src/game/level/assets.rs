@@ -14,13 +14,22 @@ pub(super) fn plugin(app: &mut App) {
 pub struct LevelAssets {
     #[dependency]
     pub music: Handle<AudioSource>,
+    #[dependency]
+    pub mushroom_texture: Handle<Image>,
 }
 
 impl FromWorld for LevelAssets {
     fn from_world(world: &mut World) -> Self {
-        let assets = world.resource::<AssetServer>();
+        let music_handle = world
+            .resource::<AssetServer>()
+            .load("audio/music/Fluffing A Duck.ogg");
+        let mushroom_texture_handle = world
+            .resource::<AssetServer>()
+            .load("textures/mushrooms.png");
+
         Self {
-            music: assets.load("audio/music/Fluffing A Duck.ogg"),
+            music: music_handle,
+            mushroom_texture: mushroom_texture_handle,
         }
     }
 }

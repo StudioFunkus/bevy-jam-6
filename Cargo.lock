@@ -455,6 +455,8 @@ version = "0.1.0"
 dependencies = [
  "bevy",
  "bevy-inspector-egui",
+ "bevy_panorbit_camera",
+ "bevy_sprite3d",
  "log",
  "rand",
  "tracing",
@@ -1074,6 +1076,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "bevy_panorbit_camera"
+version = "0.26.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ca6e15e297754d0bcb7665620c390c4f05665d4ac4ac91b4b5d3c66b9fe1f0e6"
+dependencies = [
+ "bevy",
+ "bevy_egui",
+]
+
+[[package]]
 name = "bevy_pbr"
 version = "0.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1309,6 +1321,15 @@ dependencies = [
  "nonmax",
  "radsort",
  "tracing",
+]
+
+[[package]]
+name = "bevy_sprite3d"
+version = "5.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "aab6a643739da6d576c28d7e20f78aa4dc00406eefcf92f1a5e1f30fad367079"
+dependencies = [
+ "bevy",
 ]
 
 [[package]]

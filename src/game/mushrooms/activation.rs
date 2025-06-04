@@ -11,7 +11,6 @@ use crate::{
             events::ActivateMushroomEvent,
         },
         resources::GameState,
-        visual_effects::{SpawnActionEffect, SpawnDirectionalPulse},
     },
 };
 
@@ -70,12 +69,6 @@ fn process_mushroom_activations(
             continue;
         }
 
-        // Spawn visual effect for action
-        commands.trigger(SpawnActionEffect {
-            position: event.position,
-            color: mushroom.0.color(),
-        });
-
         // Set cooldown
         commands.entity(entity).insert(MushroomCooldown {
             timer: Timer::from_seconds(mushroom.0.cooldown_time(), TimerMode::Once),
@@ -107,16 +100,9 @@ fn process_mushroom_activations(
             &directions,
         );
 
-        // Add delayed actions and spawn directional pulses
+        // Add delayed actions
         for (i, (pos, energy)) in triggers.into_iter().enumerate() {
             let delay = 0.1 + (i as f32 * 0.05); // Stagger actions
-
-            // Spawn directional pulse effect
-            commands.trigger(SpawnDirectionalPulse {
-                from_position: event.position,
-                to_position: pos,
-                color: mushroom.0.color(),
-            });
 
             action_queue.scheduled.push(ScheduledEvent {
                 event: ActivateMushroomEvent {

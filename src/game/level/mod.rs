@@ -2,7 +2,7 @@
 
 use bevy::prelude::*;
 
-mod assets;
+pub(crate) mod assets;
 pub(crate) mod definitions;
 pub(crate) mod spawning;
 

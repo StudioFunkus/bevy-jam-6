@@ -12,7 +12,11 @@ mod menus;
 mod screens;
 mod theme;
 
-use bevy::{asset::AssetMetaCheck, prelude::*};
+use bevy::{
+    asset::AssetMetaCheck, pbr::light_consts, picking::mesh_picking::MeshPickingPlugin, prelude::*,
+};
+use bevy_panorbit_camera::PanOrbitCameraPlugin;
+use bevy_sprite3d::Sprite3dPlugin;
 
 fn main() -> AppExit {
     App::new().add_plugins(AppPlugin).run()
@@ -23,7 +27,7 @@ pub struct AppPlugin;
 impl Plugin for AppPlugin {
     fn build(&self, app: &mut App) {
         // Add Bevy plugins.
-        app.add_plugins(
+        app.add_plugins((
             DefaultPlugins
                 .set(AssetPlugin {
                     // Wasm builds will check for meta files (that don't exist) if this isn't set.
@@ -40,8 +44,12 @@ impl Plugin for AppPlugin {
                     }
                     .into(),
                     ..default()
-                }),
-        );
+                })
+                .set(ImagePlugin::default_nearest()),
+            Sprite3dPlugin,
+            PanOrbitCameraPlugin,
+            MeshPickingPlugin,
+        ));
 
         // Add other plugins.
         app.add_plugins((
@@ -71,8 +79,8 @@ impl Plugin for AppPlugin {
         app.configure_sets(Update, PausableSystems.run_if(in_state(Pause(false))));
         app.configure_sets(FixedUpdate, PausableSystems.run_if(in_state(Pause(false))));
 
-        // Spawn the main camera.
-        app.add_systems(Startup, spawn_camera);
+        // Spawn the main camera and lighting.
+        app.add_systems(Startup, (spawn_camera, setup_lighting));
     }
 }
 
@@ -98,6 +106,54 @@ struct Pause(pub bool);
 #[derive(SystemSet, Copy, Clone, Eq, PartialEq, Hash, Debug)]
 struct PausableSystems;
 
+use bevy_panorbit_camera::PanOrbitCamera;
+
 fn spawn_camera(mut commands: Commands) {
-    commands.spawn((Name::new("Camera"), Camera2d));
+    commands.spawn((
+        Name::new("Camera"),
+        Camera3d::default(),
+        Camera::default(),
+        PanOrbitCamera::default(),
+        Transform::from_xyz(0.0, 7.0, 14.0).looking_at(Vec3::new(0.0, 1.0, 0.0), Vec3::Y),
+    ));
+}
+
+fn setup_lighting(mut commands: Commands) {
+    commands.insert_resource(AmbientLight {
+        color: Color::srgb(0.9, 0.85, 0.7),
+        brightness: 200.0,
+        affects_lightmapped_meshes: false,
+    });
+
+    commands.spawn((
+        Name::new("Sun Light"),
+        DirectionalLight {
+            illuminance: light_consts::lux::OVERCAST_DAY,
+            color: Color::srgb(1.0, 0.98, 0.82),
+            shadows_enabled: true,
+            ..default()
+        },
+        Transform::from_rotation(Quat::from_euler(
+            EulerRot::XYZ,
+            -std::f32::consts::PI / 3.0,
+            std::f32::consts::PI / 4.0,
+            0.0,
+        )),
+    ));
+
+    commands.spawn((
+        Name::new("Fill Light"),
+        DirectionalLight {
+            illuminance: 200.0,
+            color: Color::srgb(0.7, 0.8, 1.0),
+            shadows_enabled: false,
+            ..default()
+        },
+        Transform::from_rotation(Quat::from_euler(
+            EulerRot::XYZ,
+            -std::f32::consts::PI / 6.0,
+            -std::f32::consts::PI * 3.0 / 4.0,
+            0.0,
+        )),
+    ));
 }
