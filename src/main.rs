@@ -13,10 +13,7 @@ mod screens;
 mod theme;
 
 use bevy::{
-    asset::AssetMetaCheck,
-    pbr::light_consts,
-    picking::mesh_picking::MeshPickingPlugin,
-    prelude::*,
+    asset::AssetMetaCheck, pbr::light_consts, picking::mesh_picking::MeshPickingPlugin, prelude::*,
 };
 use bevy_panorbit_camera::PanOrbitCameraPlugin;
 use bevy_sprite3d::Sprite3dPlugin;
