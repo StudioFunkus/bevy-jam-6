@@ -1,310 +1,95 @@
 //! Visual effects and feedback for game interactions
 
-use crate::{
-    PausableSystems,
-    game::{
-        grid::{GridConfig, GridPosition},
-        mushrooms::{Mushroom, MushroomDirection, MushroomType},
-    },
-    screens::Screen,
-};
+use crate::game::mushrooms::{Mushroom, MushroomType};
 use bevy::prelude::*;
+use bevy_sprite3d::Sprite3d;
 
 pub(super) fn plugin(app: &mut App) {
-    app.add_event::<SpawnActionEffect>();
-    app.add_event::<SpawnDirectionalPulse>();
-    app.add_event::<SpawnClickEffect>();
-
-    app.add_systems(
-        Update,
-        (
-            update_directional_indicators,
-            animate_effects,
-            cleanup_expired_effects,
-        )
-            .chain()
-            .in_set(PausableSystems),
-    );
-
-    app.add_observer(spawn_action_effects)
-        .add_observer(spawn_directional_pulses)
-        .add_observer(spawn_click_effects);
+    app.add_systems(Update, (face_camera, update_mushroom_sprite_direction));
 }
 
-/// Event to spawn an action effect at a position
-#[derive(Event)]
-pub struct SpawnActionEffect {
-    pub position: GridPosition,
-    pub color: Color,
-}
-
-/// Event to spawn a directional pulse effect
-#[derive(Event)]
-pub struct SpawnDirectionalPulse {
-    pub from_position: GridPosition,
-    pub to_position: GridPosition,
-    pub color: Color,
-}
-
-/// Event to spawn a click effect
-#[derive(Event)]
-pub struct SpawnClickEffect {
-    pub position: GridPosition,
-}
-
-/// Component for visual effects with a lifetime
+/// Component for entities that should face the camera
 #[derive(Component)]
-struct VisualEffect {
-    lifetime: Timer,
-}
+pub struct FaceCamera;
 
-/// Component for animated effects
-#[derive(Component)]
-#[allow(dead_code)]
-struct AnimatedEffect {
-    start_scale: Vec3,
-    end_scale: Vec3,
-    start_alpha: f32,
-    end_alpha: f32,
-}
-
-/// Component for directional indicator
-#[derive(Component)]
-struct DirectionalIndicator;
-
-/// Spawn trigger effects when mushrooms are activated
-fn spawn_action_effects(
-    trigger: Trigger<SpawnActionEffect>,
-    mut commands: Commands,
-    grid_config: Res<GridConfig>,
+/// Make entities face the camera (billboard rotation)
+fn face_camera(
+    cam_transform: Query<&Transform, With<Camera>>,
+    mut query: Query<&mut Transform, (With<FaceCamera>, Without<Camera>)>,
 ) {
-    info!("System triggered: spawn_action_effects");
+    let Ok(camera_transform) = cam_transform.single() else {
+        return;
+    };
 
-    // Spawn expanding ring effect
-    commands.spawn((
-        Name::new("Trigger Effect"),
-        Sprite {
-            color: trigger.color.with_alpha(0.8),
-            custom_size: Some(Vec2::splat(40.0)),
-            ..default()
-        },
-        Transform::from_translation(
-            trigger.position.to_world(&grid_config) + Vec3::new(0.0, 0.0, 1.0),
-        )
-        .with_scale(Vec3::splat(0.5)),
-        VisualEffect {
-            lifetime: Timer::from_seconds(0.5, TimerMode::Once),
-        },
-        AnimatedEffect {
-            start_scale: Vec3::splat(0.5),
-            end_scale: Vec3::splat(1.5),
-            start_alpha: 0.8,
-            end_alpha: 0.2,
-        },
-        StateScoped(Screen::Gameplay), // Add this!
-    ));
-
-    // Spawn inner pulse
-    commands.spawn((
-        Name::new("Trigger Pulse"),
-        Sprite {
-            color: Color::WHITE.with_alpha(0.5),
-            custom_size: Some(Vec2::splat(30.0)),
-            ..default()
-        },
-        Transform::from_translation(
-            trigger.position.to_world(&grid_config) + Vec3::new(0.0, 0.0, 1.1),
-        )
-        .with_scale(Vec3::splat(0.3)),
-        VisualEffect {
-            lifetime: Timer::from_seconds(0.3, TimerMode::Once),
-        },
-        AnimatedEffect {
-            start_scale: Vec3::splat(0.3),
-            end_scale: Vec3::splat(1.0),
-            start_alpha: 1.0,
-            end_alpha: 1.0,
-        },
-        StateScoped(Screen::Gameplay),
-    ));
-}
-
-/// Spawn directional pulse effects
-#[tracing::instrument(name = "Spawn directional pulses", skip_all)]
-fn spawn_directional_pulses(
-    trigger: Trigger<SpawnDirectionalPulse>,
-    mut commands: Commands,
-    grid_config: Res<GridConfig>,
-) {
-    info!("System triggered: spawn_directional_pulses");
-
-    let from_world = trigger.from_position.to_world(&grid_config);
-    let to_world = trigger.to_position.to_world(&grid_config);
-    let direction = (to_world - from_world).normalize();
-
-    // Spawn traveling pulse
-    for i in 0..3 {
-        let delay = i as f32 * 0.1;
-        let start_pos = from_world + direction * 40.0;
-
-        commands.spawn((
-            Name::new("Directional Pulse"),
-            Sprite {
-                color: trigger.color.with_alpha(0.6),
-                custom_size: Some(Vec2::new(20.0, 10.0)),
-                ..default()
-            },
-            Transform::from_translation(start_pos + Vec3::new(0.0, 0.0, 1.2))
-                .with_rotation(Quat::from_rotation_z(direction.y.atan2(direction.x))),
-            VisualEffect {
-                lifetime: Timer::from_seconds(0.5 + delay, TimerMode::Once),
-            },
-            TravelingPulse {
-                start_pos,
-                end_pos: to_world,
-                progress: -delay * 2.0,
-            },
-            StateScoped(Screen::Gameplay),
-        ));
+    for mut transform in query.iter_mut() {
+        let mut target = camera_transform.translation;
+        target.y = transform.translation.y;
+        transform.look_at(target, Vec3::Y);
     }
 }
 
-/// Component for traveling pulse effects
-#[derive(Component)]
-struct TravelingPulse {
-    start_pos: Vec3,
-    end_pos: Vec3,
-    progress: f32,
-}
-
-/// Spawn click effects
-#[tracing::instrument(name = "Spawn click effects", skip_all)]
-fn spawn_click_effects(
-    trigger: Trigger<SpawnClickEffect>,
-    mut commands: Commands,
-    grid_config: Res<GridConfig>,
-) {
-    info!("System triggered: spawn_click_effects");
-
-    // Spawn click ripple
-    commands.spawn((
-        Name::new("Click Effect"),
-        Sprite {
-            color: Color::srgba(1.0, 1.0, 1.0, 0.3),
-            custom_size: Some(Vec2::splat(20.0)),
-            ..default()
-        },
-        Transform::from_translation(
-            trigger.position.to_world(&grid_config) + Vec3::new(0.0, 0.0, 1.3),
-        ),
-        VisualEffect {
-            lifetime: Timer::from_seconds(0.2, TimerMode::Once),
-        },
-        AnimatedEffect {
-            start_scale: Vec3::splat(0.2),
-            end_scale: Vec3::splat(0.8),
-            start_alpha: 0.3,
-            end_alpha: 0.3,
-        },
-    ));
-}
-
-/// Update directional indicators for mushrooms
-#[tracing::instrument(name = "Update directional indicators", skip_all)]
-fn update_directional_indicators(
-    mut commands: Commands,
-    mushrooms: Query<
-        (Entity, &MushroomDirection, &MushroomType),
-        (With<Mushroom>, Changed<MushroomDirection>),
+/// Update mushroom sprite direction based on camera angle
+fn update_mushroom_sprite_direction(
+    cam_transform: Query<&Transform, With<Camera>>,
+    mut mushrooms: Query<
+        (&mut Transform, &mut Sprite3d, &Mushroom),
+        (With<FaceCamera>, Without<Camera>),
     >,
-    existing_indicators: Query<(Entity, &ChildOf), With<DirectionalIndicator>>,
 ) {
-    for (mushroom_entity, direction, mushroom_type) in &mushrooms {
-        // Remove existing indicator if any
-        for (indicator_entity, child_of) in &existing_indicators {
-            if child_of.parent() == mushroom_entity {
-                commands.entity(indicator_entity).despawn();
-            }
+    let Ok(camera_transform) = cam_transform.single() else {
+        return;
+    };
+
+    for (mut transform, mut sprite, mushroom) in mushrooms.iter_mut() {
+        // Get camera position and adjust Y to match mushroom's height
+        // This ensures we're only considering horizontal direction, not vertical
+        let mut target = camera_transform.translation;
+        target.y = transform.translation.y;
+
+        // Calculate the direction vector from mushroom to camera
+        // Example: If mushroom at (0,0,0) and camera at (3,0,4):
+        // direction = (3,0,4) - (0,0,0) = (3,0,4)
+        // After normalize: (0.6, 0, 0.8) - a unit vector pointing toward camera
+        let direction = (target - transform.translation).normalize();
+
+        // Determine which sprite to show based on viewing angle
+        // We compare the absolute Z and X components to determine if we're
+        // viewing more from front/back (Z axis) or from the sides (X axis)
+        //
+        // Top-down view of the mushroom and camera positions:
+        //
+        //                    Back
+        //                (z < 0, flip)
+        //                     |
+        //                     |
+        //    Left -------- Mushroom -------- Right
+        //  (x < 0, flip)      M           (x > 0, no flip)
+        //                     |
+        //                     |
+        //                   Front
+        //               (z > 0, no flip)
+        //
+        let (sprite_index, should_flip) = if direction.z.abs() > direction.x.abs() {
+            // Camera is more in front or behind the mushroom
+            // Show front/back sprite (index 0), flip when behind (negative Z)
+            (0, direction.z < 0.0)
+        } else {
+            // Camera is more to the side of the mushroom
+            // Show side sprite (index 1), flip when on left (negative X)
+            (1, direction.x < 0.0)
+        };
+
+        // Calculate texture atlas index based on mushroom type
+        // The texture is organized in rows (mushroom types) and columns (view angles)
+        let row = match mushroom.0 {
+            MushroomType::Basic => 0,
+            MushroomType::Pulse => 1,
+        };
+        if let Some(ref mut atlas) = sprite.texture_atlas {
+            atlas.index = row * 2 + sprite_index;
         }
 
-        // Only show indicators for directional mushrooms
-        if matches!(mushroom_type, MushroomType::Pulse) {
-            let arrow_offset = match direction {
-                MushroomDirection::Up => Vec3::new(0.0, 20.0, 0.0),
-                MushroomDirection::Right => Vec3::new(20.0, 0.0, 0.0),
-                MushroomDirection::Down => Vec3::new(0.0, -20.0, 0.0),
-                MushroomDirection::Left => Vec3::new(-20.0, 0.0, 0.0),
-            };
-
-            let rotation = match direction {
-                MushroomDirection::Up => 0.0,
-                MushroomDirection::Right => -std::f32::consts::FRAC_PI_2,
-                MushroomDirection::Down => std::f32::consts::PI,
-                MushroomDirection::Left => std::f32::consts::FRAC_PI_2,
-            };
-
-            // Spawn arrow indicator as child of mushroom
-            let indicator = commands
-                .spawn((
-                    Name::new("Direction Indicator"),
-                    DirectionalIndicator,
-                    Sprite {
-                        color: Color::srgba(1.0, 1.0, 1.0, 0.7),
-                        custom_size: Some(Vec2::new(10.0, 15.0)),
-                        ..default()
-                    },
-                    Transform::from_translation(arrow_offset)
-                        .with_rotation(Quat::from_rotation_z(rotation)),
-                ))
-                .id();
-
-            commands.entity(mushroom_entity).add_child(indicator);
-        }
-    }
-}
-
-/// Animate visual effects
-#[tracing::instrument(name = "Animate effects", skip_all)]
-fn animate_effects(
-    time: Res<Time>,
-    mut effects: Query<(&mut Transform, &mut Sprite, &VisualEffect, &AnimatedEffect)>,
-    mut pulses: Query<(&mut Transform, &TravelingPulse, &VisualEffect), Without<AnimatedEffect>>,
-) {
-    // Animate scaling/fading effects
-    for (mut transform, mut _sprite, effect, animated) in &mut effects {
-        let progress = effect.lifetime.fraction();
-
-        // Interpolate scale
-        let scale = animated.start_scale.lerp(animated.end_scale, progress);
-        transform.scale = scale;
-
-        // Interpolate alpha
-        // let alpha = animated.start_alpha + (animated.end_alpha - animated.start_alpha) * progress;
-        // sprite.color.set_alpha(alpha);
-    }
-
-    // Animate traveling pulses
-    for (mut transform, pulse, _effect) in &mut pulses {
-        let mut progress = pulse.progress + time.delta_secs() * 3.0; // Speed of travel
-        progress = progress.clamp(0.0, 1.0);
-
-        let pos = pulse.start_pos.lerp(pulse.end_pos, progress);
-        transform.translation = pos + Vec3::new(0.0, 0.0, 1.2);
-    }
-}
-
-/// Update effect lifetimes and remove expired ones
-#[tracing::instrument(name = "Cleanup expired effects", skip_all)]
-fn cleanup_expired_effects(
-    mut commands: Commands,
-    time: Res<Time>,
-    mut effects: Query<(Entity, &mut VisualEffect)>,
-) {
-    for (entity, mut effect) in &mut effects {
-        effect.lifetime.tick(time.delta());
-
-        if effect.lifetime.finished() {
-            commands.entity(entity).despawn();
-        }
+        // Apply horizontal flip by negating the X scale
+        transform.scale.x = transform.scale.x.abs() * if should_flip { -1.0 } else { 1.0 };
     }
 }

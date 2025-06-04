@@ -1,15 +1,9 @@
 use bevy::{platform::collections::HashMap, prelude::*};
-use bevy_inspector_egui::bevy_egui::input::egui_wants_any_pointer_input;
 
 pub(super) fn plugin(app: &mut App) {
     app.init_resource::<GridConfig>();
     app.init_resource::<Grid>();
     app.add_event::<GridClickEvent>();
-
-    app.add_systems(
-        Update,
-        handle_grid_clicks.run_if(not(egui_wants_any_pointer_input)),
-    );
 }
 
 // Type alias for the spatial data structure
@@ -30,8 +24,8 @@ impl Default for GridConfig {
         Self {
             width: 6,
             height: 6,
-            cell_size: 64.0,
-            cell_spacing: 4.0,
+            cell_size: 1.0, // 1 world unit per cell
+            cell_spacing: 0.0,
         }
     }
 }
@@ -89,8 +83,8 @@ impl GridPosition {
     /// Convert grid position to world coordinates
     pub fn to_world(self, config: &GridConfig) -> Vec3 {
         let total_cell_size = config.cell_size + config.cell_spacing;
-        let grid_width = config.width as f32 * total_cell_size - config.cell_spacing;
-        let grid_height = config.height as f32 * total_cell_size - config.cell_spacing;
+        let grid_width = config.width as f32 * total_cell_size;
+        let grid_height = config.height as f32 * total_cell_size;
         let offset_x = -grid_width / 2.0 + config.cell_size / 2.0;
         let offset_y = -grid_height / 2.0 + config.cell_size / 2.0;
 
@@ -120,21 +114,22 @@ pub struct GridClickEvent {
     pub button: bevy::picking::pointer::PointerButton,
 }
 
-#[tracing::instrument(name = "Handle grid clicks", skip_all)]
-fn handle_grid_clicks(
-    mut click_events: EventReader<Pointer<Click>>,
+/// Converts low-level pointer clicks on grid cells into high-level GridClickEvents.
+///
+/// This observer bridges Bevy's picking system with the grid system, allowing
+/// game-specific logic to respond to grid interactions without coupling to UI details.
+pub fn on_grid_cell_click(
+    trigger: Trigger<Pointer<Click>>,
     mut commands: Commands,
     grid_cells: Query<&GridCell>,
 ) {
-    for event in click_events.read() {
-        if let Ok(cell) = grid_cells.get(event.target) {
-            info!("Grid cell clicked at position: {:?}", cell.position);
-            info!("Triggering observers of GridClickEvent");
-            commands.trigger(GridClickEvent {
-                position: cell.position,
-                button: event.button,
-            });
-        }
+    if let Ok(cell) = grid_cells.get(trigger.target()) {
+        info!("Grid cell clicked at position: {:?}", cell.position);
+        info!("Triggering observers of GridClickEvent");
+        commands.trigger(GridClickEvent {
+            position: cell.position,
+            button: trigger.event().button,
+        });
     }
 }
 
