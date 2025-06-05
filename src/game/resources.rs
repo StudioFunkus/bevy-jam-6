@@ -1,6 +1,7 @@
 //! Core game resources and state
 
-use bevy::prelude::*;
+use bevy::{platform::collections::HashMap, prelude::*};
+use crate::game::play_field::{GridPosition, PlayField};
 
 pub(super) fn plugin(app: &mut App) {
     app.init_resource::<GameState>();
@@ -20,6 +21,9 @@ pub struct GameState {
     pub total_activations: u64,
     /// Number of chain activations (mushroom activated by another mushroom)
     pub chain_activations: u64,
+    /// The play field containing the spatial index and bounds
+    #[reflect(ignore)]
+    pub play_field: PlayField,
 }
 
 impl Default for GameState {
@@ -29,6 +33,7 @@ impl Default for GameState {
             total_spores_earned: 25.0,
             total_activations: 0,
             chain_activations: 0,
+            play_field: PlayField::new(6, 6),
         }
     }
 }

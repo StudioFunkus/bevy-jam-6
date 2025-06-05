@@ -15,7 +15,8 @@ use crate::{
     },
 };
 
-use super::grid::{Grid, GridClickEvent, GridConfig, GridPosition, find_mushroom_at};
+use super::play_field::{GridClickEvent, GridPosition};
+use super::play_field::observers::find_entity_at;
 
 mod activation;
 pub(crate) mod events;
@@ -148,8 +149,6 @@ fn handle_grid_clicks(
     trigger: Trigger<GridClickEvent>,
     commands: Commands,
     selected_type: Res<SelectedMushroomType>,
-    grid: ResMut<Grid>,
-    grid_config: Res<GridConfig>,
     keyboard: Res<ButtonInput<KeyCode>>,
     mushrooms: Query<&Mushroom>,
     cooldowns: Query<&MushroomCooldown>,
@@ -161,7 +160,7 @@ fn handle_grid_clicks(
 ) -> Result {
     info!("System triggered: handle_grid_clicks");
 
-    if !trigger.position.in_bounds(&grid_config) {
+    if !game_state.play_field.contains(trigger.position) {
         return Ok(());
     }
 
@@ -179,7 +178,6 @@ fn handle_grid_clicks(
             trigger.event(),
             commands,
             selected_type,
-            grid,
             keyboard,
             mushrooms,
             directions,
@@ -187,7 +185,7 @@ fn handle_grid_clicks(
             unlocked,
         ),
         TurnPhase::Chain => {
-            handle_chain_phase_click(trigger.event(), commands, grid, cooldowns, turn_data)
+            handle_chain_phase_click(trigger.event(), commands, cooldowns, turn_data, game_state.into())
         }
         _ => {
             info!(
@@ -205,7 +203,6 @@ fn handle_planting_phase_click(
     event: &GridClickEvent,
     mut commands: Commands,
     selected_type: Res<SelectedMushroomType>,
-    mut grid: ResMut<Grid>,
     keyboard: Res<ButtonInput<KeyCode>>,
     mushrooms: Query<&Mushroom>,
     mut directions: Query<&mut MushroomDirection>,
@@ -217,7 +214,6 @@ fn handle_planting_phase_click(
         return delete_mushroom_at(
             event.position,
             &mut commands,
-            &mut grid,
             &mushrooms,
             &mut game_state,
         );
@@ -229,7 +225,7 @@ fn handle_planting_phase_click(
     }
 
     // Check if there's already a mushroom at this position
-    if let Some(entity) = find_mushroom_at(event.position, &grid) {
+    if let Some(entity) = find_entity_at(event.position, &game_state) {
         // Handle rotation if shift is held
         if keyboard.pressed(KeyCode::ShiftLeft) || keyboard.pressed(KeyCode::ShiftRight) {
             return rotate_mushroom(entity, &mushrooms, &mut directions);
@@ -253,9 +249,9 @@ fn handle_planting_phase_click(
 fn handle_chain_phase_click(
     event: &GridClickEvent,
     mut commands: Commands,
-    grid: ResMut<Grid>,
     cooldowns: Query<&MushroomCooldown>,
     mut turn_data: ResMut<TurnData>,
+    game_state: Res<GameState>,
 ) -> Result {
     // Only handle left-clicks
     if event.button != PointerButton::Primary {
@@ -263,7 +259,7 @@ fn handle_chain_phase_click(
     }
 
     // Try to activate mushroom at clicked position
-    if let Some(entity) = find_mushroom_at(event.position, &grid) {
+    if let Some(entity) = find_entity_at(event.position, &game_state) {
         // Check cooldown
         if cooldowns.get(entity).is_ok() {
             info!("Mushroom on cooldown");
@@ -291,11 +287,10 @@ fn handle_chain_phase_click(
 fn delete_mushroom_at(
     position: GridPosition,
     commands: &mut Commands,
-    grid: &mut ResMut<Grid>,
     mushrooms: &Query<&Mushroom>,
     game_state: &mut ResMut<GameState>,
 ) -> Result {
-    if let Some(entity) = find_mushroom_at(position, grid) {
+    if let Some(entity) = find_entity_at(position, game_state) {
         let mushroom = mushrooms.get(entity)?;
 
         // Refund half the cost
@@ -303,9 +298,6 @@ fn delete_mushroom_at(
         game_state.add_spores(refund);
 
         info!("Deleted {} - refunded {} spores", mushroom.0.name(), refund);
-
-        // Update grid
-        grid.0.remove(&position);
 
         // Despawn the mushroom entity
         commands.entity(entity).despawn();
@@ -371,15 +363,14 @@ fn place_mushroom(
 fn spawn_mushroom(
     trigger: Trigger<SpawnMushroomEvent>,
     mut commands: Commands,
-    grid_config: Res<GridConfig>,
-    mut grid: ResMut<Grid>,
+    game_state: Res<GameState>,
     mut sprite_params: Sprite3dParams,
     level_assets: Res<LevelAssets>,
 ) {
     info!("System triggered: spawn_mushrooms");
 
     let base_scale = 1.0;
-    let world_pos = trigger.position.to_world(&grid_config);
+    let world_pos = trigger.position.to_world_in(&game_state.play_field);
 
     // Create texture atlas layout for mushroom sprites
     // Each sprite is 16x16 with 2px padding (18x18 total per cell)
@@ -431,9 +422,6 @@ fn spawn_mushroom(
             StateScoped(LevelState::Playing),
         ))
         .id();
-
-    // Add the mushroom to the grid
-    grid.0.insert(trigger.position, mushroom);
 
     // Add type-specific components
     #[allow(clippy::single_match)]

@@ -5,7 +5,6 @@ use bevy::prelude::*;
 use crate::{
     game::{
         event_queue::EventQueue,
-        grid::{Grid, GridConfig},
         level::definitions::{LevelDefinitions, load_level_config},
         mushrooms::events::ActivateMushroomEvent,
         resources::GameState,
@@ -98,12 +97,11 @@ pub enum LevelCompleteAction {
 fn load_level(
     level_index: usize,
     level_definitions: &LevelDefinitions,
-    grid_config: &mut GridConfig,
     current_level: &mut CurrentLevel,
     turn_data: &mut TurnData,
     game_state: &mut GameState,
 ) -> Result<String, String> {
-    if let Some(level_def) = load_level_config(level_index, level_definitions, grid_config) {
+    if let Some(level_def) = load_level_config(level_index, level_definitions, game_state) {
         let level_name = level_def.name.clone();
 
         *current_level = CurrentLevel {
@@ -143,7 +141,6 @@ fn enter_first_level(
     mut current_level: ResMut<CurrentLevel>,
     mut turn_data: ResMut<TurnData>,
     level_definitions: Res<LevelDefinitions>,
-    mut grid_config: ResMut<GridConfig>,
     mut game_state: ResMut<GameState>,
 ) {
     info!("Starting first level");
@@ -151,7 +148,6 @@ fn enter_first_level(
     match load_level(
         0,
         &level_definitions,
-        &mut grid_config,
         &mut current_level,
         &mut turn_data,
         &mut game_state,
@@ -248,14 +244,9 @@ fn handle_level_complete_action(
     mut current_level: ResMut<CurrentLevel>,
     mut turn_data: ResMut<TurnData>,
     level_definitions: Res<LevelDefinitions>,
-    mut grid_config: ResMut<GridConfig>,
     mut game_state: ResMut<GameState>,
-    mut grid: ResMut<Grid>,
     mut next_screen: ResMut<NextState<Screen>>,
 ) {
-    // Clear the grid resource
-    grid.0.clear();
-
     match trigger.event() {
         LevelCompleteAction::RetryLevel => {
             info!("Retrying level {}", current_level.level_index + 1);
@@ -263,7 +254,6 @@ fn handle_level_complete_action(
             if load_level(
                 current_level.level_index,
                 &level_definitions,
-                &mut grid_config,
                 &mut current_level,
                 &mut turn_data,
                 &mut game_state,
@@ -283,7 +273,6 @@ fn handle_level_complete_action(
             match load_level(
                 next_index,
                 &level_definitions,
-                &mut grid_config,
                 &mut current_level,
                 &mut turn_data,
                 &mut game_state,
@@ -314,7 +303,6 @@ fn cleanup_gameplay_state(
     mut turn_data: ResMut<TurnData>,
     mut current_level: ResMut<CurrentLevel>,
     mut game_state: ResMut<GameState>,
-    mut grid: ResMut<Grid>,
     mut event_queue: ResMut<EventQueue<ActivateMushroomEvent>>,
 ) {
     info!("Cleaning up gameplay state");
@@ -330,9 +318,6 @@ fn cleanup_gameplay_state(
     game_state.spores = 25.0; // Reset to starting spores
     game_state.total_activations = 0;
     game_state.chain_activations = 0;
-
-    // Clear the grid resource
-    grid.0.clear();
 
     // Clear any pending mushroom activations
     event_queue.immediate.clear();

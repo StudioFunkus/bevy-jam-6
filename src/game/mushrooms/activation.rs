@@ -5,7 +5,8 @@ use crate::{
     game::{
         event_queue::{EventQueue, ScheduledEvent, process_scheduled_events},
         game_flow::{CurrentLevel, TurnData},
-        grid::{Grid, GridConfig, GridPosition, find_mushroom_at},
+        play_field::GridPosition,
+        play_field::observers::find_entity_at,
         mushrooms::{
             ActivationSource, Mushroom, MushroomCooldown, MushroomDirection, MushroomType,
             events::ActivateMushroomEvent,
@@ -49,8 +50,6 @@ fn process_mushroom_activations(
     mut commands: Commands,
     mut action_queue: ResMut<EventQueue<ActivateMushroomEvent>>,
     mut game_state: ResMut<GameState>,
-    grid: Res<Grid>,
-    grid_config: Res<GridConfig>,
     mushrooms: Query<&Mushroom>,
     cooldowns: Query<&MushroomCooldown>,
     directions: Query<&MushroomDirection>,
@@ -59,7 +58,7 @@ fn process_mushroom_activations(
 ) -> Result {
     // Process immediate actions
     while let Some(event) = action_queue.immediate.pop_front() {
-        let Some(entity) = find_mushroom_at(event.position, &grid) else {
+        let Some(entity) = find_entity_at(event.position, &game_state) else {
             continue;
         };
         let mushroom = mushrooms.get(entity)?;
@@ -96,7 +95,7 @@ fn process_mushroom_activations(
             event.position,
             &event,
             entity,
-            &grid_config,
+            &game_state,
             &directions,
         );
 
@@ -124,7 +123,7 @@ fn process_mushroom_activation(
     pos: GridPosition,
     event: &ActivateMushroomEvent,
     entity: Entity,
-    config: &GridConfig,
+    game_state: &GameState,
     directions: &Query<&MushroomDirection>,
 ) -> Vec<(GridPosition, f64)> {
     match mushroom_type {
@@ -141,7 +140,7 @@ fn process_mushroom_activation(
             let (dx, dy) = direction.to_offset();
             let target = GridPosition::new(pos.x + dx, pos.y + dy);
 
-            if target.in_bounds(config) {
+            if game_state.play_field.contains(target) {
                 vec![(target, event.energy * 0.9)]
             } else {
                 vec![]

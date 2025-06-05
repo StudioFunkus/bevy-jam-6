@@ -2,7 +2,7 @@
 
 use bevy::prelude::*;
 
-use crate::game::{grid::GridConfig, mushrooms::MushroomType};
+use crate::game::{mushrooms::MushroomType, resources::GameState};
 
 pub(super) fn plugin(app: &mut App) {
     app.init_resource::<LevelDefinitions>();
@@ -128,12 +128,11 @@ impl Default for LevelDefinitions {
 pub fn load_level_config(
     level_index: usize,
     definitions: &LevelDefinitions,
-    grid_config: &mut GridConfig,
+    game_state: &mut GameState,
 ) -> Option<LevelDefinition> {
     if let Some(level_def) = definitions.get_level(level_index) {
-        // Update grid configuration
-        grid_config.width = level_def.grid_width;
-        grid_config.height = level_def.grid_height;
+        // Resize the play field
+        game_state.play_field.resize(level_def.grid_width, level_def.grid_height);
 
         Some(level_def.clone())
     } else {

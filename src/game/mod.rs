@@ -5,7 +5,7 @@ use bevy::prelude::*;
 mod event_queue;
 pub(crate) mod fixed_timestep;
 pub(crate) mod game_flow;
-pub(crate) mod grid;
+pub(crate) mod play_field;
 pub(crate) mod level;
 mod mushrooms;
 mod resources;
@@ -16,7 +16,7 @@ pub(super) fn plugin(app: &mut App) {
     app.add_plugins((
         fixed_timestep::plugin,
         resources::plugin,
-        grid::plugin,
+        play_field::plugin,
         mushrooms::plugin,
         visual_effects::plugin,
         level::plugin,

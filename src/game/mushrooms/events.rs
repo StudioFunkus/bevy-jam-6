@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::game::{grid::GridPosition, mushrooms::ActivationSource};
+use crate::game::{play_field::GridPosition, mushrooms::ActivationSource};
 
 use super::MushroomType;
 
