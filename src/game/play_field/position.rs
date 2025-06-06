@@ -1,7 +1,7 @@
 //! Grid position component and utilities
 
+use super::{CELL_SIZE, CELL_SPACING, PlayField};
 use bevy::prelude::*;
-use super::{PlayField, CELL_SIZE, CELL_SPACING};
 
 pub(super) fn plugin(_app: &mut App) {}
 

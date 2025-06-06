@@ -2,12 +2,11 @@
 
 use bevy::prelude::*;
 
-mod event_queue;
 pub(crate) mod fixed_timestep;
 pub(crate) mod game_flow;
-pub(crate) mod play_field;
 pub(crate) mod level;
 mod mushrooms;
+pub(crate) mod play_field;
 mod resources;
 mod ui;
 mod visual_effects;

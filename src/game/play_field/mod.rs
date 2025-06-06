@@ -2,19 +2,29 @@
 
 use bevy::prelude::*;
 
-mod field;
-mod position;
 pub mod events;
+mod field;
+pub mod field_renderer;
+pub mod mycelium;
 pub mod observers;
+pub mod placement_preview;
+mod position;
+pub mod tile_atlas;
+pub mod tiles;
 
-pub use field::{PlayField, CELL_SIZE, CELL_SPACING};
+pub use events::GridClickEvent;
+pub use field::{CELL_SIZE, CELL_SPACING, PlayField};
 pub use position::GridPosition;
-pub use events::{GridClickEvent, GridCell};
+pub use tiles::{TileGrid, TileType};
 
 pub(super) fn plugin(app: &mut App) {
     app.add_plugins((
         position::plugin,
         events::plugin,
         observers::plugin,
+        tiles::plugin,
+        mycelium::plugin,
+        field_renderer::plugin,
+        placement_preview::plugin,
     ));
 }

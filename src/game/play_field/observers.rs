@@ -1,8 +1,8 @@
 //! Play field lifecycle observers
 
-use bevy::prelude::*;
-use crate::game::resources::GameState;
 use super::GridPosition;
+use crate::game::resources::GameState;
+use bevy::prelude::*;
 
 pub(super) fn plugin(app: &mut App) {
     app.add_observer(on_add_grid_position);
@@ -26,7 +26,7 @@ fn on_add_grid_position(
             );
             return;
         }
-        
+
         // Check if position is already occupied
         if let Some(existing) = game_state.play_field.get(*position) {
             warn!(
@@ -55,7 +55,10 @@ fn on_remove_grid_position(
                     entity, position, removed
                 );
             } else {
-                info!("Removed entity {:?} from play field at {:?}", entity, position);
+                info!(
+                    "Removed entity {:?} from play field at {:?}",
+                    entity, position
+                );
             }
         }
     }

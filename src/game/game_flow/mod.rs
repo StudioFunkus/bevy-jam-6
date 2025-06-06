@@ -4,9 +4,8 @@ use bevy::prelude::*;
 
 use crate::{
     game::{
-        event_queue::EventQueue,
         level::definitions::{LevelDefinitions, load_level_config},
-        mushrooms::events::ActivateMushroomEvent,
+        mushrooms::{ChainManager, chain_activation::reset_mushroom_states},
         resources::GameState,
     },
     screens::Screen,
@@ -34,7 +33,10 @@ pub(super) fn plugin(app: &mut App) {
     // State transition systems
     app.add_systems(OnEnter(TurnPhase::Draw), enter_draw_phase);
     app.add_systems(OnEnter(TurnPhase::Planting), enter_planting_phase);
-    app.add_systems(OnEnter(TurnPhase::Chain), enter_chain_phase);
+    app.add_systems(
+        OnEnter(TurnPhase::Chain),
+        (enter_chain_phase, reset_mushroom_states).chain(),
+    );
     app.add_systems(OnEnter(TurnPhase::Score), enter_score_phase);
     app.add_systems(OnEnter(LevelState::Success), spawn_level_success_ui);
     app.add_systems(OnEnter(LevelState::Failed), spawn_level_failed_ui);
@@ -206,14 +208,27 @@ fn spawn_level_failed_ui(commands: Commands) {
 
 /// Score phase - check win/loss conditions
 fn enter_score_phase(
-    turn_data: Res<TurnData>,
-    current_level: Res<CurrentLevel>,
+    chain_manager: Res<ChainManager>,
+    mut current_level: ResMut<CurrentLevel>,
     mut level_state: ResMut<NextState<LevelState>>,
+    mut _game_state: ResMut<GameState>,
+    turn_data: Res<TurnData>,
 ) {
     info!("=== SCORE PHASE ===");
+
+    // Calculate total spores from all chains this turn
+    let chain_score: f64 = chain_manager
+        .chains
+        .iter()
+        .map(|chain| chain.total_spores)
+        .sum();
+
+    current_level.total_spores_earned += chain_score;
+
     info!(
-        "Generated {} spores this chain",
-        turn_data.spores_this_chain
+        "Generated {} spores from {} chains this turn",
+        chain_score,
+        chain_manager.chains.len()
     );
     info!(
         "Total: {}/{} spores",
@@ -303,7 +318,7 @@ fn cleanup_gameplay_state(
     mut turn_data: ResMut<TurnData>,
     mut current_level: ResMut<CurrentLevel>,
     mut game_state: ResMut<GameState>,
-    mut event_queue: ResMut<EventQueue<ActivateMushroomEvent>>,
+    mut chain_manager: ResMut<ChainManager>,
 ) {
     info!("Cleaning up gameplay state");
 
@@ -319,9 +334,11 @@ fn cleanup_gameplay_state(
     game_state.total_activations = 0;
     game_state.chain_activations = 0;
 
-    // Clear any pending mushroom activations
-    event_queue.immediate.clear();
-    event_queue.scheduled.clear();
+    // Clear chain manager
+    chain_manager.chains.clear();
+    chain_manager.activation_queue.clear();
+    chain_manager.current_chain = None;
+    chain_manager.chain_started_this_turn = false;
 }
 
 /// Manual state advancement for testing
@@ -363,8 +380,8 @@ fn manual_phase_advance(
 /// Automatically advance phases based on completion conditions
 fn check_phase_completion(
     current_phase: Option<Res<State<TurnPhase>>>,
-    mut _next_phase: ResMut<NextState<TurnPhase>>,
-    // TODO: Add queries for checking completion conditions
+    mut next_phase: ResMut<NextState<TurnPhase>>,
+    chain_manager: Res<ChainManager>,
 ) {
     // Only check if we're actually in a game phase
     let Some(phase_state) = current_phase else {
@@ -380,8 +397,10 @@ fn check_phase_completion(
             // or when all mushrooms placed?
         }
         TurnPhase::Chain => {
-            // TODO: Auto-advance when chain reaction completes
-            // and no more activations possible?
+            if !chain_manager.has_active_chains() && chain_manager.chain_started_this_turn {
+                info!("All chains complete, advancing to score phase");
+                next_phase.set(TurnPhase::Score);
+            }
         }
         TurnPhase::Score => {
             // TODO: Auto-advance when score phase animation is complete
