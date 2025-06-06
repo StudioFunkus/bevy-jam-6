@@ -14,9 +14,12 @@ mod theme;
 
 use bevy::{
     asset::AssetMetaCheck, pbr::light_consts, picking::mesh_picking::MeshPickingPlugin, prelude::*,
+    render::view::RenderLayers,
 };
 use bevy_panorbit_camera::PanOrbitCameraPlugin;
 use bevy_sprite3d::Sprite3dPlugin;
+
+const CARD_LAYER: RenderLayers = RenderLayers::layer(2);
 
 fn main() -> AppExit {
     App::new().add_plugins(AppPlugin).run()
@@ -109,6 +112,17 @@ struct PausableSystems;
 use bevy_panorbit_camera::PanOrbitCamera;
 
 fn spawn_camera(mut commands: Commands) {
+    // Hand Camera
+    commands.spawn((
+        CARD_LAYER,
+        Camera2d,
+        Camera {
+            order: 1,
+            ..default()
+        },
+    ));
+
+    // Main Camera
     commands.spawn((
         Name::new("Camera"),
         Camera3d::default(),

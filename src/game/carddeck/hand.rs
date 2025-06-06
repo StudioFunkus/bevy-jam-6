@@ -7,42 +7,79 @@ use bevy::prelude::*;
 use std::collections::VecDeque;
 
 use crate::{
+    CARD_LAYER,
     game::carddeck::{
-        card::{Card, CardBundle, Draggable},
+        card::{Card, CardBundle},
         deck::Deck,
-        events::DrawEvent,
+        events::{CardAddedEvent, DrawEvent},
     },
     screens::Screen,
 };
 
+const CARD_SPACING: f32 = 75.0;
+
 pub(super) fn plugin(app: &mut App) {
     app.register_type::<Hand>();
 
-    app.add_systems(OnEnter(Screen::Gameplay), create_hand);
+    app.init_resource::<Hand>();
 
-    app.add_observer(on_card_add);
+    app.add_systems(OnEnter(Screen::Gameplay), spawn_hand_entity);
+
+    app.add_observer(update_card_origins);
+}
+
+fn spawn_hand_entity(mut commands: Commands, window: Query<&Window>) -> Result {
+    let window = window.single()?;
+
+    commands.spawn((
+        HandEntity,
+        Transform::from_xyz(0.0, -(0.9 * (window.height() / 2.0)), 0.0),
+        CARD_LAYER,
+    ));
+
+    Ok(())
 }
 
 /// The hand [`Resource`], which contains a [`VecDeque`] of the cards within it.
 ///
 /// You'll notice this is very similar to how the deck is defined. The two could possible
 /// be merged into a single defition at a later date.
-#[derive(Component, Default, Debug, Reflect)]
+#[derive(Resource, Debug, Reflect)]
 pub struct Hand {
-    cards: VecDeque<Entity>,
-    pub origin: Transform,
+    cards: VecDeque<(Card, Option<Entity>)>,
     pub max_cards: usize,
 }
 
+impl Hand {
+    /// Get count of cards in hand
+    #[allow(dead_code)]
+    pub fn get_card_count(&self) -> usize {
+        self.cards.len()
+    }
+}
+
+impl Default for Hand {
+    fn default() -> Self {
+        Self {
+            cards: VecDeque::new(),
+            max_cards: 9,
+        }
+    }
+}
+
+#[derive(Component)]
+pub struct HandEntity;
+
 /// Draw N cards from deck into hand
-#[tracing::instrument(name = "Draw N cards", skip_all)]
+#[tracing::instrument(skip_all)]
 pub fn draw_n(
     trigger: Trigger<DrawEvent>,
     mut commands: Commands,
-    mut hand: Query<&mut Hand>,
+    mut hand: ResMut<Hand>,
+    hand_entity: Query<Entity, With<HandEntity>>,
     mut deck: ResMut<Deck>,
 ) -> Result {
-    let mut hand = hand.single_mut()?;
+    let hand_entity = hand_entity.single()?;
 
     let mut cards_to_draw = trigger.0;
     info!(
@@ -52,88 +89,80 @@ pub fn draw_n(
         hand.max_cards
     );
 
-    // Try into to convert usize into u32
     if hand.cards.len() as u32 + cards_to_draw > hand.max_cards as u32 {
         cards_to_draw = (hand.max_cards - hand.cards.len()) as u32;
         info!("Cannot fit cards, will draw {}", cards_to_draw);
     }
 
-    let drawn_cards = deck.draw_n(cards_to_draw);
-
-    for card in drawn_cards {
-        let card_entity = commands
-            .spawn(CardBundle {
-                name: card.name.clone().into(),
-                card: card.clone(),
-                transform: Transform::from_xyz(0.0, 0.0, 0.0),
-                sprite: Sprite {
-                    color: card.mushroom_type.color(),
-                    custom_size: Some(Vec2::splat(60.0)),
-                    ..default()
-                },
-                draggable: Draggable,
-            })
-            .id();
-
-        hand.cards.push_back(card_entity);
+    if cards_to_draw > deck.get_card_count() as u32 {
+        cards_to_draw = deck.get_card_count() as u32;
+        info!("Not enough cards in deck, will draw {}", cards_to_draw);
     }
 
-    Ok(())
-}
+    for _ in 0..cards_to_draw {
+        let Some(drawn_card) = deck.draw() else {
+            break;
+        };
 
-#[tracing::instrument(name = "Create hand", skip_all)]
-fn create_hand(mut commands: Commands) -> Result {
-    commands.spawn((
-        Hand {
-            origin: Transform::from_xyz(0.0, -250.0, 10.0),
-            max_cards: 9,
-            ..default()
-        },
-        Name::new("Hand"),
-        Transform::from_xyz(0.0, -250.0, 10.0),
-    ));
+        let card_entity = spawn_card(commands.reborrow(), drawn_card.clone(), hand_entity);
 
-    Ok(())
-}
+        hand.cards
+            .push_back((drawn_card, Some(card_entity.clone())));
+    }
 
-#[tracing::instrument(name = "On card add", skip_all)]
-fn on_card_add(
-    trigger: Trigger<OnAdd, Card>,
-    mut commands: Commands,
-    hand: Query<Entity, With<Hand>>,
-    mut cards: Query<Entity, With<Card>>,
-) -> Result {
-    info!("Triggered");
-    let hand = hand.single()?;
-    let card = cards.get_mut(trigger.target())?;
-
-    commands.entity(hand).add_child(card);
-    info!("Made card a child of hand");
+    commands.trigger(CardAddedEvent);
 
     Ok(())
 }
 
 #[tracing::instrument(skip_all)]
-fn move_card_to_hand(hand: Query<&Hand, Changed<Hand>>, mut cards: Query<&mut Card>) -> Result {
-    let hand = hand.single()?;
-    let card_count = cards.iter().len();
-    let card_gap = 100.0;
-    let first_card_offset;
+fn spawn_card(mut commands: Commands, card: Card, hand_entity: Entity) -> Entity {
+    info!("Spawning card entity");
+    let card_color = card.mushroom_type.color().clone();
+    let card_entity = commands
+        .spawn(CardBundle {
+            name: card.name.clone().into(),
+            card: card,
+            transform: Transform::default().with_scale(Vec3::new(15.0, 20.0, 5.0)),
+            sprite: Sprite::from_color(card_color, Vec2::new(3.0, 5.0)),
+            ..default()
+        })
+        .id();
+    commands.entity(hand_entity).add_child(card_entity);
 
-    // The offset of the first card in the x-axis
-    if card_count % 2 == 1 {
-        first_card_offset = -(((card_count - 1) / 2) as f32 * card_gap);
+    card_entity
+}
+
+#[tracing::instrument(skip_all)]
+fn update_card_origins(
+    _: Trigger<CardAddedEvent>,
+    hand: Res<Hand>,
+    mut cards_query: Query<(&mut Card, &Transform)>,
+) -> Result {
+    let number_of_cards: f32 = hand.get_card_count() as f32;
+
+    let first_card_offset: f32;
+
+    if number_of_cards % 2.0 == 1.0 {
+        first_card_offset = ((number_of_cards - 1.0) / 2.0) * CARD_SPACING;
     } else {
-        first_card_offset = -((card_count / 2) as f32 * card_gap);
+        first_card_offset = (number_of_cards / 2.0) * CARD_SPACING;
     }
 
-    for (index, entity) in hand.cards.iter().enumerate() {
-        if let Ok(mut card) = cards.get_mut(*entity) {
-            let new_translation = card
+    for (index, card_tuple) in hand.cards.iter().enumerate() {
+        if let (card, Some(entity)) = card_tuple {
+            info!("Searching for card: {}", entity);
+            let (mut card_component, card_transform) = cards_query.get_mut(*entity)?;
+            let new_origin = card_component
                 .origin
                 .translation
-                .with_x(first_card_offset + (index as f32 * card_gap));
-            card.origin.translation = new_translation;
+                .with_x(-first_card_offset + ((index + 1) as f32 * CARD_SPACING));
+
+            card_component.origin.translation = new_origin;
+            info!(
+                "Updated card origin to {}",
+                card_component.origin.translation
+            );
         }
     }
 

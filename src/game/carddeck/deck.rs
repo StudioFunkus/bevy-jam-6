@@ -4,7 +4,7 @@
 //! stored as a resource in the world when active.
 
 use bevy::prelude::*;
-use rand::{seq::SliceRandom, thread_rng};
+use rand::{rng, seq::SliceRandom};
 use std::collections::VecDeque;
 
 use crate::game::carddeck::card::Card;
@@ -29,7 +29,7 @@ impl Deck {
     /// See [`VecDeque::make_contiguous`] for details.
     #[allow(dead_code)]
     pub fn shuffle(&mut self) -> Result {
-        let mut rng = thread_rng();
+        let mut rng = rng();
         self.cards.make_contiguous().shuffle(&mut rng);
 
         Ok(())
