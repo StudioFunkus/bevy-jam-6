@@ -22,7 +22,7 @@ impl FromWorld for LevelAssets {
     fn from_world(world: &mut World) -> Self {
         let music_handle = world
             .resource::<AssetServer>()
-            .load("audio/music/Fluffing A Duck.ogg");
+            .load("audio/music/level1.ogg");
         let mushroom_texture_handle = world
             .resource::<AssetServer>()
             .load("textures/mushrooms.png");
