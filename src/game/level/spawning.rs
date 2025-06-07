@@ -4,7 +4,7 @@ use super::super::play_field::events::on_grid_cell_click;
 use bevy::{pbr::ExtendedMaterial, prelude::*};
 
 use crate::{
-    audio::music,
+    audio::{Music, music},
     game::{
         game_flow::{CurrentLevel, LevelState},
         level::definitions::LevelDefinitions,
@@ -39,6 +39,7 @@ pub fn spawn_level(
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut field_materials: ResMut<Assets<ExtendedMaterial<StandardMaterial, FieldGroundExtension>>>,
     mut images: ResMut<Assets<Image>>,
+    music_query: Query<&AudioPlayer, With<Music>>,
 ) {
     // Get level definition
     let level_def = level_definitions
@@ -103,12 +104,26 @@ pub fn spawn_level(
         }
     }
 
-    // Spawn background music
-    commands.spawn((
-        Name::new("Gameplay Music"),
-        StateScoped(Screen::Gameplay),
-        music(level_assets.music.clone()),
-    ));
+    if let Ok(music_entity) = music_query.single() {
+        // Spawn background music
+        match current_level.level_index {
+            _ => {
+                if music_entity.0 != level_assets.music {
+                    commands.spawn((
+                        Name::new("Gameplay Music"),
+                        StateScoped(Screen::Gameplay),
+                        music(level_assets.music.clone()),
+                    ));
+                }
+            }
+        }
+    } else {
+        commands.spawn((
+            Name::new("Gameplay Music"),
+            StateScoped(Screen::Gameplay),
+            music(level_assets.music.clone()),
+        ));
+    }
 
     // TODO: Spawn level name display that fades out?
 }
