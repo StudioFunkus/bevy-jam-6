@@ -12,6 +12,7 @@ use crate::{
         constants::{CARD_LAYER, CARD_SPACING},
         deck::Deck,
         events::{DrawEvent, HandChangeEvent},
+        markers::Dragged,
     },
     screens::Screen,
 };
@@ -155,18 +156,15 @@ fn despawn_card(mut commands: Commands, card_entity: Entity, mut hand: ResMut<Ha
 #[tracing::instrument(skip_all)]
 fn update_card_origins(
     _: Trigger<HandChangeEvent>,
+    mut commands: Commands,
     hand: Res<Hand>,
     mut cards_query: Query<&mut Card>,
 ) -> Result {
     let number_of_cards: f32 = hand.get_card_count() as f32;
+    debug!("Number of cards: {}", number_of_cards);
+    debug!("Using spacing: {}", CARD_SPACING);
 
-    let first_card_offset: f32;
-
-    if number_of_cards % 2.0 == 1.0 {
-        first_card_offset = ((number_of_cards - 1.0) / 2.0) * CARD_SPACING;
-    } else {
-        first_card_offset = (number_of_cards / 2.0) * CARD_SPACING;
-    }
+    let first_card_offset: f32 = ((number_of_cards - 1.0) / 2.0) * CARD_SPACING;
 
     for (index, card_tuple) in hand.cards.iter().enumerate() {
         if let (_, Some(entity)) = card_tuple {
@@ -174,10 +172,13 @@ fn update_card_origins(
             let new_origin = card_component
                 .origin
                 .translation
-                .with_x(-first_card_offset + ((index + 1) as f32 * CARD_SPACING))
+                .with_x(-first_card_offset + (index as f32 * CARD_SPACING))
                 .with_z((index + 1) as f32);
+            debug!("Card at index {} will have offset {}", index, new_origin.x);
 
             card_component.origin.translation = new_origin;
+
+            commands.entity(*entity).insert(Dragged::Released);
         }
     }
 
