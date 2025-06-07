@@ -7,16 +7,14 @@ use bevy::prelude::*;
 use std::collections::VecDeque;
 
 use crate::{
-    CARD_LAYER,
     game::carddeck::{
         card::{Card, CardBundle},
+        constants::{CARD_LAYER, CARD_SPACING},
         deck::Deck,
-        events::{CardAddedEvent, DrawEvent},
+        events::{DrawEvent, HandChangeEvent},
     },
     screens::Screen,
 };
-
-const CARD_SPACING: f32 = 75.0;
 
 pub(super) fn plugin(app: &mut App) {
     app.register_type::<Hand>();
@@ -71,6 +69,12 @@ impl Default for Hand {
 pub struct HandEntity;
 
 /// Draw N cards from deck into hand
+///
+/// Will check that cards will fit and cards remaining in deck, and
+/// adjust amount to draw as needed.
+///
+/// When the card is drawn, [`spawn_card`] is triggered to also create
+/// the entity that will represent the card visually.
 #[tracing::instrument(skip_all)]
 pub fn draw_n(
     trigger: Trigger<DrawEvent>,
@@ -82,12 +86,6 @@ pub fn draw_n(
     let hand_entity = hand_entity.single()?;
 
     let mut cards_to_draw = trigger.0;
-    info!(
-        "Trying to draw {} cards to hand with {} cards and a max of {}",
-        cards_to_draw,
-        hand.cards.len(),
-        hand.max_cards
-    );
 
     if hand.cards.len() as u32 + cards_to_draw > hand.max_cards as u32 {
         cards_to_draw = (hand.max_cards - hand.cards.len()) as u32;
@@ -110,14 +108,16 @@ pub fn draw_n(
             .push_back((drawn_card, Some(card_entity.clone())));
     }
 
-    commands.trigger(CardAddedEvent);
+    commands.trigger(HandChangeEvent);
 
     Ok(())
 }
 
+/// Spawn a card, adding the [`Entity`] and [`Card`] component to the [`Hand`] resource.
+///
+/// This ensures that the [`Hand`] resource is kept up-to-date with changes.
 #[tracing::instrument(skip_all)]
 fn spawn_card(mut commands: Commands, card: Card, hand_entity: Entity) -> Entity {
-    info!("Spawning card entity");
     let card_color = card.mushroom_type.color().clone();
     let card_entity = commands
         .spawn(CardBundle {
@@ -133,11 +133,30 @@ fn spawn_card(mut commands: Commands, card: Card, hand_entity: Entity) -> Entity
     card_entity
 }
 
+/// Despawn a card, whilst also removing the [`Entity`] and [`Card`] component from the [`Hand`] resource.
+#[tracing::instrument(skip_all)]
+fn despawn_card(mut commands: Commands, card_entity: Entity, mut hand: ResMut<Hand>) -> Result {
+    for (index, (_, entity)) in hand.cards.iter().enumerate() {
+        if *entity == Some(card_entity) {
+            commands.entity(card_entity).despawn();
+            hand.cards.remove(index);
+            return Ok(());
+        }
+    }
+
+    error!("Error trying to despawn card, no matching entity found in hand!");
+    Ok(())
+}
+
+/// Update the value of the origin property on a [`Card`] component.
+///
+/// Triggered via [`HandChangeEvent`], which is fired whenever a [`Card`] component is added
+/// to or removed from the [`Hand`].
 #[tracing::instrument(skip_all)]
 fn update_card_origins(
-    _: Trigger<CardAddedEvent>,
+    _: Trigger<HandChangeEvent>,
     hand: Res<Hand>,
-    mut cards_query: Query<(&mut Card, &Transform)>,
+    mut cards_query: Query<&mut Card>,
 ) -> Result {
     let number_of_cards: f32 = hand.get_card_count() as f32;
 
@@ -150,19 +169,15 @@ fn update_card_origins(
     }
 
     for (index, card_tuple) in hand.cards.iter().enumerate() {
-        if let (card, Some(entity)) = card_tuple {
-            info!("Searching for card: {}", entity);
-            let (mut card_component, card_transform) = cards_query.get_mut(*entity)?;
+        if let (_, Some(entity)) = card_tuple {
+            let mut card_component = cards_query.get_mut(*entity)?;
             let new_origin = card_component
                 .origin
                 .translation
-                .with_x(-first_card_offset + ((index + 1) as f32 * CARD_SPACING));
+                .with_x(-first_card_offset + ((index + 1) as f32 * CARD_SPACING))
+                .with_z((index + 1) as f32);
 
             card_component.origin.translation = new_origin;
-            info!(
-                "Updated card origin to {}",
-                card_component.origin.translation
-            );
         }
     }
 

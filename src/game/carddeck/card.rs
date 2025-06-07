@@ -9,7 +9,13 @@ use std::time::Duration;
 use bevy::{prelude::*, render::view::RenderLayers};
 use bevy_tweening::{Animator, Tween, TweenCompleted, lens::TransformPositionLens};
 
-use crate::{CARD_LAYER, game::mushrooms::MushroomType};
+use crate::game::{
+    carddeck::{
+        constants::{CARD_LAYER, RETURN_TO_HAND_DURATION},
+        markers::{Draggable, Dragged},
+    },
+    mushrooms::MushroomType,
+};
 
 pub(super) fn plugin(app: &mut App) {
     app.register_type::<Card>();
@@ -43,18 +49,6 @@ impl Default for Card {
             origin: Transform::default(),
         }
     }
-}
-
-/// A marker component to indicate that a card can be dragged
-#[derive(Component)]
-pub struct Draggable;
-
-/// A marker component to indicate that a card is being dragged
-#[derive(Component, Debug, Default, PartialEq, Eq)]
-pub enum Dragged {
-    #[default]
-    Active,
-    Released,
 }
 
 #[derive(Bundle)]
@@ -93,6 +87,24 @@ impl From<Card> for CardBundle {
     }
 }
 
+#[tracing::instrument(name = "Create card definitions", skip_all)]
+pub fn create_card_definitions(mut card_templates: ResMut<CardTemplates>) -> Result {
+    card_templates.0.extend(vec![
+        Card {
+            name: "Button".to_string(),
+            mushroom_type: MushroomType::Basic,
+            ..default()
+        },
+        Card {
+            name: "Pulcini".to_string(),
+            mushroom_type: MushroomType::Pulse,
+            ..default()
+        },
+    ]);
+
+    Ok(())
+}
+
 #[tracing::instrument(skip_all)]
 pub fn on_card_drag(
     mut trigger: Trigger<Pointer<Drag>>,
@@ -114,8 +126,6 @@ pub fn on_card_darg_start(
     cards_being_dragged: Query<&Dragged, With<Card>>,
 ) -> Result {
     trigger.propagate(false);
-
-    info!("{}", cards_being_dragged.iter().len());
 
     // Abort if another card is being dragged
     for dragged_component in cards_being_dragged {
@@ -177,7 +187,7 @@ fn create_tween_for_card(
 ) -> Result {
     let move_tween = Tween::new(
         EaseFunction::QuadraticInOut,
-        Duration::from_secs(1),
+        Duration::from_secs_f32(RETURN_TO_HAND_DURATION),
         TransformPositionLens {
             start: card_transform.translation,
             end: card_component.origin.translation,

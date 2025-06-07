@@ -10,4 +10,4 @@ pub struct DrawEvent(pub u32);
 
 /// Event to fire when cards have been added to the hand
 #[derive(Event, Debug)]
-pub struct CardAddedEvent;
+pub struct HandChangeEvent;

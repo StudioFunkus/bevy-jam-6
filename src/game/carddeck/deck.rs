@@ -4,10 +4,10 @@
 //! stored as a resource in the world when active.
 
 use bevy::prelude::*;
-use rand::{rng, seq::SliceRandom};
+use rand::{random_range, rng, seq::SliceRandom};
 use std::collections::VecDeque;
 
-use crate::game::carddeck::card::Card;
+use crate::game::carddeck::card::{Card, CardTemplates};
 
 pub(super) fn plugin(app: &mut App) {
     app.register_type::<Deck>();
@@ -44,19 +44,7 @@ impl Deck {
     #[allow(dead_code)]
     #[tracing::instrument(name = "from deck", skip_all)]
     pub fn draw(&mut self) -> Option<Card> {
-        info!("Card being drawn from deck");
-        let card = self.cards.pop_front();
-
-        info!(
-            "Cards remaining in deck: {}",
-            self.cards
-                .iter()
-                .map(|card| card.name.clone())
-                .collect::<Vec<String>>()
-                .join(", ")
-        );
-
-        card
+        self.cards.pop_front()
     }
 
     #[allow(dead_code)]
@@ -77,7 +65,6 @@ impl Deck {
     #[allow(dead_code)]
     #[tracing::instrument(name = "Adding card to deck", skip_all)]
     pub fn add_to_bottom(&mut self, card: Card) -> Result {
-        info!("Adding card '{}' to bottom of deck", card.name);
         self.cards.push_back(card);
 
         Ok(())
@@ -88,4 +75,21 @@ impl Deck {
     pub fn get_card_count(&self) -> usize {
         self.cards.len()
     }
+}
+
+#[tracing::instrument(name = "Create test deck", skip_all)]
+pub fn create_deck(mut deck: ResMut<Deck>, card_templates: Res<CardTemplates>) -> Result {
+    let count_of_defined_cards = card_templates.0.len();
+
+    for _ in 0..10 {
+        deck.add_to_bottom(
+            card_templates
+                .0
+                .get(random_range(0..count_of_defined_cards))
+                .unwrap()
+                .clone(),
+        )?;
+    }
+
+    Ok(())
 }
