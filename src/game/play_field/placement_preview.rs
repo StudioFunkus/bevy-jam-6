@@ -208,6 +208,7 @@ fn update_placement_preview(
                             StateScoped(LevelState::Playing),
                             // Add a custom component to track this is a preview
                             PreviewMarker,
+                            Pickable::IGNORE,
                         ))
                         .id();
 
