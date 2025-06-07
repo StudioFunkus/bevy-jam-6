@@ -9,7 +9,7 @@ use bevy_tweening::{
 use crate::game::carddeck::{
     card::Card,
     constants::{SCALE_TWEEN_DURATION, TRANSLATION_TWEEN_DURATION},
-    markers::{Dragged, Hovered},
+    markers::Dragged,
 };
 
 mod dragging_manager;
@@ -75,13 +75,6 @@ fn on_finish_transform_tween(trigger: Trigger<TweenCompleted>, mut commands: Com
         // Translation
         1 => {
             commands.entity(trigger.target()).remove::<Dragged>();
-            // .remove::<Animator<Transform>>();
-        }
-        // Scale
-        // Unlike a translation tween, the scale tween shouldn't remove the related component.
-        2 => {
-            commands.entity(trigger.target());
-            // .remove::<Animator<Transform>>();
         }
         _ => (),
     }
