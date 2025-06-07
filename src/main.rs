@@ -16,6 +16,7 @@ use bevy::{
     asset::AssetMetaCheck, pbr::light_consts, picking::mesh_picking::MeshPickingPlugin, prelude::*,
 };
 use bevy_panorbit_camera::PanOrbitCameraPlugin;
+use bevy_rich_text3d::Text3dPlugin;
 use bevy_sprite3d::Sprite3dPlugin;
 
 fn main() -> AppExit {
@@ -49,7 +50,13 @@ impl Plugin for AppPlugin {
             Sprite3dPlugin,
             PanOrbitCameraPlugin,
             MeshPickingPlugin,
+            Text3dPlugin {
+                default_atlas_dimension: (1024, 1024),
+                load_system_fonts: true,
+                ..default()
+            },
         ));
+        
 
         // Add other plugins.
         app.add_plugins((
@@ -73,6 +80,8 @@ impl Plugin for AppPlugin {
             )
                 .chain(),
         );
+
+        app.insert_resource(ClearColor(Color::srgb(0.0, 0.0, 0.0)));
 
         // Set up the `Pause` state.
         app.init_state::<Pause>();
