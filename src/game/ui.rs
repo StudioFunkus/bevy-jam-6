@@ -190,6 +190,8 @@ fn spawn_game_ui(mut commands: Commands, definitions: Res<MushroomDefinitions>) 
                 spawn_mushroom_button(MushroomType::Test, &definitions),
                 spawn_mushroom_button(MushroomType::Basic, &definitions),
                 spawn_mushroom_button(MushroomType::Pulse, &definitions),
+                spawn_mushroom_button(MushroomType::Sideways, &definitions),
+                spawn_mushroom_button(MushroomType::Fork, &definitions),
                 spawn_mushroom_button(MushroomType::Amplifier, &definitions),
                 spawn_mushroom_button(MushroomType::Splitter, &definitions),
                 spawn_mushroom_button(MushroomType::Chain, &definitions),

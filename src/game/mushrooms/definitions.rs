@@ -50,6 +50,18 @@ pub mod connection_patterns {
         GridOffset::new(-1, 1),  // NW
     ];
 
+    /// Sideways (East / West)
+    pub const SIDEWAYS: &[GridOffset] = &[
+        GridOffset::new(1, 0),  // East
+        GridOffset::new(-1, 0), // West
+    ];
+
+    /// Fork (NE/NW)
+    pub const FORK: &[GridOffset] = &[
+        GridOffset::new(1, 1),   // NE
+        GridOffset::new(-1, 1),  // NW
+    ];
+
     /// Single direction
     pub const FORWARD: &[GridOffset] = &[
         GridOffset::new(0, 1), // Default facing up
@@ -97,8 +109,10 @@ pub enum ActivationBehavior {
     /// Modifies terrain and forwards energy
     Converter {
         /// What tile type to convert adjacent tiles to
-        convert_to: TileType,
+        convert_to: TileType,    
     },
+    /// Deletes a mushroom in the given square
+    Deleter,
 }
 
 /// Requirements to unlock a mushroom type
@@ -180,6 +194,8 @@ pub enum MushroomType {
     #[default]
     Basic,
     Pulse,
+    Sideways,
+    Fork,
     Amplifier,
     Splitter,
     Chain,
@@ -204,11 +220,11 @@ fn initialize_definitions(mut definitions: ResMut<MushroomDefinitions>) {
         MushroomType::Basic,
         MushroomDefinition {
             name: "Button Mushroom".to_string(),
-            description: "Produces spores when activated.".to_string(),
+            description: "Activation: produces 10 spores".to_string(),
             base_production: 10.0,
             cooldown_time: 0.1,
             max_uses_per_turn: 5,
-            sprite_row: 0,
+            sprite_row: 8,
             activation_behavior: ActivationBehavior::Basic,
             unlock_requirement: UnlockRequirement::None,
             connection_points: vec![],
@@ -220,15 +236,49 @@ fn initialize_definitions(mut definitions: ResMut<MushroomDefinitions>) {
         MushroomType::Pulse,
         MushroomDefinition {
             name: "Pulse Mushroom".to_string(),
-            description: "Sends energy pulses to trigger adjacent mushrooms in one direction."
+            description: "Activation: Produces 2 spores, then activates one adjacent mushroom."
                 .to_string(),
             base_production: 2.0,
             cooldown_time: 0.1,
             max_uses_per_turn: 2,
-            sprite_row: 1,
+            sprite_row: 6,
             activation_behavior: ActivationBehavior::Basic,
             unlock_requirement: UnlockRequirement::None,
             connection_points: connection_patterns::FORWARD.to_vec(),
+        },
+    );
+
+    // Sideways Mushroom - single forward connection
+    defs.insert(
+        MushroomType::Sideways,
+        MushroomDefinition {
+            name: "Sideways Mushroom".to_string(),
+            description: "Activation: Produces 2 spores, then activates two adjacent mushrooms either side."
+                .to_string(),
+            base_production: 2.0,
+            cooldown_time: 0.1,
+            max_uses_per_turn: 2,
+            sprite_row: 19,
+            activation_behavior: ActivationBehavior::Basic,
+            unlock_requirement: UnlockRequirement::None,
+            connection_points: connection_patterns::SIDEWAYS.to_vec(),
+        },
+    );
+
+    // Sideways Mushroom - single forward connection
+    defs.insert(
+        MushroomType::Fork,
+        MushroomDefinition {
+            name: "Fork Mushroom".to_string(),
+            description: "Activation: Produces 2 spores, then activates two adjacent mushrooms in a forking pattern."
+                .to_string(),
+            base_production: 2.0,
+            cooldown_time: 0.1,
+            max_uses_per_turn: 2,
+            sprite_row: 9,
+            activation_behavior: ActivationBehavior::Basic,
+            unlock_requirement: UnlockRequirement::None,
+            connection_points: connection_patterns::FORK.to_vec(),
         },
     );
 
@@ -328,7 +378,7 @@ fn initialize_definitions(mut definitions: ResMut<MushroomDefinitions>) {
             base_production: 6.0,
             cooldown_time: 1.8,
             max_uses_per_turn: 3,
-            sprite_row: 7,
+            sprite_row: 12,
             activation_behavior: ActivationBehavior::Basic,
             unlock_requirement: UnlockRequirement::None,
             connection_points: connection_patterns::KNIGHT_FORWARD.to_vec(),
