@@ -74,6 +74,8 @@ impl Plugin for AppPlugin {
                 .chain(),
         );
 
+        app.insert_resource(ClearColor(Color::srgb(0.0, 0.0, 0.0)));
+
         // Set up the `Pause` state.
         app.init_state::<Pause>();
         app.configure_sets(Update, PausableSystems.run_if(in_state(Pause(false))));
