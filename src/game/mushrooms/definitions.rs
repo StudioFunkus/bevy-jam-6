@@ -62,6 +62,19 @@ pub mod connection_patterns {
         GridOffset::new(-1, 1),  // NW
     ];
 
+    /// Threeway in a T shape (N/E/W)
+    pub const THREEWAY: &[GridOffset] = &[
+        GridOffset::new(0, 1),   // N
+        GridOffset::new(1, 0),   // E
+        GridOffset::new(-1, 0),  // W
+    ];
+
+    /// Diagonal line (NE/SW)
+    pub const DIAGONALLINE: &[GridOffset] = &[
+    GridOffset::new(1, 1),   // NE
+    GridOffset::new(-1, -1), // SW
+    ];
+
     /// Single direction
     pub const FORWARD: &[GridOffset] = &[
         GridOffset::new(0, 1), // Default facing up
@@ -196,6 +209,8 @@ pub enum MushroomType {
     Pulse,
     Sideways,
     Fork,
+    Threeway,
+    Diagonal,
     Amplifier,
     Splitter,
     Chain,
@@ -219,7 +234,7 @@ fn initialize_definitions(mut definitions: ResMut<MushroomDefinitions>) {
     defs.insert(
         MushroomType::Basic,
         MushroomDefinition {
-            name: "Button Mushroom".to_string(),
+            name: "Button".to_string(),
             description: "Activation: produces 10 spores".to_string(),
             base_production: 10.0,
             cooldown_time: 0.1,
@@ -235,7 +250,7 @@ fn initialize_definitions(mut definitions: ResMut<MushroomDefinitions>) {
     defs.insert(
         MushroomType::Pulse,
         MushroomDefinition {
-            name: "Pulse Mushroom".to_string(),
+            name: "Pulcini".to_string(),
             description: "Activation: Produces 2 spores, then activates one adjacent mushroom."
                 .to_string(),
             base_production: 2.0,
@@ -248,11 +263,11 @@ fn initialize_definitions(mut definitions: ResMut<MushroomDefinitions>) {
         },
     );
 
-    // Sideways Mushroom - single forward connection
+    // Sideways Mushroom - two connections, sideways
     defs.insert(
         MushroomType::Sideways,
         MushroomDefinition {
-            name: "Sideways Mushroom".to_string(),
+            name: "Dicholoma".to_string(),
             description: "Activation: Produces 2 spores, then activates two adjacent mushrooms either side."
                 .to_string(),
             base_production: 2.0,
@@ -260,16 +275,16 @@ fn initialize_definitions(mut definitions: ResMut<MushroomDefinitions>) {
             max_uses_per_turn: 2,
             sprite_row: 19,
             activation_behavior: ActivationBehavior::Basic,
-            unlock_requirement: UnlockRequirement::None,
+            unlock_requirement: UnlockRequirement::None, 
             connection_points: connection_patterns::SIDEWAYS.to_vec(),
         },
     );
 
-    // Sideways Mushroom - single forward connection
+    // Fork mushroom - two connections, forwards
     defs.insert(
-        MushroomType::Fork,
+        MushroomType::Threeway,
         MushroomDefinition {
-            name: "Fork Mushroom".to_string(),
+            name: "Forchione".to_string(),
             description: "Activation: Produces 2 spores, then activates two adjacent mushrooms in a forking pattern."
                 .to_string(),
             base_production: 2.0,
@@ -279,6 +294,40 @@ fn initialize_definitions(mut definitions: ResMut<MushroomDefinitions>) {
             activation_behavior: ActivationBehavior::Basic,
             unlock_requirement: UnlockRequirement::None,
             connection_points: connection_patterns::FORK.to_vec(),
+        },
+    );
+
+    // Wizard's Cap - Activates opposite diagonals
+    defs.insert(
+        MushroomType::Diagonal,
+        MushroomDefinition {
+            name: "Wizard's Cap".to_string(),
+            description: "Activation: Produces 2 spores, then activates two mushrooms diagonally."
+                .to_string(),
+            base_production: 2.0,
+            cooldown_time: 0.1,
+            max_uses_per_turn: 2,
+            sprite_row: 0,
+            activation_behavior: ActivationBehavior::Basic,
+            unlock_requirement: UnlockRequirement::None,
+            connection_points: connection_patterns::DIAGONALLINE.to_vec(),
+        },
+    );
+
+    // T Mushroom - three connections in a T shape
+    defs.insert(
+        MushroomType::Fork,
+        MushroomDefinition {
+            name: "Spliitake".to_string(),
+            description: "Activation: Produces 2 spores, then activates three adjacent mushrooms in a T-shaped pattern."
+                .to_string(),
+            base_production: 2.0,
+            cooldown_time: 0.1,
+            max_uses_per_turn: 2,
+            sprite_row: 7,
+            activation_behavior: ActivationBehavior::Basic,
+            unlock_requirement: UnlockRequirement::None,
+            connection_points: connection_patterns::THREEWAY.to_vec(),
         },
     );
 
@@ -373,7 +422,7 @@ fn initialize_definitions(mut definitions: ResMut<MushroomDefinitions>) {
     defs.insert(
         MushroomType::Knight,
         MushroomDefinition {
-            name: "Knight Mushroom".to_string(),
+            name: "Unicorn's Mane".to_string(),
             description: "Jumps energy in an L-shape like a chess knight.".to_string(),
             base_production: 6.0,
             cooldown_time: 1.8,
