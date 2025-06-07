@@ -40,7 +40,7 @@ pub fn create_card_scale_tween(
 
     commands
         .entity(card_entity)
-        .insert(Animator::new(scale_tween));
+        .with_child(Animator::new(scale_tween).with_target(card_entity));
 
     Ok(())
 }
@@ -64,7 +64,7 @@ pub fn create_card_translation_tween(
 
     commands
         .entity(card_entity)
-        .insert(Animator::new(move_tween));
+        .with_child(Animator::new(move_tween).with_target(card_entity));
 
     Ok(())
 }
