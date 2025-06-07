@@ -496,6 +496,22 @@ fn initialize_definitions(mut definitions: ResMut<MushroomDefinitions>) {
         },
     );
 
+    // Burst Mushroom - no connections
+    defs.insert(
+        MushroomType::Burst,
+        MushroomDefinition {
+            name: "Burst Mushroom".to_string(),
+            description: "High produces massive spores when triggered.".to_string(),
+            base_production: 50.0,
+            cooldown_time: 5.0,
+            max_uses_per_turn: 1,
+            sprite_row: 5,
+            activation_behavior: ActivationBehavior::Basic,
+            unlock_requirement: UnlockRequirement::None,
+            connection_points: vec![], // No connections
+        },
+    );
+
     // Converter Mushroom
     defs.insert(
         MushroomType::Converter,
