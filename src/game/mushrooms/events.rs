@@ -23,3 +23,10 @@ pub struct SpawnMushroomEvent {
 pub struct RemoveMushroomEvent {
     pub position: GridPosition,
 }
+
+// Spawn score event
+#[derive(Event)]
+pub struct SporeScoreEvent {
+    pub position: GridPosition,
+    pub production: f64,
+}

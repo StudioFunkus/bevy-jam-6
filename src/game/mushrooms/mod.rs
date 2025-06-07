@@ -20,12 +20,14 @@ pub mod chain_activation;
 pub mod definitions;
 pub mod events;
 pub mod resources;
+pub mod ui;
 
 pub(super) fn plugin(app: &mut App) {
     app.add_plugins((
         definitions::plugin,
         chain_activation::plugin,
         events::plugin,
+        ui::plugin,
     ));
 
     // Initialize resources

@@ -5,11 +5,7 @@ use std::collections::VecDeque;
 use std::time::Duration;
 
 use crate::game::{
-    fixed_timestep::GameTime,
-    game_flow::{CurrentLevel, TurnData},
-    play_field::GridPosition,
-    resources::GameState,
-    visual_effects::ActivationAnimation,
+    fixed_timestep::GameTime, game_flow::{CurrentLevel, TurnData}, mushrooms::events::SporeScoreEvent, play_field::GridPosition, resources::GameState, visual_effects::ActivationAnimation
 };
 
 use super::{
@@ -297,14 +293,11 @@ fn process_single_activation(
         .map(|t| t.production_multiplier())
         .unwrap_or(1.0);
 
-    let mut production =
+    let production =
         definition.base_production * activation.energy_packet.energy as f64 * tile_modifier as f64;
 
     // Apply behavior-specific modifications
     match &definition.activation_behavior {
-        ActivationBehavior::Burst { burst_multiplier } => {
-            production *= *burst_multiplier as f64;
-        }
         _ => {}
     }
 
@@ -313,6 +306,12 @@ fn process_single_activation(
     turn_data.spores_this_chain += production;
     current_level.total_spores_earned += production;
     game_state.total_activations += 1;
+
+    // Spawn spore popup
+    commands.trigger(SporeScoreEvent {
+        position: *position,
+        production,
+    });
 
     // Update chain
     if let Some(chain) = chain_manager.get_chain_mut(activation.chain_id) {
@@ -372,34 +371,18 @@ fn process_propagation(
 
     // Process based on behavior type (for special modifications)
     match behavior {
-        ActivationBehavior::Basic | ActivationBehavior::Burst { .. } => {
-            // No propagation
-            return;
+        ActivationBehavior::Basic { .. } => {
+            // No behaviour modification, just propagate if there are connection points
         }
 
         ActivationBehavior::Amplifier { boost_factor } => {
             // Boost energy before propagating
             energy_packet.energy *= boost_factor;
         }
-
-        ActivationBehavior::Chain { chain_bonus } => {
-            // Better energy preservation
-            propagate_to_connection_points(
-                chain_manager,
-                source_pos,
-                connection_points,
-                direction,
-                energy_packet,
-                chain_id,
-                game_state,
-            );
-            return;
-        }
-
         _ => {}
     }
 
-    // Default propagation using connection points
+    // Perform propagation to connection points
     propagate_to_connection_points(
         chain_manager,
         source_pos,

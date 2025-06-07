@@ -3,6 +3,8 @@
 use bevy::prelude::*;
 use std::collections::HashMap;
 
+use crate::game::play_field::TileType;
+
 /// Relative position offset for connections
 #[derive(Debug, Clone, Copy)]
 pub struct GridOffset {
@@ -74,7 +76,7 @@ pub struct MushroomDefinition {
     pub max_uses_per_turn: u32,
     /// Row in the sprite sheet for this mushroom
     pub sprite_row: usize,
-    /// Activation behavior
+    /// Activation behavior - systems perform action based on this
     pub activation_behavior: ActivationBehavior,
     /// Unlock requirements
     pub unlock_requirement: UnlockRequirement,
@@ -87,35 +89,15 @@ pub struct MushroomDefinition {
 pub enum ActivationBehavior {
     /// Just produces spores, no propagation
     Basic,
-    /// Sends energy in a single direction
-    Directional {
-        /// How many tiles the pulse can travel
-        range: u32,
-    },
     /// Boosts incoming energy before forwarding
     Amplifier {
         /// Multiplication factor for energy
         boost_factor: f32,
     },
-    /// Splits energy to all adjacent tiles
-    Splitter {
-        /// Whether to include diagonal tiles
-        include_diagonals: bool,
-    },
-    /// Optimized for long chains with minimal decay
-    Chain {
-        /// Bonus energy preservation per hop
-        chain_bonus: f32,
-    },
-    /// High threshold but massive production
-    Burst {
-        /// Production multiplier when activated
-        burst_multiplier: f32,
-    },
     /// Modifies terrain and forwards energy
     Converter {
         /// What tile type to convert adjacent tiles to
-        convert_to: super::super::play_field::TileType,
+        convert_to: TileType,
     },
 }
 
@@ -244,7 +226,7 @@ fn initialize_definitions(mut definitions: ResMut<MushroomDefinitions>) {
             cooldown_time: 0.1,
             max_uses_per_turn: 2,
             sprite_row: 1,
-            activation_behavior: ActivationBehavior::Directional { range: 1 },
+            activation_behavior: ActivationBehavior::Basic,
             unlock_requirement: UnlockRequirement::None,
             connection_points: connection_patterns::FORWARD.to_vec(),
         },
@@ -278,9 +260,7 @@ fn initialize_definitions(mut definitions: ResMut<MushroomDefinitions>) {
             cooldown_time: 3.0,
             max_uses_per_turn: 2,
             sprite_row: 3,
-            activation_behavior: ActivationBehavior::Splitter {
-                include_diagonals: false,
-            },
+            activation_behavior: ActivationBehavior::Basic,
             unlock_requirement: UnlockRequirement::None,
             connection_points: connection_patterns::CARDINAL.to_vec(),
         },
@@ -297,7 +277,7 @@ fn initialize_definitions(mut definitions: ResMut<MushroomDefinitions>) {
             cooldown_time: 0.8,
             max_uses_per_turn: 5,
             sprite_row: 4,
-            activation_behavior: ActivationBehavior::Chain { chain_bonus: 0.02 },
+            activation_behavior: ActivationBehavior::Basic,
             unlock_requirement: UnlockRequirement::None,
             connection_points: connection_patterns::FORWARD.to_vec(),
         },
@@ -308,15 +288,13 @@ fn initialize_definitions(mut definitions: ResMut<MushroomDefinitions>) {
         MushroomType::Burst,
         MushroomDefinition {
             name: "Burst Mushroom".to_string(),
-            description: "High energy threshold, but produces massive spores when triggered."
+            description: "High produces massive spores when triggered."
                 .to_string(),
             base_production: 50.0,
             cooldown_time: 5.0,
             max_uses_per_turn: 1,
             sprite_row: 5,
-            activation_behavior: ActivationBehavior::Burst {
-                burst_multiplier: 2.0,
-            },
+            activation_behavior: ActivationBehavior::Basic,
             unlock_requirement: UnlockRequirement::None,
             connection_points: vec![], // No connections
         },
@@ -334,7 +312,7 @@ fn initialize_definitions(mut definitions: ResMut<MushroomDefinitions>) {
             max_uses_per_turn: 3,
             sprite_row: 6,
             activation_behavior: ActivationBehavior::Converter {
-                convert_to: crate::game::play_field::TileType::Fertile,
+                convert_to: TileType::Fertile,
             },
             unlock_requirement: UnlockRequirement::None,
             connection_points: connection_patterns::FORWARD.to_vec(),
@@ -351,7 +329,7 @@ fn initialize_definitions(mut definitions: ResMut<MushroomDefinitions>) {
             cooldown_time: 1.8,
             max_uses_per_turn: 3,
             sprite_row: 7,
-            activation_behavior: ActivationBehavior::Directional { range: 3 }, // L-shaped is ~2.2 distance
+            activation_behavior: ActivationBehavior::Basic,
             unlock_requirement: UnlockRequirement::None,
             connection_points: connection_patterns::KNIGHT_FORWARD.to_vec(),
         },
@@ -367,7 +345,7 @@ fn initialize_definitions(mut definitions: ResMut<MushroomDefinitions>) {
             cooldown_time: 0.1,
             max_uses_per_turn: 50,
             sprite_row: 7,
-            activation_behavior: ActivationBehavior::Amplifier { boost_factor: 2.0 },
+            activation_behavior: ActivationBehavior::Basic,
             unlock_requirement: UnlockRequirement::None,
             connection_points: vec![GridOffset::new(0, 1)],
         },
