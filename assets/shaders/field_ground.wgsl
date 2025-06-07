@@ -130,7 +130,7 @@ fn fragment(
     for (var i = 0u; i < preview_count; i = i + 1u) {
         let preview = preview_highlights[i];
         let highlight_pos = preview.position;
-        let cell_dist = length((uv - highlight_pos) * grid_size);
+        let cell_dist = length((uv - highlight_pos) * grid_size * 0.7);
         
         if (cell_dist < 0.5) {
             if (preview.highlight_type == -1.0) {
@@ -144,7 +144,7 @@ fn fragment(
                 empty_connection_highlight = max(empty_connection_highlight, 0.5 + 0.15 * sin(time * 5.0));
             } else if (preview.highlight_type == -4.0) {
                 // Existing target highlight (blue)
-                existing_target_highlight = max(existing_target_highlight, 0.3 + 0.1 * sin(time * 2.0));
+                existing_target_highlight = max(existing_target_highlight, 0.5 + 0.1 * sin(time * 2.0));
             }
         }
     }
