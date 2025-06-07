@@ -15,6 +15,7 @@ mod theme;
 use bevy::{
     asset::AssetMetaCheck, pbr::light_consts, picking::mesh_picking::MeshPickingPlugin, prelude::*,
 };
+use bevy_hanabi::HanabiPlugin;
 use bevy_panorbit_camera::PanOrbitCameraPlugin;
 use bevy_rich_text3d::Text3dPlugin;
 use bevy_sprite3d::Sprite3dPlugin;
@@ -50,6 +51,7 @@ impl Plugin for AppPlugin {
             Sprite3dPlugin,
             PanOrbitCameraPlugin,
             MeshPickingPlugin,
+            HanabiPlugin,
             Text3dPlugin {
                 default_atlas_dimension: (1024, 1024),
                 load_system_fonts: true,
