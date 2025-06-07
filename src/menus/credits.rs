@@ -4,7 +4,7 @@ use bevy::{
     ecs::spawn::SpawnIter, input::common_conditions::input_just_pressed, prelude::*, ui::Val::*,
 };
 
-use crate::{asset_tracking::LoadResource, audio::music, menus::Menu, theme::prelude::*};
+use crate::{menus::Menu, theme::prelude::*};
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(OnEnter(Menu::Credits), spawn_credits_menu);
@@ -80,4 +80,3 @@ fn go_back_on_click(_: Trigger<Pointer<Click>>, mut next_menu: ResMut<NextState<
 fn go_back(mut next_menu: ResMut<NextState<Menu>>) {
     next_menu.set(Menu::Main);
 }
-

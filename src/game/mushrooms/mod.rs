@@ -20,6 +20,7 @@ pub mod chain_activation;
 pub mod definitions;
 pub mod events;
 pub mod resources;
+pub mod sounds;
 pub mod ui;
 
 pub(super) fn plugin(app: &mut App) {
@@ -28,6 +29,7 @@ pub(super) fn plugin(app: &mut App) {
         chain_activation::plugin,
         events::plugin,
         ui::plugin,
+        sounds::plugin,
     ));
 
     // Initialize resources
@@ -251,7 +253,7 @@ fn spawn_mushroom(
     // Create texture atlas for sprites
     let layout = TextureAtlasLayout::from_grid(
         UVec2::new(16, 16),
-        2, // columns (front/side views)
+        2,  // columns (front/side views)
         24, // rows (mushroom types)
         Some(UVec2::new(2, 2)),
         None,

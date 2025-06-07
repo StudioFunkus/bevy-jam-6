@@ -13,7 +13,7 @@ pub(super) fn plugin(app: &mut App) {
 #[reflect(Resource)]
 pub struct ScreenAssets {
     #[dependency]
-    pub music: Handle<AudioSource>
+    pub music: Handle<AudioSource>,
 }
 
 impl FromWorld for ScreenAssets {
@@ -21,9 +21,9 @@ impl FromWorld for ScreenAssets {
         let music_handle = world
             .resource::<AssetServer>()
             .load("audio/music/title.ogg");
-        
+
         Self {
-            music: music_handle
+            music: music_handle,
         }
     }
 }

@@ -5,7 +5,12 @@ use std::collections::VecDeque;
 use std::time::Duration;
 
 use crate::game::{
-    fixed_timestep::GameTime, game_flow::{CurrentLevel, TurnData}, mushrooms::events::SporeScoreEvent, play_field::GridPosition, resources::GameState, visual_effects::ActivationAnimation
+    fixed_timestep::GameTime,
+    game_flow::{CurrentLevel, TurnData},
+    mushrooms::events::SporeScoreEvent,
+    play_field::GridPosition,
+    resources::GameState,
+    visual_effects::ActivationAnimation,
 };
 
 use super::{

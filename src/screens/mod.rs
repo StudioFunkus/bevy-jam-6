@@ -1,10 +1,10 @@
 //! The game's main screen states and transitions between them.
 
+mod assets;
 mod gameplay;
 mod loading;
 mod splash;
 mod title;
-mod assets;
 
 use bevy::prelude::*;
 
