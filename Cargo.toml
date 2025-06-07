@@ -21,6 +21,7 @@ bevy-inspector-egui = "0.31"
 bevy_sprite3d = "5.0.0"
 bevy_panorbit_camera = { version = "0.26.0", features = ["bevy_egui"] }
 bevy_rich_text3d = "0.3"
+bevy_hanabi = "0.16.0"
 
 # Your web builds will start failing if you add a dependency that pulls in `getrandom` v0.3+.
 # To fix this, you should tell `getrandom` to use the `wasm_js` backend on Wasm.

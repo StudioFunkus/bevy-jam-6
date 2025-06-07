@@ -10,12 +10,14 @@ pub(crate) mod play_field;
 mod resources;
 mod ui;
 mod visual_effects;
+mod particles;
 
 pub(super) fn plugin(app: &mut App) {
 
     app.add_systems(Update, despawn_timer_system);
 
     app.add_plugins((
+        particles::plugin,
         fixed_timestep::plugin,
         resources::plugin,
         play_field::plugin,
