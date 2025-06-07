@@ -252,7 +252,7 @@ fn spawn_mushroom(
     let layout = TextureAtlasLayout::from_grid(
         UVec2::new(16, 16),
         2, // columns (front/side views)
-        8, // rows (mushroom types)
+        24, // rows (mushroom types)
         Some(UVec2::new(2, 2)),
         None,
     );
@@ -283,7 +283,7 @@ fn spawn_mushroom(
             ..default()
         }
         .bundle_with_atlas(&mut sprite_params, atlas),
-        Transform::from_xyz(world_pos.x, 0.5, -world_pos.y),
+        Transform::from_xyz(world_pos.x, 0.5, -world_pos.z),
         FaceCamera,
         NotShadowReceiver,
         StateScoped(LevelState::Playing),

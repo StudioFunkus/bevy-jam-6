@@ -65,8 +65,8 @@ impl GridPosition {
 
         Vec3::new(
             offset_x + self.x as f32 * total_cell_size,
-            offset_y + self.y as f32 * total_cell_size,
             0.0,
+            offset_y + self.y as f32 * total_cell_size,
         )
     }
 
