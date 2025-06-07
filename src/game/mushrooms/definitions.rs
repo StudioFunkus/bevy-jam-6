@@ -346,8 +346,7 @@ fn initialize_definitions(mut definitions: ResMut<MushroomDefinitions>) {
         MushroomType::Knight,
         MushroomDefinition {
             name: "Knight Mushroom".to_string(),
-            description: "Jumps energy in an L-shape like a chess knight."
-                .to_string(),
+            description: "Jumps energy in an L-shape like a chess knight.".to_string(),
             base_production: 6.0,
             cooldown_time: 1.8,
             max_uses_per_turn: 3,
@@ -363,17 +362,14 @@ fn initialize_definitions(mut definitions: ResMut<MushroomDefinitions>) {
         MushroomType::Test,
         MushroomDefinition {
             name: "Giga Mushroom".to_string(),
-            description: "Activates everything."
-                .to_string(),
+            description: "Activates everything.".to_string(),
             base_production: 1000.0,
             cooldown_time: 0.1,
             max_uses_per_turn: 50,
             sprite_row: 7,
             activation_behavior: ActivationBehavior::Amplifier { boost_factor: 2.0 },
             unlock_requirement: UnlockRequirement::None,
-            connection_points: vec![
-                GridOffset::new(0, 1),
-            ],
+            connection_points: vec![GridOffset::new(0, 1)],
         },
     );
 

@@ -4,7 +4,10 @@ use bevy::{ecs::spawn::SpawnWith, prelude::*};
 
 use crate::{
     game::{
-        game_flow::{CurrentLevel, LevelState, TurnData, TurnPhase}, level::definitions, mushrooms::{ChainManager, MushroomDefinitions, MushroomType, SelectedMushroomType}, resources::GameState
+        game_flow::{CurrentLevel, LevelState, TurnData, TurnPhase},
+        level::definitions,
+        mushrooms::{ChainManager, MushroomDefinitions, MushroomType, SelectedMushroomType},
+        resources::GameState,
     },
     screens::Screen,
     theme::{interaction::InteractionPalette, palette as ui_palette},
@@ -198,9 +201,17 @@ fn spawn_game_ui(mut commands: Commands, definitions: Res<MushroomDefinitions>) 
         ));
 }
 
-fn spawn_mushroom_button(mushroom_type: MushroomType, definitions: &MushroomDefinitions) -> impl Bundle {
+fn spawn_mushroom_button(
+    mushroom_type: MushroomType,
+    definitions: &MushroomDefinitions,
+) -> impl Bundle {
     (
-        Name::new(format!("{} Button", definitions.get(mushroom_type).map_or("Unknown", |d| d.name.as_str()))),
+        Name::new(format!(
+            "{} Button",
+            definitions
+                .get(mushroom_type)
+                .map_or("Unknown", |d| d.name.as_str())
+        )),
         Node::default(),
         Children::spawn(SpawnWith(move |parent: &mut ChildSpawner| {
             parent

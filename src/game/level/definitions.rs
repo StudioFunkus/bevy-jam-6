@@ -189,6 +189,11 @@ pub fn load_level_config(
             .play_field
             .resize(level_def.grid_width, level_def.grid_height);
 
+        // Set tile configuration
+        game_state
+            .play_field
+            .set_tiles_from_level(&level_def.tile_configuration);
+
         Some(level_def.clone())
     } else {
         None

@@ -8,9 +8,11 @@ use crate::{
     game::{
         game_flow::{CurrentLevel, LevelState},
         level::definitions::LevelDefinitions,
-        mushrooms::{events::SpawnMushroomEvent, MushroomDefinitions},
+        mushrooms::{MushroomDefinitions, events::SpawnMushroomEvent},
         play_field::{
-            events::GridCell, field_renderer::{spawn_field_ground, FieldGroundExtension}, GridPosition, TileGrid, CELL_SIZE
+            CELL_SIZE, GridPosition,
+            events::GridCell,
+            field_renderer::{FieldGroundExtension, spawn_field_ground},
         },
         resources::GameState,
     },
@@ -36,7 +38,6 @@ pub fn spawn_level(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut field_materials: ResMut<Assets<ExtendedMaterial<StandardMaterial, FieldGroundExtension>>>,
-    mut tile_grid: ResMut<TileGrid>,
     mut images: ResMut<Assets<Image>>,
 ) {
     // Get level definition
@@ -51,21 +52,6 @@ pub fn spawn_level(
 
     info!("Spawning level: {}", level_name);
 
-    // TODO: Move tile grid to PlayField and manage it there
-    // Initialize tile grid for this level
-    tile_grid.resize(
-        game_state.play_field.width as usize,
-        game_state.play_field.height as usize,
-    );
-
-    // Clear all tiles first
-    tile_grid.clear();
-
-    // Set tile configuration from level definition
-    if let Some(level_def) = &level_def {
-        tile_grid.set_from_level(&level_def.tile_configuration);
-    }
-
     // Spawn the game grid with current configuration
     spawn_game_grid(
         &mut commands,
@@ -73,7 +59,6 @@ pub fn spawn_level(
         &mut meshes,
         &mut materials,
         &mut field_materials,
-        &tile_grid,
         &mut images,
         &level_assets,
     );
@@ -87,7 +72,9 @@ pub fn spawn_level(
             if game_state.play_field.contains(position) {
                 info!(
                     "Spawning starting {} at ({}, {})",
-                    mushroom_definitions.get(starting_mushroom.mushroom_type).map_or("Unknown", |d| d.name.as_str()),
+                    mushroom_definitions
+                        .get(starting_mushroom.mushroom_type)
+                        .map_or("Unknown", |d| d.name.as_str()),
                     starting_mushroom.x,
                     starting_mushroom.y
                 );
@@ -131,7 +118,6 @@ pub fn spawn_game_grid(
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<StandardMaterial>>,
     field_materials: &mut ResMut<Assets<ExtendedMaterial<StandardMaterial, FieldGroundExtension>>>,
-    tile_grid: &TileGrid,
     images: &mut ResMut<Assets<Image>>,
     level_assets: &Res<LevelAssets>,
 ) {
@@ -143,8 +129,8 @@ pub fn spawn_game_grid(
         images,
         level_assets,
         &game_state.play_field,
-        tile_grid,
     );
+
     let grid_entity = commands
         .spawn((
             Name::new("Game Grid"),

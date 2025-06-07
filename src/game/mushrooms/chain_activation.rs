@@ -7,7 +7,7 @@ use std::time::Duration;
 use crate::game::{
     fixed_timestep::GameTime,
     game_flow::{CurrentLevel, TurnData},
-    play_field::{GridPosition, TileGrid},
+    play_field::GridPosition,
     resources::GameState,
     visual_effects::ActivationAnimation,
 };
@@ -177,7 +177,6 @@ fn process_activation_queue(
     mut current_level: ResMut<CurrentLevel>,
     time: Res<GameTime>,
     definitions: Res<MushroomDefinitions>,
-    tile_grid: Res<TileGrid>,
     mut mushrooms: Query<(
         &Mushroom,
         &mut MushroomActivationState,
@@ -212,7 +211,6 @@ fn process_activation_queue(
             &mut turn_data,
             &mut current_level,
             &definitions,
-            &tile_grid,
             &mut mushrooms,
             activation,
         );
@@ -252,7 +250,6 @@ fn process_single_activation(
     turn_data: &mut TurnData,
     current_level: &mut CurrentLevel,
     definitions: &MushroomDefinitions,
-    tile_grid: &TileGrid,
     mushrooms: &mut Query<(
         &Mushroom,
         &mut MushroomActivationState,
@@ -294,14 +291,14 @@ fn process_single_activation(
     ));
 
     // Calculate spore production
-    let tile_modifier = tile_grid
-        .get(*position)
+    let tile_modifier = game_state
+        .play_field
+        .get_tile(*position)
         .map(|t| t.production_multiplier())
         .unwrap_or(1.0);
 
-    let mut production = definition.base_production
-        * activation.energy_packet.energy as f64
-        * tile_modifier as f64;
+    let mut production =
+        definition.base_production * activation.energy_packet.energy as f64 * tile_modifier as f64;
 
     // Apply behavior-specific modifications
     match &definition.activation_behavior {

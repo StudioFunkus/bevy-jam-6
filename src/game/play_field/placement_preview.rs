@@ -11,7 +11,7 @@ use crate::game::{
     level::assets::LevelAssets,
     mushrooms::{Mushroom, MushroomDefinitions, MushroomDirection, SelectedMushroomType},
     play_field::{
-        GridPosition, PlayField, TileGrid,
+        GridPosition, PlayField,
         events::GridCell,
         field_renderer::{FieldGround, FieldGroundExtension},
     },
@@ -135,7 +135,6 @@ fn update_placement_preview(
     selected_type: Res<SelectedMushroomType>,
     definitions: Res<MushroomDefinitions>,
     play_field: Res<GameState>,
-    tile_grid: Res<TileGrid>,
     level_assets: Res<LevelAssets>,
     mut sprite_params: Sprite3dParams,
     mut preview_query: Query<&mut Transform, With<PlacementPreview>>,
@@ -144,7 +143,7 @@ fn update_placement_preview(
         match event.new_position {
             Some(position) => {
                 // Check if position is valid for placement
-                if !is_valid_placement_position(&position, &play_field.play_field, &tile_grid) {
+                if !is_valid_placement_position(&position, &play_field.play_field) {
                     // Hide preview if position is invalid
                     if let Some(entity) = preview_state.preview_entity {
                         commands.entity(entity).despawn();
@@ -258,7 +257,6 @@ fn update_preview_connections(
     selected_type: Res<SelectedMushroomType>,
     definitions: Res<MushroomDefinitions>,
     play_field: Res<GameState>,
-    tile_grid: Res<TileGrid>,
 ) {
     // Clear previous connections (but keep existing mushroom connections)
     preview_connections.connected_positions.clear();
@@ -271,7 +269,7 @@ fn update_preview_connections(
     };
 
     // Check if position is valid
-    if !is_valid_placement_position(&position, &play_field.play_field, &tile_grid) {
+    if !is_valid_placement_position(&position, &play_field.play_field) {
         return;
     }
 
@@ -295,8 +293,9 @@ fn update_preview_connections(
         }
 
         // Check if target tile allows mushroom placement (for visual feedback)
-        let target_allows_mushroom = tile_grid
-            .get(target_pos)
+        let target_allows_mushroom = play_field
+            .play_field
+            .get_tile(target_pos)
             .map(|tile| tile.allows_mushroom())
             .unwrap_or(false);
 
@@ -321,7 +320,6 @@ fn update_existing_mushroom_connections(
     all_mushrooms: Query<(Entity, &GridPosition, &Mushroom, Option<&MushroomDirection>)>,
     definitions: Res<MushroomDefinitions>,
     play_field: Res<GameState>,
-    tile_grid: Res<TileGrid>,
 ) {
     // Clear existing connection targets
     preview_connections.existing_connection_targets.clear();
@@ -353,8 +351,9 @@ fn update_existing_mushroom_connections(
                 continue;
             }
 
-            let target_allows_mushroom = tile_grid
-                .get(target_pos)
+            let target_allows_mushroom = play_field
+                .play_field
+                .get_tile(target_pos)
                 .map(|tile| tile.allows_mushroom())
                 .unwrap_or(false);
 
@@ -488,11 +487,7 @@ fn update_shader_highlights(
 }
 
 /// Check if a position is valid for mushroom placement
-fn is_valid_placement_position(
-    position: &GridPosition,
-    play_field: &PlayField,
-    tile_grid: &TileGrid,
-) -> bool {
+fn is_valid_placement_position(position: &GridPosition, play_field: &PlayField) -> bool {
     // Check bounds
     if !play_field.contains(*position) {
         return false;
@@ -504,7 +499,7 @@ fn is_valid_placement_position(
     }
 
     // Check tile type
-    if let Some(tile_type) = tile_grid.get(*position) {
+    if let Some(tile_type) = play_field.get_tile(*position) {
         return tile_type.allows_mushroom();
     }
 

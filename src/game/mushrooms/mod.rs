@@ -4,7 +4,9 @@ use bevy_sprite3d::{Sprite3dBuilder, Sprite3dParams};
 use crate::game::{
     game_flow::{LevelState, TurnPhase},
     level::assets::LevelAssets,
-    play_field::{observers::find_entity_at, placement_preview::PreviewState, GridClickEvent, GridPosition, TileGrid},
+    play_field::{
+        GridClickEvent, GridPosition, observers::find_entity_at, placement_preview::PreviewState,
+    },
     resources::GameState,
     visual_effects::FaceCamera,
 };
@@ -78,7 +80,6 @@ fn handle_grid_clicks(
     current_level: Res<crate::game::game_flow::CurrentLevel>,
     preview_state: Res<PreviewState>,
     hovered_cell: Res<crate::game::play_field::placement_preview::HoveredCell>,
-    tile_grid: Res<TileGrid>,
 ) {
     info!("Grid click at {:?}", trigger.position);
 
@@ -103,7 +104,6 @@ fn handle_grid_clicks(
             current_level.level_index,
             preview_state,
             hovered_cell,
-            tile_grid,
         ),
         TurnPhase::Chain => {
             handle_chain_click(trigger.event(), commands, chain_manager, game_state)
@@ -130,7 +130,6 @@ fn handle_planting_click(
     current_level: usize,
     preview_state: Res<PreviewState>,
     hovered_cell: Res<crate::game::play_field::placement_preview::HoveredCell>,
-    tile_grid: Res<TileGrid>,
 ) {
     // Right-click to delete
     if event.button == bevy::picking::pointer::PointerButton::Secondary {
@@ -166,7 +165,7 @@ fn handle_planting_click(
     }
 
     // Check tile type
-    if let Some(tile_type) = tile_grid.get(event.position) {
+    if let Some(tile_type) = game_state.play_field.get_tile(event.position) {
         if !tile_type.allows_mushroom() {
             info!("Cannot place mushroom on {:?} tile", tile_type);
             return;

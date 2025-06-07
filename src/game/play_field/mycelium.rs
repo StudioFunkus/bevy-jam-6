@@ -1,8 +1,8 @@
 //! Mycelium connection system (PlayField connections)
 
 use super::GridPosition;
-use super::tiles::TileGrid;
 use crate::game::mushrooms::{Mushroom, MushroomDefinitions, MushroomDirection, MushroomType};
+use crate::game::play_field::PlayField;
 use crate::game::resources::GameState;
 use bevy::prelude::*;
 
@@ -29,7 +29,6 @@ pub fn build_playfield_connections(
     >,
     all_mushrooms: Query<(Entity, &GridPosition, &Mushroom, Option<&MushroomDirection>)>,
     mut game_state: ResMut<GameState>,
-    tile_grid: Res<TileGrid>,
     definitions: Res<MushroomDefinitions>,
     mut builder: Local<ConnectionBuilder>,
 ) {
@@ -92,7 +91,7 @@ pub fn build_playfield_connections(
                 if mushroom_list.iter().any(|(e, _, _, _)| *e == target_entity) {
                     // Create connection with pathfinding
                     if let Some((path, strength)) =
-                        find_mycelium_path(**pos, target_pos, &tile_grid)
+                        find_mycelium_path(**pos, target_pos, &game_state.play_field)
                     {
                         game_state.play_field.add_connection(
                             **pos,
@@ -148,7 +147,7 @@ fn rotate_connection_point(
 fn find_mycelium_path(
     from: GridPosition,
     to: GridPosition,
-    tile_grid: &TileGrid,
+    play_field: &PlayField,
 ) -> Option<(Vec<GridPosition>, f32)> {
     let path = bresenham_line(from, to);
 
@@ -157,7 +156,7 @@ fn find_mycelium_path(
 
     // Check each tile along the path
     for pos in &path {
-        if let Some(tile) = tile_grid.get(*pos) {
+        if let Some(tile) = play_field.get_tile(*pos) {
             if !tile.allows_mycelium() {
                 can_connect = false;
                 break;

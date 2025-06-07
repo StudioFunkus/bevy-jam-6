@@ -5,7 +5,7 @@
 //! - Texture coordinates: Y=0 at BOTTOM, Y increases UPWARD  
 
 use super::tile_atlas::TileSprite;
-use super::{GridPosition, PlayField, TileGrid, TileType};
+use super::{GridPosition, PlayField, TileType};
 use crate::game::game_flow::LevelState;
 use crate::game::level::assets::LevelAssets;
 use crate::game::resources::GameState;
@@ -133,7 +133,6 @@ pub fn spawn_field_ground(
     images: &mut ResMut<Assets<Image>>,
     level_assets: &Res<LevelAssets>,
     play_field: &PlayField,
-    tile_grid: &TileGrid,
 ) -> Entity {
     let (world_width, world_height) = play_field.world_size();
 
@@ -141,7 +140,7 @@ pub fn spawn_field_ground(
     let mesh = meshes.add(Rectangle::new(world_width, world_height));
 
     // Create tile indices texture
-    let tile_indices_texture = create_tile_indices_texture(tile_grid);
+    let tile_indices_texture = create_tile_indices_texture(play_field);
     let tile_indices_handle = images.add(tile_indices_texture);
 
     // Use tile texture from level assets
@@ -178,18 +177,16 @@ pub fn spawn_field_ground(
             MeshMaterial3d(material_handle.clone()),
             Transform::from_xyz(0.0, -0.05, 0.0)
                 .with_rotation(Quat::from_rotation_x(-std::f32::consts::FRAC_PI_2)),
-            FieldGround {
-                material_handle,
-            },
+            FieldGround { material_handle },
             StateScoped(LevelState::Playing),
         ))
         .id()
 }
 
 /// Create texture containing tile type indices
-fn create_tile_indices_texture(tile_grid: &TileGrid) -> Image {
-    let width = tile_grid.width() as u32;
-    let height = tile_grid.height() as u32;
+fn create_tile_indices_texture(play_field: &PlayField) -> Image {
+    let width = play_field.width as u32;
+    let height = play_field.height as u32;
     let mut data = vec![0u8; (width * height * 4) as usize];
 
     info!("Creating tile indices texture: {}x{}", width, height);
@@ -198,15 +195,15 @@ fn create_tile_indices_texture(tile_grid: &TileGrid) -> Image {
     for y in 0..height {
         for x in 0..width {
             let pos = GridPosition::new(x as i32, y as i32);
-            let tile_type = tile_grid.get(pos).unwrap_or_default();
-            // We need to flip Y coordinate 
+            let tile_type = play_field.get_tile(pos).unwrap_or_default();
+            // We need to flip Y coordinate
             let pixel_index = grid_pos_to_texture_index(x, y, width, height);
 
             // Count tile types
             *tile_counts.entry(tile_type).or_insert(0) += 1;
 
             // Debug: log special tiles
-            if !matches!(tile_type, crate::game::play_field::TileType::Empty) {
+            if !matches!(tile_type, TileType::Empty) {
                 info!("Tile at ({}, {}): {:?}", x, y, tile_type);
             }
 

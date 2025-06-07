@@ -15,7 +15,7 @@ pub mod tiles;
 pub use events::GridClickEvent;
 pub use field::{CELL_SIZE, CELL_SPACING, PlayField};
 pub use position::GridPosition;
-pub use tiles::{TileGrid, TileType};
+pub use tiles::TileType;
 
 pub(super) fn plugin(app: &mut App) {
     app.add_plugins((
