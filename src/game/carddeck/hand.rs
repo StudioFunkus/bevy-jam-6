@@ -3,16 +3,19 @@
 //! The hand contains the cards that have been drawn and are currently playable by the player.
 //! These are drawn from the deck.
 
-use bevy::prelude::*;
+use bevy::{color::palettes::tailwind, prelude::*, sprite::Anchor};
 use std::collections::VecDeque;
 
 use crate::{
-    game::carddeck::{
-        card::{Card, CardBundle},
-        constants::{CARD_LAYER, CARD_SPACING},
-        deck::Deck,
-        events::{DrawEvent, HandChangeEvent},
-        markers::Dragged,
+    game::{
+        carddeck::{
+            card::{Card, CardBundle},
+            constants::{CARD_LAYER, CARD_SPACING},
+            deck::Deck,
+            events::{DrawEvent, HandChangeEvent},
+            markers::{Draggable, Dragged},
+        },
+        mushrooms::{MushroomDefinitions, MushroomType},
     },
     screens::Screen,
 };
@@ -22,7 +25,7 @@ pub(super) fn plugin(app: &mut App) {
 
     app.init_resource::<Hand>();
 
-    app.add_systems(OnEnter(Screen::Gameplay), spawn_hand_entity);
+    app.add_systems(OnEnter(Screen::Gameplay), (spawn_hand_entity).chain());
 
     app.add_observer(update_card_origins);
 }
@@ -31,6 +34,7 @@ fn spawn_hand_entity(mut commands: Commands, window: Query<&Window>) -> Result {
     let window = window.single()?;
 
     commands.spawn((
+        Name::from("Hand"),
         HandEntity,
         Transform::from_xyz(0.0, -(0.9 * (window.height() / 2.0)), 0.0),
         CARD_LAYER,
@@ -88,11 +92,13 @@ pub fn draw_n(
 
     let mut cards_to_draw = trigger.0;
 
+    // Check we can fit the cards, otherwise draw less
     if hand.cards.len() as u32 + cards_to_draw > hand.max_cards as u32 {
         cards_to_draw = (hand.max_cards - hand.cards.len()) as u32;
         info!("Cannot fit cards, will draw {}", cards_to_draw);
     }
 
+    // Check the deck has enough cards, otherwise draw less
     if cards_to_draw > deck.get_card_count() as u32 {
         cards_to_draw = deck.get_card_count() as u32;
         info!("Not enough cards in deck, will draw {}", cards_to_draw);
@@ -124,7 +130,7 @@ fn spawn_card(mut commands: Commands, card: Card, hand_entity: Entity) -> Entity
         .spawn(CardBundle {
             name: card.name.clone().into(),
             card: card,
-            transform: Transform::default().with_scale(Vec3::new(15.0, 20.0, 5.0)),
+            transform: Transform::default().with_scale(Vec3::new(15.0, 20.0, 1.0)),
             sprite: Sprite::from_color(card_color, Vec2::new(3.0, 5.0)),
             ..default()
         })
@@ -158,7 +164,7 @@ fn update_card_origins(
     _: Trigger<HandChangeEvent>,
     mut commands: Commands,
     hand: Res<Hand>,
-    mut cards_query: Query<&mut Card>,
+    mut cards_query: Query<(&mut Card, &Transform)>,
 ) -> Result {
     let number_of_cards: f32 = hand.get_card_count() as f32;
     debug!("Number of cards: {}", number_of_cards);
@@ -168,7 +174,7 @@ fn update_card_origins(
 
     for (index, card_tuple) in hand.cards.iter().enumerate() {
         if let (_, Some(entity)) = card_tuple {
-            let mut card_component = cards_query.get_mut(*entity)?;
+            let (mut card_component, card_transform) = cards_query.get_mut(*entity)?;
             let new_origin = card_component
                 .origin
                 .translation
@@ -178,9 +184,57 @@ fn update_card_origins(
 
             card_component.origin.translation = new_origin;
 
+            // Also set the origin's scale for the hover system
+            card_component.origin.scale = card_transform.scale;
+
             commands.entity(*entity).insert(Dragged::Released);
         }
     }
+
+    Ok(())
+}
+
+#[tracing::instrument(skip_all)]
+fn create_test_card(
+    mut commands: Commands,
+    mushroom_definitions: Res<MushroomDefinitions>,
+    hand_query: Query<Entity, With<HandEntity>>,
+) -> Result {
+    let mushroom_type = MushroomType::Chain;
+    let mushroom_definition = mushroom_definitions.get(MushroomType::Chain).unwrap();
+
+    let test_card_component = Card {
+        mushroom_type: mushroom_type,
+        name: mushroom_definition.name.clone(),
+        origin: Transform::from_translation(Vec3::ZERO.with_z(10.0)),
+    };
+
+    let hand = hand_query.single()?;
+
+    commands.entity(hand).with_children(|commands| {
+        commands
+            .spawn(CardBundle {
+                name: mushroom_definition.name.clone().into(),
+                card: test_card_component,
+                sprite: Sprite {
+                    color: Color::Srgba(tailwind::STONE_800),
+                    custom_size: Some(Vec2::new(40.0, 60.0)),
+                    ..default()
+                },
+                ..default()
+            })
+            .with_children(|commands| {
+                commands.spawn((
+                    Text2d::new(mushroom_definition.description.clone()),
+                    Anchor::Center,
+                    TextColor(tailwind::STONE_200.into()),
+                    TextFont {
+                        font_size: 25.0,
+                        ..default()
+                    },
+                ));
+            });
+    });
 
     Ok(())
 }

@@ -1,18 +1,15 @@
 use bevy::prelude::*;
-use bevy_tweening::{Animator, Tween, TweenCompleted, lens::TransformPositionLens};
-use std::time::Duration;
 
 use crate::game::carddeck::{
     card::Card,
-    constants::RETURN_TO_HAND_DURATION,
+    managers::create_card_translation_tween,
     markers::{Draggable, Dragged},
 };
 
 pub(super) fn plugin(app: &mut App) {
     app.add_observer(on_card_drag)
         .add_observer(on_card_darg_start)
-        .add_observer(on_card_drag_end)
-        .add_observer(on_card_move_done);
+        .add_observer(on_card_drag_end);
 
     app.add_systems(Update, move_cards_back_to_origin);
 }
@@ -77,7 +74,7 @@ pub fn move_cards_back_to_origin(
                 continue;
             }
             Dragged::Released => {
-                create_tween_for_card(
+                create_card_translation_tween(
                     commands.reborrow(),
                     card_entity,
                     card_component,
@@ -86,40 +83,6 @@ pub fn move_cards_back_to_origin(
             }
         }
     }
-
-    Ok(())
-}
-
-#[tracing::instrument(skip_all)]
-fn create_tween_for_card(
-    mut commands: Commands,
-    card_entity: Entity,
-    card_component: &Card,
-    card_transform: &Transform,
-) -> Result {
-    let move_tween = Tween::new(
-        EaseFunction::QuadraticInOut,
-        Duration::from_secs_f32(RETURN_TO_HAND_DURATION),
-        TransformPositionLens {
-            start: card_transform.translation,
-            end: card_component.origin.translation,
-        },
-    )
-    .with_completed_event(1);
-
-    commands
-        .entity(card_entity)
-        .insert(Animator::new(move_tween));
-
-    Ok(())
-}
-
-#[tracing::instrument(skip_all)]
-fn on_card_move_done(trigger: Trigger<TweenCompleted>, mut commands: Commands) -> Result {
-    commands.entity(trigger.target()).remove::<Dragged>();
-    commands
-        .entity(trigger.target())
-        .remove::<Animator<Transform>>();
 
     Ok(())
 }

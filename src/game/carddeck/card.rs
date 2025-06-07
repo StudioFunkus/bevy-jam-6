@@ -66,17 +66,6 @@ impl Default for CardBundle {
     }
 }
 
-impl From<Card> for CardBundle {
-    fn from(value: Card) -> Self {
-        Self {
-            name: value.mushroom_type.name().into(),
-            card: value,
-            transform: Transform::default().with_scale(Vec3::new(15.0, 20.0, 0.0)),
-            ..default()
-        }
-    }
-}
-
 #[tracing::instrument(name = "Create card definitions", skip_all)]
 pub fn create_card_definitions(mut card_templates: ResMut<CardTemplates>) -> Result {
     card_templates.0.extend(vec![

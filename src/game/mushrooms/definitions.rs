@@ -1,6 +1,6 @@
 //! Mmushroom definitions
 
-use bevy::prelude::*;
+use bevy::{color::palettes::tailwind, prelude::*};
 use std::collections::HashMap;
 
 use crate::game::play_field::TileType;
@@ -187,6 +187,22 @@ pub enum MushroomType {
     Converter,
     Knight,
     Test,
+}
+
+impl MushroomType {
+    pub fn color(self) -> Srgba {
+        match self {
+            MushroomType::Amplifier => tailwind::AMBER_400,
+            MushroomType::Basic => tailwind::YELLOW_950,
+            MushroomType::Burst => tailwind::CYAN_600,
+            MushroomType::Chain => tailwind::LIME_400,
+            MushroomType::Converter => tailwind::GREEN_700,
+            MushroomType::Knight => tailwind::SLATE_500,
+            MushroomType::Pulse => tailwind::VIOLET_500,
+            MushroomType::Splitter => tailwind::FUCHSIA_400,
+            _ => tailwind::RED_600,
+        }
+    }
 }
 
 /// Plugin to initialize mushroom definitions
