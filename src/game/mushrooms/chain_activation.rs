@@ -6,7 +6,7 @@ use std::collections::VecDeque;
 use std::time::Duration;
 
 use crate::game::{
-    self, fixed_timestep::GameTime, game_flow::{CurrentLevel, TurnData}, mushrooms::events::SporeScoreEvent, particles::assets::activate_effect, play_field::GridPosition, resources::GameState, visual_effects::ActivationAnimation
+    self, fixed_timestep::GameTime, game_flow::{CurrentLevel, TurnData}, mushrooms::events::SporeScoreEvent, particles::assets::activate_effect, play_field::GridPosition, resources::GameState, visual_effects::ActivationAnimation, DespawnTimer
 };
 
 use super::{
@@ -326,6 +326,7 @@ fn process_single_activation(
         Name::new("Spore Effect"),
         ParticleEffect::new(activate_effect),
         Transform::from_translation(Vec3::new(world_pos.x, 0.7, -world_pos.z)),
+        DespawnTimer::new(1.0)
 
     ));
 
