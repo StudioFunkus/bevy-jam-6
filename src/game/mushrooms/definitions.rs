@@ -80,6 +80,11 @@ pub mod connection_patterns {
         GridOffset::new(0, 1), // Default facing up
     ];
 
+    /// Single direction, skip 1 tile
+    pub const SKIP_FORWARD: &[GridOffset] = &[
+        GridOffset::new(0, 2), // Default facing up
+    ];
+
     /// Single knight move - L-shaped like chess knight
     pub const KNIGHT_FORWARD: &[GridOffset] = &[
         GridOffset::new(2, 1), // 2 right, 1 up (at default orientation)
@@ -124,7 +129,7 @@ pub enum ActivationBehavior {
         /// What tile type to convert adjacent tiles to
         convert_to: TileType,    
     },
-    /// Deletes a mushroom in the given square
+    /// Deletes a mushroom in the connected square
     Deleter,
 }
 
@@ -211,7 +216,12 @@ pub enum MushroomType {
     Fork,
     Threeway,
     Diagonal,
+    Surround,
+    Skipper,
+    Deleter,
+    Bomb,
     Amplifier,
+    Fourway_amplifier,
     Splitter,
     Chain,
     Burst,
@@ -251,7 +261,7 @@ fn initialize_definitions(mut definitions: ResMut<MushroomDefinitions>) {
         MushroomType::Pulse,
         MushroomDefinition {
             name: "Pulcini".to_string(),
-            description: "Activation: Produces 2 spores, then activates one adjacent mushroom."
+            description: "Activation: produces 2 spores, then activates one adjacent mushroom."
                 .to_string(),
             base_production: 2.0,
             cooldown_time: 0.1,
@@ -268,13 +278,13 @@ fn initialize_definitions(mut definitions: ResMut<MushroomDefinitions>) {
         MushroomType::Sideways,
         MushroomDefinition {
             name: "Dicholoma".to_string(),
-            description: "Activation: Produces 2 spores, then activates two adjacent mushrooms either side."
+            description: "Activation: produces 2 spores, then activates two adjacent mushrooms either side."
                 .to_string(),
             base_production: 2.0,
-            cooldown_time: 0.1,
+            cooldown_time: 1.0,
             max_uses_per_turn: 2,
             sprite_row: 19,
-            activation_behavior: ActivationBehavior::Basic,
+            activation_behavior: ActivationBehavior::Amplifier { boost_factor: 2.0 },
             unlock_requirement: UnlockRequirement::None, 
             connection_points: connection_patterns::SIDEWAYS.to_vec(),
         },
@@ -285,13 +295,13 @@ fn initialize_definitions(mut definitions: ResMut<MushroomDefinitions>) {
         MushroomType::Threeway,
         MushroomDefinition {
             name: "Forchione".to_string(),
-            description: "Activation: Produces 2 spores, then activates two adjacent mushrooms in a forking pattern."
+            description: "Activation: produces 2 spores, then activates two adjacent mushrooms in a forking pattern."
                 .to_string(),
             base_production: 2.0,
-            cooldown_time: 0.1,
+            cooldown_time: 1.0,
             max_uses_per_turn: 2,
             sprite_row: 9,
-            activation_behavior: ActivationBehavior::Basic,
+            activation_behavior: ActivationBehavior::Amplifier { boost_factor: 3.0 },
             unlock_requirement: UnlockRequirement::None,
             connection_points: connection_patterns::FORK.to_vec(),
         },
@@ -302,13 +312,13 @@ fn initialize_definitions(mut definitions: ResMut<MushroomDefinitions>) {
         MushroomType::Diagonal,
         MushroomDefinition {
             name: "Wizard's Cap".to_string(),
-            description: "Activation: Produces 2 spores, then activates two mushrooms diagonally."
+            description: "Activation: produces 2 spores, then activates two mushrooms diagonally."
                 .to_string(),
-            base_production: 2.0,
-            cooldown_time: 0.1,
+            base_production: 5.0,
+            cooldown_time: 1.0,
             max_uses_per_turn: 2,
             sprite_row: 0,
-            activation_behavior: ActivationBehavior::Basic,
+            activation_behavior: ActivationBehavior::Amplifier { boost_factor: 2.0 },
             unlock_requirement: UnlockRequirement::None,
             connection_points: connection_patterns::DIAGONALLINE.to_vec(),
         },
@@ -319,66 +329,85 @@ fn initialize_definitions(mut definitions: ResMut<MushroomDefinitions>) {
         MushroomType::Fork,
         MushroomDefinition {
             name: "Spliitake".to_string(),
-            description: "Activation: Produces 2 spores, then activates three adjacent mushrooms in a T-shaped pattern."
+            description: "Activation: produces 2 spores, then activates three adjacent mushrooms in a T-shaped pattern."
                 .to_string(),
-            base_production: 2.0,
-            cooldown_time: 0.1,
+            base_production: 7.0,
+            cooldown_time: 2.0,
             max_uses_per_turn: 2,
             sprite_row: 7,
-            activation_behavior: ActivationBehavior::Basic,
+            activation_behavior: ActivationBehavior::Amplifier { boost_factor: 2.0 },
             unlock_requirement: UnlockRequirement::None,
             connection_points: connection_patterns::THREEWAY.to_vec(),
         },
     );
 
-    // Amplifier Mushroom - connects to all cardinal directions
+    // Umberella - all surrounding mushrooms
     defs.insert(
-        MushroomType::Amplifier,
+        MushroomType::Surround,
         MushroomDefinition {
-            name: "Amplifier Mushroom".to_string(),
-            description: "Boosts energy by 50% and forwards to all adjacent mushrooms.".to_string(),
-            base_production: 1.0,
-            cooldown_time: 1.5,
-            max_uses_per_turn: 1,
-            sprite_row: 2,
-            activation_behavior: ActivationBehavior::Amplifier { boost_factor: 1.5 },
-            unlock_requirement: UnlockRequirement::None,
-            connection_points: connection_patterns::CARDINAL.to_vec(),
-        },
-    );
-
-    // Splitter Mushroom - connects to cardinal directions (can be configured for diagonals)
-    defs.insert(
-        MushroomType::Splitter,
-        MushroomDefinition {
-            name: "Splitter Mushroom".to_string(),
-            description:
-                "Splits energy equally to all adjacent mushrooms, creating branching chains."
-                    .to_string(),
-            base_production: 3.0,
+            name: "Umberella".to_string(),
+            description: "Activation: produces 2 spores, then activates all adjacent mushrooms."
+                .to_string(),
+            base_production: 4.0,
             cooldown_time: 3.0,
             max_uses_per_turn: 2,
-            sprite_row: 3,
-            activation_behavior: ActivationBehavior::Basic,
+            sprite_row: 1,
+            activation_behavior: ActivationBehavior::Amplifier { boost_factor: 8.0 },
             unlock_requirement: UnlockRequirement::None,
-            connection_points: connection_patterns::CARDINAL.to_vec(),
+            connection_points: connection_patterns::ALL_DIRECTIONS.to_vec(),
         },
     );
 
-    // Chain Mushroom - single forward connection
+    // Skipper - skips one tile and activates the next
     defs.insert(
-        MushroomType::Chain,
+        MushroomType::Skipper,
         MushroomDefinition {
-            name: "Chain Mushroom".to_string(),
-            description: "Low activation threshold, optimized for creating long reaction chains."
+            name: "Portini".to_string(),
+            description: "Activation: produces 2 spores, then activates a mushroom 2 tiles away."
                 .to_string(),
-            base_production: 5.0,
-            cooldown_time: 0.8,
-            max_uses_per_turn: 5,
-            sprite_row: 4,
+            base_production: 8.0,
+            cooldown_time: 1.0,
+            max_uses_per_turn: 2,
+            sprite_row: 2,
+            activation_behavior: ActivationBehavior::Basic,
+            unlock_requirement: UnlockRequirement::None,
+            connection_points: connection_patterns::SKIP_FORWARD.to_vec(),
+        },
+    );
+
+    // Deleter - deletes a mushroom (currently dummy behaviour)
+    defs.insert(
+        MushroomType::Deleter,
+        MushroomDefinition {
+            name: "Delita".to_string(),
+            description: "Activation: produces 30 spores, but destroys 1 mushroom."
+                .to_string(),
+            base_production: 30.0,
+            cooldown_time: 10.0,
+            max_uses_per_turn: 2,
+            sprite_row: 3,
+            //doesn't actually delete a mushroom because that behaviour isn't implemented
             activation_behavior: ActivationBehavior::Basic,
             unlock_requirement: UnlockRequirement::None,
             connection_points: connection_patterns::FORWARD.to_vec(),
+        },
+    );
+
+    // Bomb - deletes 4 mushrooms (currently dummy behaviour)
+    defs.insert(
+        MushroomType::Bomb,
+        MushroomDefinition {
+            name: "Skullcap".to_string(),
+            description: "Activation: produces 100 spores, but destroys 4 mushrooms."
+                .to_string(),
+            base_production: 100.0,
+            cooldown_time: 10.0,
+            max_uses_per_turn: 2,
+            sprite_row: 4,
+            //doesn't actually delete a mushroom because that behaviour isn't implemented
+            activation_behavior: ActivationBehavior::Basic,
+            unlock_requirement: UnlockRequirement::None,
+            connection_points: connection_patterns::DIAGONAL.to_vec(),
         },
     );
 
@@ -386,8 +415,8 @@ fn initialize_definitions(mut definitions: ResMut<MushroomDefinitions>) {
     defs.insert(
         MushroomType::Burst,
         MushroomDefinition {
-            name: "Burst Mushroom".to_string(),
-            description: "High produces massive spores when triggered."
+            name: "Puffball".to_string(),
+            description: "Activation: produces 50 spores when activated."
                 .to_string(),
             base_production: 50.0,
             cooldown_time: 5.0,
@@ -398,18 +427,86 @@ fn initialize_definitions(mut definitions: ResMut<MushroomDefinitions>) {
             connection_points: vec![], // No connections
         },
     );
+    
+        // Amplifier Mushroom - connects to all cardinal directions
+    defs.insert(
+        MushroomType::Amplifier,
+        MushroomDefinition {
+            name: "Amplicus".to_string(),
+            description: "Boosts energy by 50% and forwards to 1 adjacent mushroom.".to_string(),
+            base_production: 1.0,
+            cooldown_time: 1.5,
+            max_uses_per_turn: 1,
+            sprite_row: 10,
+            activation_behavior: ActivationBehavior::Amplifier { boost_factor: 1.5 },
+            unlock_requirement: UnlockRequirement::None,
+            connection_points: connection_patterns::FORWARD.to_vec(),
+        },
+    );
+
+    
+    // Amplifier Mushroom - connects to all cardinal directions
+    defs.insert(
+        MushroomType::Fourway_amplifier,
+        MushroomDefinition {
+            name: "Enoki".to_string(),
+            description: "Boosts energy by 50% and forwards to 4 adjacent mushrooms.".to_string(),
+            base_production: 1.0,
+            cooldown_time: 1.5,
+            max_uses_per_turn: 1,
+            sprite_row: 16,
+            activation_behavior: ActivationBehavior::Amplifier { boost_factor: 6.0 },
+            unlock_requirement: UnlockRequirement::None,
+            connection_points: connection_patterns::CARDINAL.to_vec(),
+        },
+    );
+
+    // Splitter Mushroom - connects to cardinal directions (can be configured for diagonals)
+    defs.insert(
+        MushroomType::Splitter,
+        MushroomDefinition {
+            name: "Ink Cap".to_string(),
+            description:
+                "Splits energy equally to all adjacent mushrooms, creating branching chains."
+                    .to_string(),
+            base_production: 5.0,
+            cooldown_time: 3.0,
+            max_uses_per_turn: 2,
+            sprite_row: 17,
+            activation_behavior: ActivationBehavior::Basic,
+            unlock_requirement: UnlockRequirement::None,
+            connection_points: connection_patterns::CARDINAL.to_vec(),
+        },
+    );
+
+    // Chain Mushroom - single forward connection
+    defs.insert(
+        MushroomType::Chain,
+        MushroomDefinition {
+            name: "Mumbling Truffle".to_string(),
+            description: "Low activation threshold, optimized for creating long reaction chains."
+                .to_string(),
+            base_production: 5.0,
+            cooldown_time: 0.8,
+            max_uses_per_turn: 5,
+            sprite_row: 14,
+            activation_behavior: ActivationBehavior::Basic,
+            unlock_requirement: UnlockRequirement::None,
+            connection_points: connection_patterns::FORWARD.to_vec(),
+        },
+    );
 
     // Converter Mushroom
     defs.insert(
         MushroomType::Converter,
         MushroomDefinition {
-            name: "Converter Mushroom".to_string(),
+            name: "False Broccoli".to_string(),
             description: "Converts adjacent terrain to fertile soil while forwarding energy."
                 .to_string(),
             base_production: 8.0,
             cooldown_time: 2.5,
             max_uses_per_turn: 3,
-            sprite_row: 6,
+            sprite_row: 18,
             activation_behavior: ActivationBehavior::Converter {
                 convert_to: TileType::Fertile,
             },
