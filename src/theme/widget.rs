@@ -133,3 +133,26 @@ where
         })),
     )
 }
+
+/// A simple button with text and an action defined as an [`Observer`]. The button's layout is provided by `button_bundle`.
+fn image<E, B, M, I>(
+    handle: Handle<Image>,
+) -> impl Bundle
+where
+    E: Event,
+    B: Bundle,
+    I: IntoObserverSystem<E, B, M>,
+{
+    (
+        Name::new("UI_image"),
+        Node::default(),
+        Children::spawn(SpawnWith(|parent: &mut ChildSpawner| {
+            parent
+                .spawn((
+                    Name::new("Image Inner"),
+                    Pickable::IGNORE,
+                    ImageNode::new(handle)
+                ));
+        })),
+    )
+}

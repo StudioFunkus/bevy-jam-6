@@ -2,13 +2,13 @@
 
 use bevy::prelude::*;
 
-use crate::{asset_tracking::ResourceHandles, menus::Menu, screens::Screen, theme::widget};
+use crate::{asset_tracking::ResourceHandles, menus::Menu, screens::{assets::ScreenAssets, Screen}, theme::widget};
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(OnEnter(Menu::Main), spawn_main_menu);
 }
 
-fn spawn_main_menu(mut commands: Commands) {
+fn spawn_main_menu(mut commands: Commands,screen_assets: Res<ScreenAssets>) {
     commands.spawn((
         widget::ui_root("Main Menu"),
         GlobalZIndex(2),
@@ -19,6 +19,7 @@ fn spawn_main_menu(mut commands: Commands) {
             widget::button("Settings", open_settings_menu),
             widget::button("Credits", open_credits_menu),
             widget::button("Exit", exit_app),
+            widget::image(screen_assets.wizard.clone()),
         ],
         #[cfg(target_family = "wasm")]
         children![

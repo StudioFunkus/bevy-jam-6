@@ -14,6 +14,8 @@ pub(super) fn plugin(app: &mut App) {
 pub struct ScreenAssets {
     #[dependency]
     pub music: Handle<AudioSource>,
+    #[dependency]
+    pub wizard: Handle<Image>,
 }
 
 impl FromWorld for ScreenAssets {
@@ -21,9 +23,12 @@ impl FromWorld for ScreenAssets {
         let music_handle = world
             .resource::<AssetServer>()
             .load("audio/music/title.ogg");
-
+        let image_handle = world
+            .resource::<AssetServer>()
+            .load("images/THE_WIZARD.png");
         Self {
             music: music_handle,
+            wizard: image_handle,
         }
     }
 }

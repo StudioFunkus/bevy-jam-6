@@ -1,6 +1,6 @@
 //! The game's main screen states and transitions between them.
 
-mod assets;
+pub(crate) mod assets;
 mod gameplay;
 mod loading;
 mod splash;
