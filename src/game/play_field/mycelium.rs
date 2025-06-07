@@ -27,13 +27,14 @@ pub fn build_playfield_connections(
         (Entity, &GridPosition, &Mushroom, Option<&MushroomDirection>),
         Changed<GridPosition>,
     >,
+    mut deleted_mushrooms: RemovedComponents<Mushroom>,
     all_mushrooms: Query<(Entity, &GridPosition, &Mushroom, Option<&MushroomDirection>)>,
     mut game_state: ResMut<GameState>,
     definitions: Res<MushroomDefinitions>,
     mut builder: Local<ConnectionBuilder>,
 ) {
     // Check if we need to rebuild connections
-    let needs_rebuild = !new_mushrooms.is_empty() || !changed_mushrooms.is_empty() || builder.dirty;
+    let needs_rebuild = !new_mushrooms.is_empty() || !changed_mushrooms.is_empty() || deleted_mushrooms.read().next().is_some() || builder.dirty;
 
     if !needs_rebuild {
         return;

@@ -285,6 +285,7 @@ fn spawn_mushroom(
         FaceCamera,
         NotShadowReceiver,
         StateScoped(LevelState::Playing),
+        Pickable::IGNORE,
     ));
 
     let entity = entity_commands.id();
