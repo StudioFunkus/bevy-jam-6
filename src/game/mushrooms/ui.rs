@@ -104,8 +104,7 @@ pub fn spawn_spore_popup(
         Mesh3d::default(),
         MeshMaterial3d(mat.clone()),
         StateScoped(LevelState::Playing),
-        Transform::from_xyz(world_pos.x, 1.0, -world_pos.z)
-            .with_scale(Vec3::splat(0.012)),
+        Transform::from_xyz(world_pos.x, 1.0, -world_pos.z).with_scale(Vec3::splat(0.012)),
     ));
 }
 

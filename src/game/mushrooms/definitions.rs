@@ -288,8 +288,7 @@ fn initialize_definitions(mut definitions: ResMut<MushroomDefinitions>) {
         MushroomType::Burst,
         MushroomDefinition {
             name: "Burst Mushroom".to_string(),
-            description: "High produces massive spores when triggered."
-                .to_string(),
+            description: "High produces massive spores when triggered.".to_string(),
             base_production: 50.0,
             cooldown_time: 5.0,
             max_uses_per_turn: 1,

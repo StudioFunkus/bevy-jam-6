@@ -2,7 +2,11 @@
 
 use bevy::prelude::*;
 
-use crate::{audio::music, menus::Menu, screens::{assets::ScreenAssets, Screen}};
+use crate::{
+    audio::music,
+    menus::Menu,
+    screens::{Screen, assets::ScreenAssets},
+};
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(OnEnter(Screen::Title), (open_main_menu, start_title_music));
@@ -17,7 +21,7 @@ fn close_menu(mut next_menu: ResMut<NextState<Menu>>) {
     next_menu.set(Menu::None);
 }
 // Spawn background music
-fn start_title_music(mut commands: Commands,screen_assets: Res<ScreenAssets>) {
+fn start_title_music(mut commands: Commands, screen_assets: Res<ScreenAssets>) {
     commands.spawn((
         Name::new("Gameplay Music"),
         StateScoped(Screen::Title),

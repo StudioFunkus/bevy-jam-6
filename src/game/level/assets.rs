@@ -20,6 +20,8 @@ pub struct LevelAssets {
     pub tile_texture: Handle<Image>,
     #[dependency]
     pub background_model_1: Handle<Scene>,
+    #[dependency]
+    pub sfx_activate: Handle<AudioSource>,
 }
 
 impl FromWorld for LevelAssets {
@@ -27,14 +29,20 @@ impl FromWorld for LevelAssets {
         let music_handle = world
             .resource::<AssetServer>()
             .load("audio/music/level1.ogg");
+        let sfx_activate_handle = world
+            .resource::<AssetServer>()
+            .load("audio/sound_effects/activate.ogg");
         let mushroom_texture_handle = world
             .resource::<AssetServer>()
             .load("textures/mushrooms.png");
         let tile_texture_handle = world.resource::<AssetServer>().load("textures/tiles.png");
-        let background_model_1_handle = world.resource::<AssetServer>().load("models/background1.gltf#Scene0");
-        
+        let background_model_1_handle = world
+            .resource::<AssetServer>()
+            .load("models/background1.gltf#Scene0");
+
         Self {
             music: music_handle,
+            sfx_activate: sfx_activate_handle,
             mushroom_texture: mushroom_texture_handle,
             tile_texture: tile_texture_handle,
             background_model_1: background_model_1_handle,
