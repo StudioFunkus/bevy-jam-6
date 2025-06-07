@@ -1,7 +1,7 @@
 //! Level spawning systems
 
 use super::super::play_field::events::on_grid_cell_click;
-use bevy::{pbr::ExtendedMaterial, prelude::*};
+use bevy::{pbr::ExtendedMaterial, prelude::*, render::storage::ShaderStorageBuffer};
 
 use crate::{
     audio::{Music, music},
@@ -39,6 +39,7 @@ pub fn spawn_level(
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut field_materials: ResMut<Assets<ExtendedMaterial<StandardMaterial, FieldGroundExtension>>>,
     mut images: ResMut<Assets<Image>>,
+    mut buffers: ResMut<Assets<ShaderStorageBuffer>>,
     music_query: Query<&AudioPlayer, With<Music>>,
 ) {
     // Get level definition
@@ -61,6 +62,7 @@ pub fn spawn_level(
         &mut materials,
         &mut field_materials,
         &mut images,
+        &mut buffers,
         &level_assets,
     );
 
@@ -141,6 +143,7 @@ pub fn spawn_game_grid(
     materials: &mut ResMut<Assets<StandardMaterial>>,
     field_materials: &mut ResMut<Assets<ExtendedMaterial<StandardMaterial, FieldGroundExtension>>>,
     images: &mut ResMut<Assets<Image>>,
+    buffers: &mut ResMut<Assets<ShaderStorageBuffer>>,
     level_assets: &Res<LevelAssets>,
 ) {
     // Spawn the custom field ground that handles tile and mycelium rendering
@@ -149,6 +152,7 @@ pub fn spawn_game_grid(
         meshes,
         field_materials,
         images,
+        buffers,
         level_assets,
         &game_state.play_field,
     );
