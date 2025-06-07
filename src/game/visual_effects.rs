@@ -1,6 +1,6 @@
 //! Visual effects and feedback for game interactions
 
-use crate::game::mushrooms::{Mushroom, MushroomDefinitions};
+use crate::game::mushrooms::{Mushroom, MushroomDefinitions, MushroomSprite};
 use bevy::prelude::*;
 use bevy_sprite3d::Sprite3d;
 
@@ -50,6 +50,7 @@ fn face_camera(
         let mut target = camera_transform.translation;
         target.y = transform.translation.y;
         transform.look_at(target, Vec3::Y);
+        transform.rotate_y(std::f32::consts::PI); // 180° rotation so our +z faces the camera
     }
 }
 
@@ -57,16 +58,22 @@ fn face_camera(
 fn update_mushroom_sprite_direction(
     cam_transform: Query<&Transform, With<Camera>>,
     definitions: Res<MushroomDefinitions>,
-    mut mushrooms: Query<
-        (&mut Transform, &mut Sprite3d, &Mushroom),
-        (With<FaceCamera>, Without<Camera>),
+    mut sprites: Query<
+        (&mut Transform, &mut Sprite3d, &ChildOf),
+        (With<MushroomSprite>, With<FaceCamera>, Without<Camera>),
     >,
+    mushrooms: Query<&Mushroom>,
 ) {
     let Ok(camera_transform) = cam_transform.single() else {
         return;
     };
 
-    for (mut transform, mut sprite, mushroom) in mushrooms.iter_mut() {
+    for (mut transform, mut sprite, child_of) in sprites.iter_mut() {
+        // Get the parent mushroom component
+        let Ok(mushroom) = mushrooms.get(child_of.parent()) else {
+            continue;
+        };
+
         // Get camera position and adjust Y to match mushroom's height
         // This ensures we're only considering horizontal direction, not vertical
         let mut target = camera_transform.translation;

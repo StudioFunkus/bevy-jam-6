@@ -12,6 +12,11 @@ use crate::game::{
 };
 
 pub(super) fn plugin(app: &mut App) {
+    app.add_systems(
+        Update,
+        (animate_spore_popups,).run_if(in_state(LevelState::Playing)),
+    );
+
     app.add_observer(spawn_spore_popup);
     app.add_observer(spawn_uses_display);
 }
@@ -62,23 +67,18 @@ fn spawn_uses_display(
         unlit: true,
         ..Default::default()
     });
+
     // Spawn billboard text as child of mushroom
     commands.spawn((
         Name::new("Uses Display Billboard"),
         Text3d::new(format!("{remaining_uses}")),
         Mesh3d::default(),
-        Text3dStyling {
-            size: 32.,
-            color: Srgba::new(0., 1., 1., 1.),
-            align: TextAlign::Center,
-            anchor: TextAnchor::CENTER_LEFT,
-            ..Default::default()
-        },
-        Text3dBounds { width: 400. },
+        Transform::from_xyz(-0.25, 0.5, 0.0).with_scale(Vec3::splat(0.012)),
         MeshMaterial3d(mat.clone()),
         StateScoped(LevelState::Playing),
         UsesDisplay,
         FaceCamera,
+        ChildOf(entity),
     ));
 }
 
@@ -103,14 +103,18 @@ pub fn spawn_spore_popup(
         Text3d::new(format!("+{:.0}", trigger.event().production)),
         Mesh3d::default(),
         MeshMaterial3d(mat.clone()),
+        Transform::from_xyz(world_pos.x, 1.0, -world_pos.z).with_scale(Vec3::splat(0.012)),
+        FaceCamera,
         StateScoped(LevelState::Playing),
-        Transform::from_xyz(world_pos.x, 1.0, -world_pos.z)
-            .with_scale(Vec3::splat(0.012)),
+        SporePopup {
+            timer: Timer::from_seconds(2.0, TimerMode::Once),
+            start_y: 1.0,
+        },
     ));
 }
 
 /// Animate spore popups - float up
-fn _animate_spore_popups(
+fn animate_spore_popups(
     mut commands: Commands,
     time: Res<Time>,
     mut popups: Query<(Entity, &mut Transform, &mut SporePopup)>,
