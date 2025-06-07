@@ -1,15 +1,20 @@
 //! Level spawning systems
 
-use super::super::grid::on_grid_cell_click;
-use bevy::{pbr::NotShadowReceiver, prelude::*};
+use super::super::play_field::events::on_grid_cell_click;
+use bevy::{pbr::ExtendedMaterial, prelude::*};
 
 use crate::{
     audio::music,
     game::{
         game_flow::{CurrentLevel, LevelState},
-        grid::{GridCell, GridConfig, GridPosition},
         level::definitions::LevelDefinitions,
-        mushrooms::events::SpawnMushroomEvent,
+        mushrooms::{MushroomDefinitions, events::SpawnMushroomEvent},
+        play_field::{
+            CELL_SIZE, GridPosition,
+            events::GridCell,
+            field_renderer::{FieldGroundExtension, spawn_field_ground},
+        },
+        resources::GameState,
     },
     screens::Screen,
 };
@@ -26,11 +31,14 @@ pub(super) fn plugin(app: &mut App) {
 pub fn spawn_level(
     mut commands: Commands,
     level_assets: Res<LevelAssets>,
-    grid_config: Res<GridConfig>,
+    game_state: Res<GameState>,
     current_level: Res<CurrentLevel>,
     level_definitions: Res<LevelDefinitions>,
+    mushroom_definitions: Res<MushroomDefinitions>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
+    mut field_materials: ResMut<Assets<ExtendedMaterial<StandardMaterial, FieldGroundExtension>>>,
+    mut images: ResMut<Assets<Image>>,
 ) {
     // Get level definition
     let level_def = level_definitions
@@ -45,18 +53,35 @@ pub fn spawn_level(
     info!("Spawning level: {}", level_name);
 
     // Spawn the game grid with current configuration
-    spawn_game_grid(&mut commands, &grid_config, &mut meshes, &mut materials);
+    spawn_game_grid(
+        &mut commands,
+        &game_state,
+        &mut meshes,
+        &mut materials,
+        &mut field_materials,
+        &mut images,
+        &level_assets,
+    );
 
     // Spawn starting mushrooms if any are defined
     if let Some(level_def) = level_def {
+        commands.spawn((
+            Name::new("Level Background"),
+            SceneRoot(level_assets.background_model_1.clone()),
+            Transform::from_xyz(8.0, -6.1, 4.5), // Model isn't centered
+            StateScoped(LevelState::Playing),
+        ));
+
         for starting_mushroom in &level_def.starting_mushrooms {
             let position = GridPosition::new(starting_mushroom.x, starting_mushroom.y);
 
             // Validate position is within bounds
-            if position.in_bounds(&grid_config) {
+            if game_state.play_field.contains(position) {
                 info!(
                     "Spawning starting {} at ({}, {})",
-                    starting_mushroom.mushroom_type.name(),
+                    mushroom_definitions
+                        .get(starting_mushroom.mushroom_type)
+                        .map_or("Unknown", |d| d.name.as_str()),
                     starting_mushroom.x,
                     starting_mushroom.y
                 );
@@ -64,11 +89,15 @@ pub fn spawn_level(
                 commands.trigger(SpawnMushroomEvent {
                     position,
                     mushroom_type: starting_mushroom.mushroom_type,
+                    direction: None,
                 });
             } else {
                 warn!(
                     "Starting mushroom position ({}, {}) is out of bounds for {}x{} grid",
-                    starting_mushroom.x, starting_mushroom.y, grid_config.width, grid_config.height
+                    starting_mushroom.x,
+                    starting_mushroom.y,
+                    game_state.play_field.width,
+                    game_state.play_field.height
                 );
             }
         }
@@ -92,21 +121,23 @@ pub struct GameGrid;
 #[tracing::instrument(name = "Spawn game grid", skip_all)]
 pub fn spawn_game_grid(
     commands: &mut Commands,
-    config: &GridConfig,
+    game_state: &GameState,
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<StandardMaterial>>,
+    field_materials: &mut ResMut<Assets<ExtendedMaterial<StandardMaterial, FieldGroundExtension>>>,
+    images: &mut ResMut<Assets<Image>>,
+    level_assets: &Res<LevelAssets>,
 ) {
-    commands.spawn((
-        Name::new("Ground Plane"),
-        Mesh3d(meshes.add(Plane3d::default().mesh().size(50.0, 50.0).subdivisions(10))),
-        MeshMaterial3d(materials.add(StandardMaterial {
-            base_color: Color::srgb(0.2, 0.3, 0.2),
-            ..default()
-        })),
-        Transform::from_xyz(0.0, -0.5, 0.0),
-        NotShadowReceiver,
-        StateScoped(LevelState::Playing),
-    ));
+    // Spawn the custom field ground that handles tile and mycelium rendering
+    spawn_field_ground(
+        commands,
+        meshes,
+        field_materials,
+        images,
+        level_assets,
+        &game_state.play_field,
+    );
+
     let grid_entity = commands
         .spawn((
             Name::new("Game Grid"),
@@ -119,22 +150,24 @@ pub fn spawn_game_grid(
 
     // Spawn grid cells
     let mut cell_entities = Vec::new();
-    for y in 0..config.height {
-        for x in 0..config.width {
+    for y in 0..game_state.play_field.height {
+        for x in 0..game_state.play_field.width {
             let position = GridPosition::new(x, y);
-            let world_pos = position.to_world(config);
+            let world_pos = position.to_world_in(&game_state.play_field);
+
             let cell = commands
                 .spawn((
                     Name::new(format!("Grid Cell ({x}, {y})")),
                     GridCell { position },
-                    Mesh3d(meshes.add(Rectangle::new(config.cell_size, config.cell_size))),
+                    // Invisible collider for click detection only
+                    Mesh3d(meshes.add(Rectangle::new(CELL_SIZE, CELL_SIZE))),
                     MeshMaterial3d(materials.add(StandardMaterial {
-                        base_color: Color::srgba(0.2, 0.2, 0.2, 0.5),
-                        alpha_mode: AlphaMode::Opaque,
-                        unlit: false,
+                        base_color: Color::NONE, // Fully transparent
+                        alpha_mode: AlphaMode::Blend,
+                        unlit: true,
                         ..default()
                     })),
-                    Transform::from_xyz(world_pos.x, 0.0, -world_pos.y)
+                    Transform::from_xyz(world_pos.x, 0.1, -world_pos.y) // Slightly above ground
                         .with_rotation(Quat::from_rotation_x(-std::f32::consts::FRAC_PI_2)),
                 ))
                 .observe(on_grid_cell_click)
@@ -143,24 +176,6 @@ pub fn spawn_game_grid(
         }
     }
 
-    // Spawn grid background
-    let grid_width = config.width as f32 * (config.cell_size + config.cell_spacing);
-    let grid_height = config.height as f32 * (config.cell_size + config.cell_spacing);
-    let background = commands
-        .spawn((
-            Name::new("Grid Background"),
-            Mesh3d(meshes.add(Rectangle::new(grid_width + 0.2, grid_height + 0.2))),
-            MeshMaterial3d(materials.add(StandardMaterial {
-                base_color: Color::srgb(0.1, 0.1, 0.1),
-                unlit: false,
-                ..default()
-            })),
-            Transform::from_xyz(0.0, -0.01, 0.0)
-                .with_rotation(Quat::from_rotation_x(-std::f32::consts::FRAC_PI_2)),
-        ))
-        .id();
-
     // Add all children to grid
     commands.entity(grid_entity).add_children(&cell_entities);
-    commands.entity(grid_entity).add_child(background);
 }

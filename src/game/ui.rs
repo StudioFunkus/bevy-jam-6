@@ -1,17 +1,17 @@
 //! Game UI for displaying state and controls
 
-use bevy::{ecs::spawn::SpawnWith, picking::prelude::*, prelude::*};
+use bevy::{ecs::spawn::SpawnWith, prelude::*};
 
 use crate::{
     game::{
         game_flow::{CurrentLevel, LevelState, TurnData, TurnPhase},
-        resources::{GameState, UnlockedMushrooms},
+        level::definitions,
+        mushrooms::{ChainManager, MushroomDefinitions, MushroomType, SelectedMushroomType},
+        resources::GameState,
     },
     screens::Screen,
     theme::{interaction::InteractionPalette, palette as ui_palette},
 };
-
-use super::mushrooms::{MushroomType, resources::SelectedMushroomType};
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(OnEnter(Screen::Gameplay), spawn_game_ui);
@@ -23,6 +23,7 @@ pub(super) fn plugin(app: &mut App) {
             update_turn_phase_display,
             update_level_progress_display,
             update_phase_button,
+            update_chain_info,
         )
             .run_if(in_state(Screen::Gameplay)),
     );
@@ -54,55 +55,72 @@ struct MushroomButton {
     mushroom_type: MushroomType,
 }
 
-fn spawn_game_ui(mut commands: Commands) {
+/// Marker for chain information display
+#[derive(Component)]
+struct ChainInfoDisplay;
+
+fn spawn_game_ui(mut commands: Commands, definitions: Res<MushroomDefinitions>) {
     // Top bar for game stats
-    commands.spawn((
-        Name::new("Game UI - Top Bar"),
-        Node {
-            position_type: PositionType::Absolute,
-            top: Val::Px(10.0),
-            left: Val::Px(10.0),
-            right: Val::Px(10.0),
-            padding: UiRect::all(Val::Px(20.0)),
-            flex_direction: FlexDirection::Column,
-            row_gap: Val::Px(10.0),
-            ..default()
-        },
-        BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.8)),
-        StateScoped(Screen::Gameplay),
-        children![
-            (
+    commands
+        .spawn((
+            Name::new("Game UI - Top Bar"),
+            Node {
+                position_type: PositionType::Absolute,
+                top: Val::Px(10.0),
+                left: Val::Px(10.0),
+                right: Val::Px(10.0),
+                padding: UiRect::all(Val::Px(20.0)),
+                flex_direction: FlexDirection::Column,
+                row_gap: Val::Px(10.0),
+                ..default()
+            },
+            BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.8)),
+            StateScoped(Screen::Gameplay),
+        ))
+        .with_children(|parent| {
+            parent.spawn((
                 Name::new("Spore Count"),
                 Text::new("Spores: 0"),
                 TextFont::from_font_size(32.0),
                 TextColor(ui_palette::HEADER_TEXT),
                 SporeDisplay,
-            ),
-            (
+            ));
+
+            parent.spawn((
                 Name::new("Stats"),
                 Text::new("Activations: 0 | Chains: 0"),
                 TextFont::from_font_size(20.0),
                 TextColor(ui_palette::LABEL_TEXT),
                 StatsDisplay,
-            ),
+            ));
+
             // Add turn phase display
-            (
+            parent.spawn((
                 Name::new("Turn Phase"),
                 Text::new("Phase: Loading..."),
                 TextFont::from_font_size(24.0),
                 TextColor(Color::srgb(0.8, 0.8, 0.2)),
                 TurnPhaseDisplay,
-            ),
+            ));
+
             // Add level progress display
-            (
+            parent.spawn((
                 Name::new("Level Progress"),
                 Text::new("Level 1 - Turn 1/5 - Goal: 0/100"),
                 TextFont::from_font_size(18.0),
                 TextColor(ui_palette::LABEL_TEXT),
                 LevelProgressDisplay,
-            ),
-        ],
-    ));
+            ));
+
+            // Add chain info display
+            parent.spawn((
+                Name::new("Chain Info"),
+                Text::new(""),
+                TextFont::from_font_size(16.0),
+                TextColor(Color::srgb(0.4, 0.8, 1.0)),
+                ChainInfoDisplay,
+            ));
+        });
 
     // Add phase control button
     commands
@@ -129,53 +147,71 @@ fn spawn_game_ui(mut commands: Commands) {
                 hovered: Color::srgb(0.3, 0.6, 0.3),
                 pressed: Color::srgb(0.4, 0.7, 0.4),
             },
-            children![(
+        ))
+        .with_children(|parent| {
+            parent.spawn((
                 Name::new("Button Text"),
                 Text::new("Next Phase (Space)"),
                 TextFont::from_font_size(20.0),
                 TextColor(Color::WHITE),
                 Pickable::IGNORE,
-            )],
-        ))
+            ));
+        })
         .observe(advance_phase_on_click);
 
     // Side panel for mushroom selection
-    commands.spawn((
-        Name::new("Game UI - Side Panel"),
-        Node {
-            position_type: PositionType::Absolute,
-            top: Val::Px(100.0),
-            right: Val::Px(10.0),
-            width: Val::Px(300.0),
-            padding: UiRect::all(Val::Px(20.0)),
-            flex_direction: FlexDirection::Column,
-            row_gap: Val::Px(15.0),
-            ..default()
-        },
-        BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.8)),
-        StateScoped(Screen::Gameplay),
-        children![
-            (
-                Name::new("Mushroom Selection Header"),
-                Text::new("Mushrooms"),
-                TextFont::from_font_size(28.0),
-                TextColor(ui_palette::HEADER_TEXT),
-            ),
-            (
-                Name::new("Instructions"),
-                Text::new("Click mushrooms to activate them!\nShift+Click to rotate directional mushrooms\nRight-click to delete (50% refund)"),
-                TextFont::from_font_size(16.0),
-                TextColor(ui_palette::LABEL_TEXT),
-            ),
-            spawn_mushroom_button(MushroomType::Basic),
-            spawn_mushroom_button(MushroomType::Pulse),
-        ],
-    ));
+    commands
+        .spawn((
+            Name::new("Game UI - Side Panel"),
+            Node {
+                position_type: PositionType::Absolute,
+                top: Val::Px(100.0),
+                right: Val::Px(10.0),
+                width: Val::Px(300.0),
+                padding: UiRect::all(Val::Px(20.0)),
+                flex_direction: FlexDirection::Column,
+                row_gap: Val::Px(15.0),
+                ..default()
+            },
+            BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.8)),
+            StateScoped(Screen::Gameplay),
+            children![
+                (
+                    Name::new("Mushroom Selection Header"),
+                    Text::new("Mushrooms"),
+                    TextFont::from_font_size(28.0),
+                    TextColor(ui_palette::HEADER_TEXT),
+                ),
+                (
+                    Name::new("Instructions"),
+                    Text::new("Hover to preview placement\nPress R to rotate preview\nClick to place mushroom\nRight-click to delete"),
+                    TextFont::from_font_size(16.0),
+                    TextColor(ui_palette::LABEL_TEXT),
+                ),
+                spawn_mushroom_button(MushroomType::Test, &definitions),
+                spawn_mushroom_button(MushroomType::Basic, &definitions),
+                spawn_mushroom_button(MushroomType::Pulse, &definitions),
+                spawn_mushroom_button(MushroomType::Amplifier, &definitions),
+                spawn_mushroom_button(MushroomType::Splitter, &definitions),
+                spawn_mushroom_button(MushroomType::Chain, &definitions),
+                spawn_mushroom_button(MushroomType::Burst, &definitions),
+                spawn_mushroom_button(MushroomType::Converter, &definitions),
+                spawn_mushroom_button(MushroomType::Knight, &definitions),
+            ],
+        ));
 }
 
-fn spawn_mushroom_button(mushroom_type: MushroomType) -> impl Bundle {
+fn spawn_mushroom_button(
+    mushroom_type: MushroomType,
+    definitions: &MushroomDefinitions,
+) -> impl Bundle {
     (
-        Name::new(format!("{} Button", mushroom_type.name())),
+        Name::new(format!(
+            "{} Button",
+            definitions
+                .get(mushroom_type)
+                .map_or("Unknown", |d| d.name.as_str())
+        )),
         Node::default(),
         Children::spawn(SpawnWith(move |parent: &mut ChildSpawner| {
             parent
@@ -191,7 +227,7 @@ fn spawn_mushroom_button(mushroom_type: MushroomType) -> impl Bundle {
                         ..default()
                     },
                     BackgroundColor(Color::srgba(0.3, 0.3, 0.3, 0.8)),
-                    BorderColor(mushroom_type.color()),
+                    BorderColor(Color::srgba(0.5, 0.5, 0.5, 0.8)),
                     BorderRadius::all(Val::Px(5.0)),
                     MushroomButton { mushroom_type },
                     InteractionPalette {
@@ -199,34 +235,36 @@ fn spawn_mushroom_button(mushroom_type: MushroomType) -> impl Bundle {
                         hovered: Color::srgba(0.4, 0.4, 0.4, 0.9),
                         pressed: Color::srgba(0.5, 0.5, 0.5, 1.0),
                     },
-                    children![
-                        (
-                            Name::new("Mushroom Name"),
-                            Text::new(mushroom_type.name()),
-                            TextFont::from_font_size(20.0),
-                            TextColor(Color::WHITE),
-                            Pickable::IGNORE,
-                        ),
-                        (
-                            Name::new("Mushroom Cost"),
-                            Text::new(format!("Cost: {:.0} spores", mushroom_type.cost())),
-                            TextFont::from_font_size(16.0),
-                            TextColor(ui_palette::LABEL_TEXT),
-                            Pickable::IGNORE,
-                        ),
-                        (
-                            Name::new("Mushroom Effect"),
-                            Text::new(mushroom_type.description()),
-                            TextFont::from_font_size(14.0),
-                            TextColor(Color::srgba(0.8, 0.8, 0.8, 0.8)),
-                            Pickable::IGNORE,
-                        ),
-                    ],
                 ))
+                .with_children(|parent| {
+                    parent.spawn((
+                        Name::new("Mushroom Name"),
+                        Text::new("Loading..."),
+                        TextFont::from_font_size(20.0),
+                        TextColor(Color::WHITE),
+                        Pickable::IGNORE,
+                    ));
+
+                    parent.spawn((
+                        Name::new("Mushroom Effect"),
+                        Text::new(""),
+                        TextFont::from_font_size(14.0),
+                        TextColor(Color::srgba(0.8, 0.8, 0.8, 0.8)),
+                        Pickable::IGNORE,
+                    ));
+
+                    parent.spawn((
+                        Name::new("Mushroom Stats"),
+                        Text::new(""),
+                        TextFont::from_font_size(12.0),
+                        TextColor(Color::srgba(0.6, 0.6, 0.6, 0.8)),
+                        Pickable::IGNORE,
+                    ));
+                })
                 .observe(
                     move |_: Trigger<Pointer<Click>>,
                           mut selected: ResMut<SelectedMushroomType>| {
-                        println!("Selected mushroom: {}", mushroom_type.name());
+                        println!("Selected mushroom: {:?}", mushroom_type);
                         selected.mushroom_type = mushroom_type;
                     },
                 );
@@ -289,7 +327,7 @@ fn update_phase_button(
             Visibility::Hidden
         };
 
-        // Update button text based on phase - find the text child
+        // Update button text based on phase
         if let Some(&text_entity) = children.first() {
             if let Ok(mut text) = texts.get_mut(text_entity) {
                 if let Some(ref phase) = current_phase {
@@ -326,7 +364,6 @@ fn advance_phase_on_click(
     }
 }
 
-// Add level progress update function:
 fn update_level_progress_display(
     current_level: Res<CurrentLevel>,
     turn_data: Res<TurnData>,
@@ -335,7 +372,7 @@ fn update_level_progress_display(
     if let Ok(mut text) = progress_display.single_mut() {
         text.0 = format!(
             "Level {} - Turn {}/{} - Goal: {:.0}/{:.0} spores",
-            current_level.level_index,
+            current_level.level_index + 1,
             turn_data.current_turn,
             current_level.max_turns,
             current_level.total_spores_earned,
@@ -365,7 +402,8 @@ fn update_spore_display(
 
 fn update_mushroom_buttons(
     game_state: Res<GameState>,
-    unlocked: Res<UnlockedMushrooms>,
+    definitions: Res<MushroomDefinitions>,
+    current_level: Res<CurrentLevel>,
     selected: Res<SelectedMushroomType>,
     mut buttons: Query<(
         &MushroomButton,
@@ -373,14 +411,15 @@ fn update_mushroom_buttons(
         &mut Visibility,
         &Children,
     )>,
-    mut text_colors: Query<&mut TextColor>,
+    mut texts: Query<&mut Text>,
 ) {
     for (button, mut border_color, mut visibility, children) in &mut buttons {
+        // Get mushroom definition
+        let definition = definitions.get(button.mushroom_type);
+
         // Check if unlocked
-        let is_unlocked = match button.mushroom_type {
-            MushroomType::Basic => unlocked.button,
-            MushroomType::Pulse => unlocked.pulse,
-        };
+        let is_unlocked =
+            definitions.is_unlocked(button.mushroom_type, &game_state, current_level.level_index);
 
         // Update visibility
         *visibility = if is_unlocked {
@@ -393,18 +432,61 @@ fn update_mushroom_buttons(
         if selected.mushroom_type == button.mushroom_type {
             border_color.0 = Color::WHITE;
         } else {
-            border_color.0 = button.mushroom_type.color();
+            border_color.0 = Color::srgba(0.5, 0.5, 0.5, 0.8);
         }
 
-        // Update cost text color based on affordability
-        if let Some(&cost_entity) = children.get(1) {
-            if let Ok(mut text_color) = text_colors.get_mut(cost_entity) {
-                let can_afford = game_state.spores >= button.mushroom_type.cost();
-                text_color.0 = if can_afford {
-                    Color::srgb(0.2, 0.8, 0.2)
+        // Update text content if we have a definition
+        if let Some(def) = definition {
+            // Update name (first child)
+            if let Some(name_entity) = children.iter().nth(0) {
+                if let Ok(mut text) = texts.get_mut(name_entity) {
+                    text.0 = def.name.clone();
+                }
+            }
+
+            // Update description (second child)
+            if let Some(desc_entity) = children.iter().nth(1) {
+                if let Ok(mut text) = texts.get_mut(desc_entity) {
+                    text.0 = def.description.clone();
+                }
+            }
+
+            // Update stats (third child)
+            if let Some(stats_entity) = children.iter().nth(2) {
+                if let Ok(mut text) = texts.get_mut(stats_entity) {
+                    text.0 = format!(
+                        "Production: {} | Uses: {}/turn",
+                        def.base_production, def.max_uses_per_turn
+                    );
+                }
+            }
+        }
+    }
+}
+
+fn update_chain_info(
+    chain_manager: Res<ChainManager>,
+    current_phase: Option<Res<State<TurnPhase>>>,
+    mut chain_display: Query<&mut Text, With<ChainInfoDisplay>>,
+) {
+    if let Ok(mut text) = chain_display.single_mut() {
+        if let Some(phase) = current_phase {
+            if *phase.get() == TurnPhase::Chain {
+                if chain_manager.chain_started_this_turn {
+                    let _active_chains = chain_manager.chains.iter().filter(|c| c.active).count();
+                    let total_spores: f64 =
+                        chain_manager.chains.iter().map(|c| c.total_spores).sum();
+
+                    text.0 = format!(
+                        "Chain Active! {} activations queued | {:.0} spores generated",
+                        chain_manager.activation_queue.len(),
+                        total_spores
+                    );
                 } else {
-                    Color::srgb(0.8, 0.2, 0.2)
-                };
+                    text.0 = "Click a mushroom to start a chain reaction!".to_string();
+                }
+            } else {
+                text.0 = String::new();
             }
         }
     }
