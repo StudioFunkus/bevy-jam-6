@@ -11,3 +11,7 @@ pub enum Dragged {
     Active,
     Released,
 }
+
+/// A marker component to indicate that a card is being hovered
+#[derive(Component)]
+pub struct Hovered;

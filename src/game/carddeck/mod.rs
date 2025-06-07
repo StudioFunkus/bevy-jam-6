@@ -1,5 +1,4 @@
 use bevy::prelude::*;
-use bevy_tweening::TweeningPlugin;
 use card::create_card_definitions;
 use deck::create_deck;
 use hand::draw_n;
@@ -11,10 +10,11 @@ pub mod constants;
 mod deck;
 pub(crate) mod events;
 mod hand;
+mod managers;
 mod markers;
 
 pub(super) fn plugin(app: &mut App) {
-    app.add_plugins((hand::plugin, card::plugin, deck::plugin, TweeningPlugin));
+    app.add_plugins((hand::plugin, card::plugin, deck::plugin, managers::plugin));
 
     app.add_systems(
         OnEnter(Screen::Gameplay),
