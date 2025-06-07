@@ -65,6 +65,13 @@ pub fn spawn_level(
 
     // Spawn starting mushrooms if any are defined
     if let Some(level_def) = level_def {
+        commands.spawn((
+            Name::new("Level Background"),
+            SceneRoot(level_assets.background_model_1.clone()),
+            Transform::from_xyz(8.0, -6.1, 4.5), // Model isn't centered
+            StateScoped(LevelState::Playing),
+        ));
+
         for starting_mushroom in &level_def.starting_mushrooms {
             let position = GridPosition::new(starting_mushroom.x, starting_mushroom.y);
 
