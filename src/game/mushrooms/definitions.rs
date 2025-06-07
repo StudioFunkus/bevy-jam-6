@@ -72,7 +72,7 @@ pub struct MushroomDefinition {
     pub cooldown_time: f32,
     /// Maximum activations per turn
     pub max_uses_per_turn: u32,
-    /// Minimum energy threshold to activate
+    /// Row in the sprite sheet for this mushroom
     pub sprite_row: usize,
     /// Activation behavior
     pub activation_behavior: ActivationBehavior,
