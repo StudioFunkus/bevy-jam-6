@@ -4,7 +4,7 @@ use bevy::prelude::*;
 
 use crate::asset_tracking::LoadResource;
 
-pub(super) fn plugin(app: &mut App) {
+pub(crate) fn plugin(app: &mut App) {
     app.register_type::<LevelAssets>();
     app.load_resource::<LevelAssets>();
 }
