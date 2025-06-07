@@ -5,7 +5,7 @@ use bevy::prelude::*;
 use crate::{asset_tracking::ResourceHandles, menus::Menu, screens::{assets::ScreenAssets, Screen}, theme::widget};
 
 pub(super) fn plugin(app: &mut App) {
-    app.add_systems(OnEnter(Menu::Main), spawn_main_menu);
+    app.add_systems(OnEnter(Menu::Main), (spawn_main_menu,spawn_main_menu_art_assets));
 }
 
 fn spawn_main_menu(mut commands: Commands,screen_assets: Res<ScreenAssets>) {
@@ -19,13 +19,18 @@ fn spawn_main_menu(mut commands: Commands,screen_assets: Res<ScreenAssets>) {
             widget::button("Settings", open_settings_menu),
             widget::button("Credits", open_credits_menu),
             widget::button("Exit", exit_app),
-            widget::image(screen_assets.wizard.clone()),
         ],
-        #[cfg(target_family = "wasm")]
+    ));
+}
+
+fn spawn_main_menu_art_assets(mut commands: Commands,screen_assets: Res<ScreenAssets>) {
+    commands.spawn((
+        widget::ui_root("Main Menu"),
+        GlobalZIndex(0),
+        StateScoped(Menu::Main),
+        #[cfg(not(target_family = "wasm"))]
         children![
-            widget::button("Play", enter_loading_or_gameplay_screen),
-            widget::button("Settings", open_settings_menu),
-            widget::button("Credits", open_credits_menu),
+            widget::image(screen_assets.wizard.clone()),
         ],
     ));
 }

@@ -25,7 +25,7 @@ impl FromWorld for ScreenAssets {
             .load("audio/music/title.ogg");
         let image_handle = world
             .resource::<AssetServer>()
-            .load("images/THE_WIZARD.png");
+            .load("images/Wizard1.png");
         Self {
             music: music_handle,
             wizard: image_handle,

@@ -18,7 +18,13 @@ pub fn ui_root(name: impl Into<Cow<'static, str>>) -> impl Bundle {
             position_type: PositionType::Absolute,
             width: Percent(100.0),
             height: Percent(100.0),
-            align_items: AlignItems::Center,
+            padding: UiRect{
+                left: Px(50.),
+                right: Px(10.),
+                top: Px(10.),
+                bottom: Px(10.),
+            },
+            align_items: AlignItems::Baseline,
             justify_content: JustifyContent::Center,
             flex_direction: FlexDirection::Column,
             row_gap: Px(20.0),
@@ -135,13 +141,9 @@ where
 }
 
 /// A simple button with text and an action defined as an [`Observer`]. The button's layout is provided by `button_bundle`.
-fn image<E, B, M, I>(
+pub fn image(
     handle: Handle<Image>,
 ) -> impl Bundle
-where
-    E: Event,
-    B: Bundle,
-    I: IntoObserverSystem<E, B, M>,
 {
     (
         Name::new("UI_image"),
@@ -150,6 +152,25 @@ where
             parent
                 .spawn((
                     Name::new("Image Inner"),
+                    Pickable::IGNORE,
+                    ImageNode::new(handle)
+                ));
+        })),
+    )
+}
+
+/// A simple button with text and an action defined as an [`Observer`]. The button's layout is provided by `button_bundle`.
+pub fn image2(
+    handle: Handle<Image>,
+) -> impl Bundle
+{
+    (
+        Name::new("UI_image2"),
+        Node::default(),
+        Children::spawn(SpawnWith(|parent: &mut ChildSpawner| {
+            parent
+                .spawn((
+                    Name::new("Image Inner2"),
                     Pickable::IGNORE,
                     ImageNode::new(handle)
                 ));
