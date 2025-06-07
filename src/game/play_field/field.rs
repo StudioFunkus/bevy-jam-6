@@ -1,7 +1,6 @@
 //! The structure that represents our play field
 //! It contains a spatial index mapping grid positions to entities
 
-use crate::game::mushrooms::{MushroomDirection, MushroomType};
 use bevy::{platform::collections::HashMap, prelude::*};
 
 use super::{GridPosition, TileType};

@@ -157,7 +157,7 @@ fn update_placement_preview(
                     // Update position
                     if let Ok(mut transform) = preview_query.get_mut(entity) {
                         let world_pos = position.to_world_in(&play_field.play_field);
-                        transform.translation = Vec3::new(world_pos.x, 0.5, -world_pos.y);
+                        transform.translation = Vec3::new(world_pos.x, 0.5, -world_pos.z);
                     }
                 } else {
                     // Create new preview entity
@@ -171,7 +171,7 @@ fn update_placement_preview(
                     let layout = TextureAtlasLayout::from_grid(
                         UVec2::new(16, 16),
                         2,
-                        8,
+                        24,
                         Some(UVec2::new(2, 2)),
                         None,
                     );
@@ -202,7 +202,7 @@ fn update_placement_preview(
                             PlacementPreview,
                             preview_state.direction,
                             sprite_bundle,
-                            Transform::from_xyz(world_pos.x, 0.5, -world_pos.y),
+                            Transform::from_xyz(world_pos.x, 0.5, -world_pos.z),
                             FaceCamera,
                             NotShadowReceiver,
                             StateScoped(LevelState::Playing),

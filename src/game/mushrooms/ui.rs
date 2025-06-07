@@ -6,8 +6,9 @@ use bevy_rich_text3d::{Text3d, Text3dBounds, Text3dStyling, TextAlign, TextAncho
 
 use crate::game::{
     game_flow::LevelState,
-    mushrooms::{events::SporeScoreEvent, Mushroom, MushroomActivationState, MushroomDefinitions},
-    resources::GameState, visual_effects::FaceCamera,
+    mushrooms::{Mushroom, MushroomActivationState, MushroomDefinitions, events::SporeScoreEvent},
+    resources::GameState,
+    visual_effects::FaceCamera,
 };
 
 pub(super) fn plugin(app: &mut App) {
@@ -55,35 +56,30 @@ fn spawn_uses_display(
         .max_uses_per_turn
         .saturating_sub(state.activations_this_turn);
 
-    let mat = materials.add(
-        StandardMaterial {
-            base_color_texture: Some(TextAtlas::DEFAULT_IMAGE.clone()),
-            alpha_mode: AlphaMode::Blend,
-            unlit: true,
-            ..Default::default()
-        }
-    );
+    let mat = materials.add(StandardMaterial {
+        base_color_texture: Some(TextAtlas::DEFAULT_IMAGE.clone()),
+        alpha_mode: AlphaMode::Blend,
+        unlit: true,
+        ..Default::default()
+    });
     // Spawn billboard text as child of mushroom
-    commands
-        .spawn((
-            Name::new("Uses Display Billboard"),
-            Text3d::new(format!("{remaining_uses}")),
-            Mesh3d::default(),
-            Text3dStyling {
-                size: 32.,
-                color: Srgba::new(0., 1., 1., 1.),
-                align: TextAlign::Center,
-                anchor: TextAnchor::CENTER_LEFT,
-                ..Default::default()
-            },
-            Text3dBounds {
-                width: 400.,
-            },
-            MeshMaterial3d(mat.clone()),
-            StateScoped(LevelState::Playing),
-            UsesDisplay,
-            FaceCamera
-        ));
+    commands.spawn((
+        Name::new("Uses Display Billboard"),
+        Text3d::new(format!("{remaining_uses}")),
+        Mesh3d::default(),
+        Text3dStyling {
+            size: 32.,
+            color: Srgba::new(0., 1., 1., 1.),
+            align: TextAlign::Center,
+            anchor: TextAnchor::CENTER_LEFT,
+            ..Default::default()
+        },
+        Text3dBounds { width: 400. },
+        MeshMaterial3d(mat.clone()),
+        StateScoped(LevelState::Playing),
+        UsesDisplay,
+        FaceCamera,
+    ));
 }
 
 /// Spawn a popup showing spore generation
@@ -93,15 +89,14 @@ pub fn spawn_spore_popup(
     mut materials: ResMut<Assets<StandardMaterial>>,
     game_state: Res<GameState>,
 ) {
+    let mat = materials.add(StandardMaterial {
+        base_color_texture: Some(TextAtlas::DEFAULT_IMAGE.clone()),
+        alpha_mode: AlphaMode::Blend,
+        unlit: true,
+        ..Default::default()
+    });
 
-    let mat = materials.add(
-        StandardMaterial {
-            base_color_texture: Some(TextAtlas::DEFAULT_IMAGE.clone()),
-            alpha_mode: AlphaMode::Blend,
-            unlit: true,
-            ..Default::default()
-        }
-    );
+    let world_pos = trigger.event().position.to_world_in(&game_state.play_field);
 
     commands.spawn((
         Name::new("Spore Popup"),
@@ -109,13 +104,8 @@ pub fn spawn_spore_popup(
         Mesh3d::default(),
         MeshMaterial3d(mat.clone()),
         StateScoped(LevelState::Playing),
-        Transform::from_translation(
-            trigger
-                .event()
-                .position
-                .to_world(game_state.play_field.width, game_state.play_field.height)
-        )
-        .with_scale(Vec3::splat(0.012)),
+        Transform::from_xyz(world_pos.x, 1.0, -world_pos.z)
+            .with_scale(Vec3::splat(0.012)),
     ));
 }
 

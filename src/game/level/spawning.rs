@@ -167,7 +167,7 @@ pub fn spawn_game_grid(
                         unlit: true,
                         ..default()
                     })),
-                    Transform::from_xyz(world_pos.x, 0.1, -world_pos.y) // Slightly above ground
+                    Transform::from_xyz(world_pos.x, 0.1, -world_pos.z) // Slightly above ground
                         .with_rotation(Quat::from_rotation_x(-std::f32::consts::FRAC_PI_2)),
                 ))
                 .observe(on_grid_cell_click)
