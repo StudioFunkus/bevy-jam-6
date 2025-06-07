@@ -20,6 +20,7 @@ pub mod chain_activation;
 pub mod definitions;
 pub mod events;
 pub mod resources;
+pub mod sounds;
 pub mod ui;
 
 pub(super) fn plugin(app: &mut App) {
@@ -28,6 +29,7 @@ pub(super) fn plugin(app: &mut App) {
         chain_activation::plugin,
         events::plugin,
         ui::plugin,
+        sounds::plugin,
     ));
 
     // Initialize resources
@@ -45,6 +47,9 @@ pub(super) fn plugin(app: &mut App) {
 #[derive(Component)]
 #[require(MushroomActivationState, MushroomDirection, GridPosition)]
 pub struct Mushroom(pub MushroomType);
+
+#[derive(Component)]
+pub struct MushroomSprite;
 
 /// Direction component for mushrooms
 #[derive(Component, Clone, Copy, Debug, PartialEq, Eq, Default)]
@@ -251,7 +256,7 @@ fn spawn_mushroom(
     // Create texture atlas for sprites
     let layout = TextureAtlasLayout::from_grid(
         UVec2::new(16, 16),
-        2, // columns (front/side views)
+        2,  // columns (front/side views)
         24, // rows (mushroom types)
         Some(UVec2::new(2, 2)),
         None,
@@ -267,7 +272,7 @@ fn spawn_mushroom(
     let direction = trigger.event().direction.unwrap_or(preview_state.direction);
 
     // Spawn mushroom entity
-    let entity_commands = commands.spawn((
+    let entity = commands.spawn((
         Name::new(format!(
             "{} at ({}, {})",
             definition.name, trigger.position.x, trigger.position.y
@@ -275,6 +280,16 @@ fn spawn_mushroom(
         Mushroom(trigger.mushroom_type),
         trigger.position,
         direction, // Use the direction from preview
+        Transform::from_xyz(world_pos.x, 0.5, -world_pos.z),
+        NotShadowReceiver,
+        StateScoped(LevelState::Playing),
+        Pickable::IGNORE,
+    )).id();
+
+    // Add mushroom sprite
+    commands.spawn((
+        Name::new("Mushroom Sprite"),
+        MushroomSprite,
         Sprite3dBuilder {
             image: level_assets.mushroom_texture.clone(),
             pixels_per_metre: 16.0,
@@ -283,14 +298,9 @@ fn spawn_mushroom(
             ..default()
         }
         .bundle_with_atlas(&mut sprite_params, atlas),
-        Transform::from_xyz(world_pos.x, 0.5, -world_pos.z),
         FaceCamera,
-        NotShadowReceiver,
-        StateScoped(LevelState::Playing),
-        Pickable::IGNORE,
+        ChildOf(entity),
     ));
-
-    let entity = entity_commands.id();
 
     // Update play field
     game_state

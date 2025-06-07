@@ -56,7 +56,6 @@ impl Plugin for AppPlugin {
                 ..default()
             },
         ));
-        
 
         // Add other plugins.
         app.add_plugins((

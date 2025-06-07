@@ -34,7 +34,10 @@ pub fn build_playfield_connections(
     mut builder: Local<ConnectionBuilder>,
 ) {
     // Check if we need to rebuild connections
-    let needs_rebuild = !new_mushrooms.is_empty() || !changed_mushrooms.is_empty() || deleted_mushrooms.read().next().is_some() || builder.dirty;
+    let needs_rebuild = !new_mushrooms.is_empty()
+        || !changed_mushrooms.is_empty()
+        || deleted_mushrooms.read().next().is_some()
+        || builder.dirty;
 
     if !needs_rebuild {
         return;
