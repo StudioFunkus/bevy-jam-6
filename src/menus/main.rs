@@ -1,6 +1,9 @@
 //! The main menu (seen on the title screen).
 
+use std::time::Duration;
+
 use bevy::{ecs::spawn::SpawnWith, prelude::*};
+use bevy_tweening::{lens::UiPositionLens, Animator, RepeatCount, RepeatStrategy, Tween};
 
 use crate::{
     asset_tracking::ResourceHandles,
@@ -107,53 +110,45 @@ fn spawn_main_menu_art_assets(mut commands: Commands, screen_assets: Res<ScreenA
                     }
                 )],
             ),
-            // Spore 1
-            (
-                Name::new("Spore 1"),
-                Node {
-                    height: Val::Px(100.0),
-                    justify_self: JustifySelf::Center,
-                    align_self: AlignSelf::Center,
-                    ..default()
-                },
-                ImageNode::new(screen_assets.spore1.clone()),
-                Pickable::IGNORE,
-                Spore,
-            ),
-            // // lil spore 1
-            // widget::image(
-            //     screen_assets.spore1.clone(),
-            //     None,
-            //     None,
-            //     None,
-            //     None,
-            //     Val::Px(20.),
-            //     Val::Px(20.),
-            //     PositionType::Absolute,
-            // ),
-            // // lil spore 2
-            // widget::image(
-            //     screen_assets.spore2.clone(),
-            //     None,
-            //     None,
-            //     None,
-            //     None,
-            //     Val::Px(20.),
-            //     Val::Px(20.),
-            //     PositionType::Absolute,
-            // ),
-            // //lil spore 3
-            // widget::image(
-            //     screen_assets.spore3.clone(),
-            //     None,
-            //     None,
-            //     None,
-            //     None,
-            //     Val::Px(20.),
-            //     Val::Px(20.),
-            //     PositionType::Absolute,
-            // )
         ],
+    ));
+
+    commands.spawn((
+        Name::new("Main Menu - Spores"),
+        Node {
+            position_type: PositionType::Absolute,
+            width: Val::Percent(100.0),
+            height: Val::Percent(100.0),
+            align_items: AlignItems::Default,
+            justify_content: JustifyContent::Default,
+            flex_direction: FlexDirection::Row,
+            ..default()
+        },
+        Pickable::IGNORE,
+        GlobalZIndex(0),
+        StateScoped(Menu::Main),
+        children![(
+            Name::new("Spore 1"),
+            Node {
+                height: Val::Px(30.),
+                position_type: PositionType::Absolute,
+                ..default()
+            },
+            ImageNode::new(screen_assets.spore1.clone()),
+            Pickable::IGNORE,
+            Animator::new(
+                Tween::new(
+                    EaseFunction::QuadraticInOut,
+                    Duration::from_secs(2),
+                    UiPositionLens {
+                        start: UiRect::new(Val::Auto, Val::Percent(40.), Val::Percent(42.), Val::Auto,),
+                        end: UiRect::new(Val::Auto, Val::Percent(30.), Val::Percent(47.), Val::Auto,),
+                    },
+                )
+                .with_repeat_count(RepeatCount::Infinite)
+                .with_repeat_strategy(RepeatStrategy::MirroredRepeat)
+            )
+        )],
     ));
 }
 
