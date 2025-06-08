@@ -18,6 +18,22 @@
 }
 #endif
 
+// Storage buffer for connections
+struct ConnectionData {
+    start_pos: vec2<f32>,
+    end_pos: vec2<f32>,
+    strength: f32,
+    distance: f32,
+    _padding: vec2<f32>,
+};
+
+// Storage buffer for preview highlights
+struct PreviewData {
+    position: vec2<f32>,
+    highlight_type: f32,
+    _padding: f32,
+};
+
 // Tile texture atlas
 @group(2) @binding(100) var tile_texture: texture_2d<f32>;
 @group(2) @binding(101) var tile_sampler: sampler;
@@ -34,19 +50,22 @@
 
 // Connection data
 @group(2) @binding(106) var<uniform> connection_count: u32;
-@group(2) @binding(107) var<uniform> connection_starts: array<vec4<f32>, 64>;
-@group(2) @binding(108) var<uniform> connection_ends: array<vec4<f32>, 64>;
+@group(2) @binding(107) var<storage, read> connections: array<ConnectionData>;
+
+// Preview highlights
+@group(2) @binding(108) var<uniform> preview_count: u32;
+@group(2) @binding(109) var<storage, read> preview_highlights: array<PreviewData>;
 
 // Mycelium colors
-@group(2) @binding(109) var<uniform> mycelium_color_low: vec4<f32>;
-@group(2) @binding(110) var<uniform> mycelium_color_high: vec4<f32>;
+@group(2) @binding(110) var<uniform> mycelium_color_low: vec4<f32>;
+@group(2) @binding(111) var<uniform> mycelium_color_high: vec4<f32>;
 
 // Animation parameters
-@group(2) @binding(111) var<uniform> pulse_speed: f32;
-@group(2) @binding(112) var<uniform> glow_intensity: f32;
+@group(2) @binding(112) var<uniform> pulse_speed: f32;
+@group(2) @binding(113) var<uniform> glow_intensity: f32;
 
 // Line rendering parameters
-@group(2) @binding(113) var<uniform> line_width: f32;
+@group(2) @binding(114) var<uniform> line_width: f32;
 
 // SDF for line segment (not technically SDF, but used for line rendering)
 fn sdf_line_segment(p: vec2<f32>, a: vec2<f32>, b: vec2<f32>, width: f32) -> f32 {
@@ -101,73 +120,58 @@ fn fragment(
     let tile_atlas_uv = get_tile_uv(tile_index, cell_uv);
     var base_color = textureSample(tile_texture, tile_sampler, tile_atlas_uv);
     
-    // Initialise highlight factors
+    // Initialize highlight factors
     var preview_highlight = 0.0;
     var connected_highlight = 0.0;
     var empty_connection_highlight = 0.0;
     var existing_target_highlight = 0.0;
     
-    // Process connections and preview highlights
-    for (var i = 0u; i < 64u; i = i + 1u) {
-        let start_data = connection_starts[i];
-        let end_data = connection_ends[i];
+    // Process preview highlights
+    for (var i = 0u; i < preview_count; i = i + 1u) {
+        let preview = preview_highlights[i];
+        let highlight_pos = preview.position;
+        let cell_dist = length((uv - highlight_pos) * grid_size * 0.7);
         
-        // Check if this is a preview highlight (negative strength values)
-        if (start_data.z < 0.0) {
-            let highlight_pos = start_data.xy;
-            let dist_to_highlight = length(uv - highlight_pos) * length(grid_size);
-            
-            if (start_data.z == -1.0) {
-                // Preview position highlight
-                let cell_dist = length((uv - highlight_pos) * grid_size);
-                if (cell_dist < 0.5) {
-                    // Pulsing effect for preview position
-                    preview_highlight = max(preview_highlight, 0.6 + 0.2 * sin(time * 3.0));
-                }
-            } else if (start_data.z == -2.0) {
-                // Connected position highlight
-                let cell_dist = length((uv - highlight_pos) * grid_size);
-                if (cell_dist < 0.5) {
-                    // Different pulse for connected tiles
-                    connected_highlight = max(connected_highlight, 0.4 + 0.1 * sin(time * 4.0 + 1.57));
-                }
-            } else if (start_data.z == -3.0) {
-                // Empty connection point highlight
-                let cell_dist = length((uv - highlight_pos) * grid_size);
-                if (cell_dist < 0.5) {
-                    // Red pulse for empty connection points
-                    empty_connection_highlight = max(empty_connection_highlight, 0.5 + 0.15 * sin(time * 5.0));
-                }
-            } else if (start_data.z == -4.0) {
-                // Existing mushroom connection target highlight
-                let cell_dist = length((uv - highlight_pos) * grid_size);
-                if (cell_dist < 0.5) {
-                    // Blue subtle outline for existing connection targets
-                    existing_target_highlight = max(existing_target_highlight, 0.3 + 0.1 * sin(time * 2.0));
-                }
+        if (cell_dist < 0.5) {
+            if (preview.highlight_type == -1.0) {
+                // Preview position highlight (cyan)
+                preview_highlight = max(preview_highlight, 0.6 + 0.2 * sin(time * 3.0));
+            } else if (preview.highlight_type == -2.0) {
+                // Connected position highlight (green)
+                connected_highlight = max(connected_highlight, 0.4 + 0.1 * sin(time * 4.0 + 1.57));
+            } else if (preview.highlight_type == -3.0) {
+                // Empty connection point highlight (red)
+                empty_connection_highlight = max(empty_connection_highlight, 0.5 + 0.15 * sin(time * 5.0));
+            } else if (preview.highlight_type == -4.0) {
+                // Existing target highlight (blue)
+                existing_target_highlight = max(existing_target_highlight, 0.5 + 0.1 * sin(time * 2.0));
             }
-        } else if (i < connection_count && start_data.w > 0.0) {
-            // Regular mycelium connection
-            let start_pos = start_data.xy;
-            let end_pos = end_data.xy;
-            let strength = start_data.z;
-            let distance = start_data.w;
+        }
+    }
+    
+    // Process mycelium connections
+    for (var i = 0u; i < connection_count; i = i + 1u) {
+        let connection = connections[i];
+        
+        // Skip invalid connections
+        if (connection.distance <= 0.0) {
+            continue;
+        }
+        
+        // Calculate mycelium line
+        let line_alpha = sdf_line_segment(uv, connection.start_pos, connection.end_pos, line_width);
+        
+        if (line_alpha > 0.0) {
+            // Energy pulse animation
+            let flow_offset = length(uv - connection.start_pos) / connection.distance;
+            let pulse = sin((flow_offset - time * pulse_speed) * 6.28318) * 0.5 + 0.5;
             
-            // Calculate mycelium line
-            let line_alpha = sdf_line_segment(uv, start_pos, end_pos, line_width);
+            // Mycelium color with pulse
+            let mycelium_color = mix(mycelium_color_low, mycelium_color_high, pulse * connection.strength);
+            let glow = 1.0 + pulse * glow_intensity;
             
-            if (line_alpha > 0.0) {
-                // Energy pulse animation
-                let flow_offset = length(uv - start_pos) / distance;
-                let pulse = sin((flow_offset - time * pulse_speed) * 6.28318) * 0.5 + 0.5;
-                
-                // Mycelium color with pulse
-                let mycelium_color = mix(mycelium_color_low, mycelium_color_high, pulse * strength);
-                let glow = 1.0 + pulse * glow_intensity;
-                
-                // Blend mycelium over base
-                base_color = mix(base_color, mycelium_color * glow, line_alpha * strength);
-            }
+            // Blend mycelium over base
+            base_color = mix(base_color, mycelium_color * glow, line_alpha * connection.strength);
         }
     }
     
@@ -176,6 +180,7 @@ fn fragment(
         let preview_color = vec4<f32>(0.2, 0.8, 1.0, 1.0);
         base_color = mix(base_color, preview_color, preview_highlight * 0.5);
         
+        // Edge highlight
         let edge_dist = min(min(cell_uv.x, 1.0 - cell_uv.x), min(cell_uv.y, 1.0 - cell_uv.y));
         if (edge_dist < 0.05) {
             base_color = mix(base_color, preview_color, 0.8);
@@ -186,6 +191,7 @@ fn fragment(
         let connected_color = vec4<f32>(0.2, 1.0, 0.4, 1.0);
         base_color = mix(base_color, connected_color, connected_highlight * 0.4);
         
+        // Edge highlight
         let edge_dist = min(min(cell_uv.x, 1.0 - cell_uv.x), min(cell_uv.y, 1.0 - cell_uv.y));
         if (edge_dist < 0.03) {
             base_color = mix(base_color, connected_color, 0.6);
@@ -196,6 +202,7 @@ fn fragment(
         let empty_color = vec4<f32>(1.0, 0.3, 0.2, 1.0);
         base_color = mix(base_color, empty_color, empty_connection_highlight * 0.4);
         
+        // Dashed edge
         let edge_dist = min(min(cell_uv.x, 1.0 - cell_uv.x), min(cell_uv.y, 1.0 - cell_uv.y));
         let dash_pattern = sin((cell_uv.x + cell_uv.y) * 20.0 + time * 8.0) * 0.5 + 0.5;
         if (edge_dist < 0.04 && dash_pattern > 0.3) {
@@ -206,6 +213,7 @@ fn fragment(
     if (existing_target_highlight > 0.0) {
         let target_color = vec4<f32>(0.3, 0.6, 1.0, 1.0);
         
+        // Thin edge outline
         let edge_dist = min(min(cell_uv.x, 1.0 - cell_uv.x), min(cell_uv.y, 1.0 - cell_uv.y));
         if (edge_dist < 0.02) {
             base_color = mix(base_color, target_color, existing_target_highlight * 0.6);

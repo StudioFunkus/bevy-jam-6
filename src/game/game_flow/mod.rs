@@ -7,6 +7,7 @@ use crate::{
         carddeck::events::DrawEvent,
         level::definitions::{LevelDefinitions, load_level_config},
         mushrooms::{ChainManager, chain_activation::reset_mushroom_states},
+        play_field::placement_preview::PreviewConnections,
         resources::GameState,
     },
     screens::Screen,
@@ -325,6 +326,7 @@ fn cleanup_gameplay_state(
     mut current_level: ResMut<CurrentLevel>,
     mut game_state: ResMut<GameState>,
     mut chain_manager: ResMut<ChainManager>,
+    mut preview_connections: ResMut<PreviewConnections>,
 ) {
     info!("Cleaning up gameplay state");
 
@@ -345,6 +347,12 @@ fn cleanup_gameplay_state(
     chain_manager.activation_queue.clear();
     chain_manager.current_chain = None;
     chain_manager.chain_started_this_turn = false;
+
+    // Clear preview connections
+    preview_connections.connected_positions.clear();
+    preview_connections.empty_connection_points.clear();
+    preview_connections.existing_connection_targets.clear();
+    preview_connections.preview_position = None;
 }
 
 /// Manual state advancement for testing

@@ -8,12 +8,14 @@ use super::tile_atlas::TileSprite;
 use super::{GridPosition, PlayField, TileType};
 use crate::game::game_flow::LevelState;
 use crate::game::level::assets::LevelAssets;
+use crate::game::play_field::placement_preview::PreviewConnections;
 use crate::game::resources::GameState;
 use bevy::{
     pbr::{ExtendedMaterial, MaterialExtension},
     prelude::*,
     render::render_asset::RenderAssetUsages,
-    render::render_resource::{AsBindGroup, ShaderRef},
+    render::render_resource::{AsBindGroup, ShaderRef, ShaderType},
+    render::storage::ShaderStorageBuffer,
 };
 
 /// Convert grid Y coordinate to texture Y coordinate
@@ -34,11 +36,30 @@ fn grid_pos_to_texture_index(
 }
 
 pub(super) fn plugin(app: &mut App) {
-    app.add_plugins(MaterialPlugin::<
-        ExtendedMaterial<StandardMaterial, FieldGroundExtension>,
+    app.add_plugins(MaterialPlugin::
+        <ExtendedMaterial<StandardMaterial, FieldGroundExtension>,
     >::default())
         .add_systems(Update, update_connection_data)
+        .add_systems(Update, update_shader_highlights)
         .add_systems(Update, update_material_time);
+}
+
+/// Connection data for storage buffer
+#[derive(Debug, Clone, Copy, ShaderType)]
+pub struct ConnectionBufferData {
+    pub start_pos: Vec2,
+    pub end_pos: Vec2,
+    pub strength: f32,
+    pub distance: f32,
+    pub _padding: Vec2,
+}
+
+/// Preview highlight data for storage buffer
+#[derive(Debug, Clone, Copy, ShaderType)]
+pub struct PreviewBufferData {
+    pub position: Vec2,
+    pub highlight_type: f32,
+    pub _padding: f32,
 }
 
 /// Extension data for field ground rendering
@@ -62,34 +83,38 @@ pub struct FieldGroundExtension {
     #[uniform(105)]
     pub grid_size: Vec2,
 
-    /// Number of active connections (max 64)
+    /// Number of active connections
     #[uniform(106)]
     pub connection_count: u32,
 
-    /// Connection start positions (64 max)
-    #[uniform(107)]
-    pub connection_starts: [Vec4; 64],
+    /// Connection data storage buffer
+    #[storage(107, read_only)]
+    pub connections: Handle<ShaderStorageBuffer>,
 
-    /// Connection end positions (64 max)  
+    /// Number of preview highlights
     #[uniform(108)]
-    pub connection_ends: [Vec4; 64],
+    pub preview_count: u32,
+
+    /// Preview highlights storage buffer
+    #[storage(109, read_only)]
+    pub preview_highlights: Handle<ShaderStorageBuffer>,
 
     /// Mycelium colors
-    #[uniform(109)]
+    #[uniform(110)]
     pub mycelium_color_low: LinearRgba,
 
-    #[uniform(110)]
+    #[uniform(111)]
     pub mycelium_color_high: LinearRgba,
 
     /// Animation parameters
-    #[uniform(111)]
+    #[uniform(112)]
     pub pulse_speed: f32,
 
-    #[uniform(112)]
+    #[uniform(113)]
     pub glow_intensity: f32,
 
     /// Line rendering parameters
-    #[uniform(113)]
+    #[uniform(114)]
     pub line_width: f32,
 }
 
@@ -105,32 +130,13 @@ pub struct FieldGround {
     pub material_handle: Handle<ExtendedMaterial<StandardMaterial, FieldGroundExtension>>,
 }
 
-/// Connection data for shader rendering
-#[derive(Debug, Clone, Copy)]
-pub struct ConnectionData {
-    pub start_pos: Vec2,
-    pub end_pos: Vec2,
-    pub strength: f32,
-    pub distance: f32,
-}
-
-impl Default for ConnectionData {
-    fn default() -> Self {
-        Self {
-            start_pos: Vec2::ZERO,
-            end_pos: Vec2::ZERO,
-            strength: 0.0,
-            distance: 0.0,
-        }
-    }
-}
-
 /// Spawn the field ground mesh for a specific level
 pub fn spawn_field_ground(
     commands: &mut Commands,
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<ExtendedMaterial<StandardMaterial, FieldGroundExtension>>>,
     images: &mut ResMut<Assets<Image>>,
+    buffers: &mut ResMut<Assets<ShaderStorageBuffer>>,
     level_assets: &Res<LevelAssets>,
     play_field: &PlayField,
 ) -> Entity {
@@ -146,7 +152,24 @@ pub fn spawn_field_ground(
     // Use tile texture from level assets
     let tile_texture_handle = level_assets.tile_texture.clone();
 
-    // Create material with empty connection arrays
+    // Create empty storage buffers with initial capacity
+    let empty_connections = vec![ConnectionBufferData {
+        start_pos: Vec2::ZERO,
+        end_pos: Vec2::ZERO,
+        strength: 0.0,
+        distance: 0.0,
+        _padding: Vec2::ZERO,
+    }];
+    let connections_buffer = buffers.add(ShaderStorageBuffer::from(empty_connections));
+
+    let empty_previews = vec![PreviewBufferData {
+        position: Vec2::ZERO,
+        highlight_type: 0.0,
+        _padding: 0.0,
+    }];
+    let preview_buffer = buffers.add(ShaderStorageBuffer::from(empty_previews));
+
+    // Create material
     let material_handle = materials.add(ExtendedMaterial {
         base: StandardMaterial {
             base_color: Color::WHITE,
@@ -159,8 +182,9 @@ pub fn spawn_field_ground(
             time: 0.0,
             grid_size: Vec2::new(play_field.width as f32, play_field.height as f32),
             connection_count: 0,
-            connection_starts: [Vec4::ZERO; 64],
-            connection_ends: [Vec4::ZERO; 64],
+            connections: connections_buffer,
+            preview_count: 0,
+            preview_highlights: preview_buffer,
             mycelium_color_low: LinearRgba::new(0.2, 0.8, 0.4, 1.0),
             mycelium_color_high: LinearRgba::new(0.4, 1.0, 0.6, 1.0),
             pulse_speed: 2.0,
@@ -249,13 +273,13 @@ fn update_material_time(
     }
 }
 
-/// Update connection data in material uniforms based on active connections from PlayField
+/// Update connection data in storage buffers
 fn update_connection_data(
     field_grounds: Query<&FieldGround>,
     mut materials: ResMut<Assets<ExtendedMaterial<StandardMaterial, FieldGroundExtension>>>,
+    mut buffers: ResMut<Assets<ShaderStorageBuffer>>,
     game_state: Res<GameState>,
 ) {
-    // Only update when game state changes (connections are added/removed)
     if !game_state.is_changed() {
         return;
     }
@@ -264,21 +288,13 @@ fn update_connection_data(
         if let Some(material) = materials.get_mut(&field_ground.material_handle) {
             // Get all connections from PlayField
             let connections = game_state.play_field.get_all_connections();
-            let connection_count = connections.len().min(64); // Cap at 64 connections for now
-
-            // Clear arrays
-            material.extension.connection_starts = [Vec4::ZERO; 64];
-            material.extension.connection_ends = [Vec4::ZERO; 64];
-            material.extension.connection_count = connection_count as u32;
-
-            // Convert grid coordinates to normalized UV coordinates (0.0-1.0)
-            let grid_size = material.extension.grid_size;
-
-            for (i, connection) in connections.iter().take(64).enumerate() {
-                // Convert grid positions to normalized coordinates with Y-flip
-                // Grid positions are cell indices, but we want center of cells in UV space
-                // Add 0.5 to get cell center, then normalize
-                // Grid Y=0 is at TOP, UV Y=0 is at BOTTOM, so we need to flip Y
+            
+            // Create buffer data
+            let mut connection_data = Vec::with_capacity(connections.len().max(1));
+            
+            for connection in connections {
+                // Convert grid positions to normalized UV coordinates
+                let grid_size = material.extension.grid_size;
                 let start_uv = Vec2::new(
                     (connection.from_pos.x as f32 + 0.5) / grid_size.x,
                     1.0 - ((connection.from_pos.y as f32 + 0.5) / grid_size.y), // Flip Y coordinate
@@ -287,20 +303,140 @@ fn update_connection_data(
                     (connection.to_pos.x as f32 + 0.5) / grid_size.x,
                     1.0 - ((connection.to_pos.y as f32 + 0.5) / grid_size.y), // Flip Y coordinate
                 );
-
-                // Calculate distance for energy flow timing
+                
                 let distance = start_uv.distance(end_uv);
-
-                // Store in uniform arrays (using Vec4 for GPU alignment)
-                material.extension.connection_starts[i] =
-                    Vec4::new(start_uv.x, start_uv.y, connection.strength, distance);
-                material.extension.connection_ends[i] = Vec4::new(end_uv.x, end_uv.y, 0.0, 0.0);
+                
+                connection_data.push(ConnectionBufferData {
+                    start_pos: start_uv,
+                    end_pos: end_uv,
+                    strength: connection.strength,
+                    distance,
+                    _padding: Vec2::ZERO,
+                });
             }
+
+            // Ensure we have at least one element to avoid zero-sized buffer
+            if connection_data.is_empty() {
+                connection_data.push(ConnectionBufferData {
+                    start_pos: Vec2::ZERO,
+                    end_pos: Vec2::ZERO,
+                    strength: 0.0,
+                    distance: 0.0,
+                    _padding: Vec2::ZERO,
+                });
+            }
+
+            // Update storage buffer
+            if let Some(buffer) = buffers.get_mut(&material.extension.connections) {
+                buffer.set_data(connection_data.as_slice());
+            }
+
+            material.extension.connection_count = connections.len() as u32;
 
             info!(
                 "Updated {} mycelium connections in shader",
-                connection_count
+                connections.len()
             );
+        }
+    }
+}
+
+/// Update preview highlights in storage buffer
+fn update_shader_highlights(
+    preview_connections: Res<crate::game::play_field::placement_preview::PreviewConnections>,
+    field_grounds: Query<&FieldGround>,
+    mut materials: ResMut<Assets<ExtendedMaterial<StandardMaterial, FieldGroundExtension>>>,
+    mut buffers: ResMut<Assets<ShaderStorageBuffer>>,
+) {
+    if !preview_connections.is_changed() {
+        return;
+    }
+
+    for field_ground in field_grounds.iter() {
+        if let Some(material) = materials.get_mut(&field_ground.material_handle) {
+            let mut preview_data = Vec::new();
+            let grid_size = material.extension.grid_size;
+
+            // Check if we have any preview data at all
+            let has_preview_data = preview_connections.preview_position.is_some()
+                || !preview_connections.connected_positions.is_empty()
+                || !preview_connections.empty_connection_points.is_empty()
+                || !preview_connections.existing_connection_targets.is_empty();
+
+            if has_preview_data {
+                // Add preview position
+                if let Some(preview_pos) = preview_connections.preview_position {
+                    let preview_uv = Vec2::new(
+                        (preview_pos.x as f32 + 0.5) / grid_size.x,
+                        1.0 - ((preview_pos.y as f32 + 0.5) / grid_size.y),
+                    );
+                    preview_data.push(PreviewBufferData {
+                        position: preview_uv,
+                        highlight_type: -1.0,
+                        _padding: 0.0,
+                    });
+                }
+
+                // Add all connected positions
+                for connected_pos in &preview_connections.connected_positions {
+                    let connected_uv = Vec2::new(
+                        (connected_pos.x as f32 + 0.5) / grid_size.x,
+                        1.0 - ((connected_pos.y as f32 + 0.5) / grid_size.y),
+                    );
+                    preview_data.push(PreviewBufferData {
+                        position: connected_uv,
+                        highlight_type: -2.0,
+                        _padding: 0.0,
+                    });
+                }
+
+                // Add all empty connection points
+                for empty_pos in &preview_connections.empty_connection_points {
+                    let empty_uv = Vec2::new(
+                        (empty_pos.x as f32 + 0.5) / grid_size.x,
+                        1.0 - ((empty_pos.y as f32 + 0.5) / grid_size.y),
+                    );
+                    preview_data.push(PreviewBufferData {
+                        position: empty_uv,
+                        highlight_type: -3.0,
+                        _padding: 0.0,
+                    });
+                }
+
+                // Add all existing mushroom connection targets
+                for existing_target in &preview_connections.existing_connection_targets {
+                    let target_uv = Vec2::new(
+                        (existing_target.x as f32 + 0.5) / grid_size.x,
+                        1.0 - ((existing_target.y as f32 + 0.5) / grid_size.y),
+                    );
+                    preview_data.push(PreviewBufferData {
+                        position: target_uv,
+                        highlight_type: -4.0,
+                        _padding: 0.0,
+                    });
+                }
+            }
+
+            // Always ensure we have at least one element (dummy with highlight_type 0.0)
+            if preview_data.is_empty() {
+                preview_data.push(PreviewBufferData {
+                    position: Vec2::new(-1000.0, -1000.0), // Far off-screen
+                    highlight_type: 0.0,
+                    _padding: 0.0,
+                });
+            }
+
+            // Update storage buffer
+            if let Some(buffer) = buffers.get_mut(&material.extension.preview_highlights) {
+                buffer.set_data(preview_data.as_slice());
+            }
+
+            // Set count to 0 if we only have the dummy element
+            material.extension.preview_count = if has_preview_data {
+                preview_data.len() as u32
+            } else {
+                0
+            };
         }
     }
 }
