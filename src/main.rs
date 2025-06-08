@@ -133,7 +133,7 @@ pub struct MainCamera;
 struct PausableSystems;
 
 use bevy_panorbit_camera::PanOrbitCamera;
-use funkus_dialogue_core::{DialogueDebugPlugin, DialoguePlugin};
+use funkus_dialogue_core::DialoguePlugin;
 use funkus_dialogue_ui::DialogueUIPlugin;
 use game::carddeck::constants::CARD_LAYER;
 

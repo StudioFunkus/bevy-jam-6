@@ -40,7 +40,7 @@ pub fn spawn_level(
     mut field_materials: ResMut<Assets<ExtendedMaterial<StandardMaterial, FieldGroundExtension>>>,
     mut images: ResMut<Assets<Image>>,
     mut buffers: ResMut<Assets<ShaderStorageBuffer>>,
-    music_query: Query<&AudioPlayer, With<Music>>,
+    _music_query: Query<&AudioPlayer, With<Music>>,
     mut gameplay_music: ResMut<CurrentGameplayMusic>,
 ) {
     // Get level definition
@@ -106,12 +106,6 @@ pub fn spawn_level(
             }
         }
     }
-
-    // Check if we need to change music
-    let mut current_music = music_query
-        .iter()
-        .find(|player| player.0 == level_assets.music)
-        .is_some();
 
     // Only spawn new music if it's different from what's playing
     if gameplay_music.current_track.as_ref() != Some(&level_assets.music) {

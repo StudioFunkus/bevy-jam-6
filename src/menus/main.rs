@@ -20,7 +20,7 @@ pub(super) fn plugin(app: &mut App) {
 
 // spawn all menu widgets
 
-fn spawn_main_menu(mut commands: Commands, screen_assets: Res<ScreenAssets>) {
+fn spawn_main_menu(mut commands: Commands, _screen_assets: Res<ScreenAssets>) {
     commands.spawn((
         widget::ui_root("Main Menu"),
         GlobalZIndex(2),
