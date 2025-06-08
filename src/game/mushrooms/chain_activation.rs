@@ -257,7 +257,7 @@ fn process_single_activation(
     chain_manager: &mut ChainManager,
     game_state: &mut GameState,
     turn_data: &mut TurnData,
-    current_level: &mut CurrentLevel,
+    _current_level: &mut CurrentLevel,
     definitions: &MushroomDefinitions,
     effects: &mut ResMut<Assets<EffectAsset>>,
     mushrooms: &mut Query<(

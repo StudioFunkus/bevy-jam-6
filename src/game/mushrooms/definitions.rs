@@ -23,7 +23,7 @@ pub mod connection_patterns {
     use super::GridOffset;
 
     /// Cardinal directions (N, E, S, W)
-    pub const CARDINAL: &[GridOffset] = &[
+    pub const _CARDINAL: &[GridOffset] = &[
         GridOffset::new(0, 1),  // North
         GridOffset::new(1, 0),  // East
         GridOffset::new(0, -1), // South
