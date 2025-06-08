@@ -23,7 +23,7 @@ use super::assets::LevelAssets;
 
 pub(super) fn plugin(app: &mut App) {
     // Spawn grid when entering Playing state
-    app.add_systems(OnEnter(LevelState::Playing), spawn_level);
+    app.add_systems(OnEnter(LevelState::StartDialogue), spawn_level);
 }
 
 /// Spawn the main game level

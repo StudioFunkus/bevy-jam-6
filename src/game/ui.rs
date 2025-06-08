@@ -12,6 +12,10 @@ use crate::{
     theme::{interaction::InteractionPalette, palette as ui_palette},
 };
 
+/// Marker for UI that should be hidden during dialogue
+#[derive(Component)]
+struct GameplayUI;
+
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(OnEnter(Screen::Gameplay), spawn_game_ui);
     app.add_systems(
@@ -23,6 +27,7 @@ pub(super) fn plugin(app: &mut App) {
             update_level_progress_display,
             update_phase_button,
             update_chain_info,
+            control_ui_visibility
         )
             .run_if(in_state(Screen::Gameplay)),
     );
@@ -71,8 +76,10 @@ fn spawn_game_ui(mut commands: Commands, definitions: Res<MushroomDefinitions>) 
                 padding: UiRect::all(Val::Px(20.0)),
                 flex_direction: FlexDirection::Column,
                 row_gap: Val::Px(10.0),
+                width: Val::Percent(30.0),
                 ..default()
             },
+            GameplayUI,
             BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.8)),
             StateScoped(Screen::Gameplay),
         ))
@@ -141,6 +148,7 @@ fn spawn_game_ui(mut commands: Commands, definitions: Res<MushroomDefinitions>) 
             BorderRadius::all(Val::Px(10.0)),
             StateScoped(Screen::Gameplay),
             PhaseAdvanceButton,
+            GameplayUI,
             InteractionPalette {
                 none: Color::srgb(0.2, 0.5, 0.2),
                 hovered: Color::srgb(0.3, 0.6, 0.3),
@@ -174,6 +182,7 @@ fn spawn_game_ui(mut commands: Commands, definitions: Res<MushroomDefinitions>) 
             },
             BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.8)),
             StateScoped(Screen::Gameplay),
+            GameplayUI,
             children![
                 (
                     Name::new("Mushroom Selection Header"),
@@ -498,5 +507,23 @@ fn update_chain_info(
                 text.0 = String::new();
             }
         }
+    }
+}
+
+fn control_ui_visibility(
+    level_state: Res<State<LevelState>>,
+    mut ui_query: Query<&mut Visibility, With<GameplayUI>>,
+) {
+    let should_hide = matches!(
+        level_state.get(),
+        LevelState::StartDialogue | LevelState::EndDialogue
+    );
+    
+    for mut visibility in ui_query.iter_mut() {
+        *visibility = if should_hide {
+            Visibility::Hidden
+        } else {
+            Visibility::Inherited
+        };
     }
 }
