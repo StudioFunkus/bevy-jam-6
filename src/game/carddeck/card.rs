@@ -153,6 +153,11 @@ pub fn create_card_definitions(mut card_templates: ResMut<CardTemplates>) -> Res
             mushroom_type: MushroomType::Knight,
             rarity: Rarity::Rare,
         },
+        CardTemplate {
+            name: "Unblocker".into(),
+            mushroom_type: MushroomType::Unblocker,
+            rarity: Rarity::Rare,
+        },
     ];
     info!("Done creating templates");
 
