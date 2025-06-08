@@ -4,15 +4,15 @@
 //! stored as a resource in the world when active.
 
 use bevy::prelude::*;
-use rand::{random_range, rng, seq::SliceRandom};
+use rand::{rng, seq::SliceRandom};
 use std::collections::VecDeque;
 
-use crate::game::carddeck::card::{Card, CardTemplates};
+use crate::game::carddeck::card::Card;
 
 pub(super) fn plugin(app: &mut App) {
-    app.register_type::<Deck>();
+    // app.register_type::<Deck>();
 
-    app.init_resource::<Deck>();
+    // app.init_resource::<Deck>();
 }
 
 #[derive(Resource, Default, Debug, Reflect)]
@@ -75,21 +75,29 @@ impl Deck {
     pub fn get_card_count(&self) -> usize {
         self.cards.len()
     }
-}
 
-#[tracing::instrument(name = "Create test deck", skip_all)]
-pub fn create_deck(mut deck: ResMut<Deck>, card_templates: Res<CardTemplates>) -> Result {
-    let count_of_defined_cards = card_templates.0.len();
+    /// Empty this deck
+    #[tracing::instrument(skip_all)]
+    pub fn empty_deck(&mut self) -> Result {
+        self.cards.drain(..);
 
-    for _ in 0..10 {
-        deck.add_to_bottom(
-            card_templates
-                .0
-                .get(random_range(0..count_of_defined_cards))
-                .unwrap()
-                .clone(),
-        )?;
+        Ok(())
     }
 
-    Ok(())
+    // /// Refresh this deck from the original deck
+    // #[tracing::instrument(skip_all)]
+    // pub fn refresh_deck(&mut self, template_deck: Res<Deck>) -> Result {
+    //     self.cards = template_deck.cards.clone();
+    //     self.shuffle()?;
+
+    //     Ok(())
+    // }
 }
+
+// /// Empty the deck
+// #[tracing::instrument(skip_all)]
+// pub fn empty_active_deck(mut deck: ResMut<Deck>) -> Result {
+//     deck.empty_deck()?;
+
+//     Ok(())
+// }

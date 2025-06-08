@@ -41,12 +41,15 @@ pub fn on_card_drag(
     mut trigger: Trigger<Pointer<Drag>>,
     mut card_transform: Query<&mut Transform, (With<Draggable>, With<Card>)>,
     dragged_query: Query<(Entity, &Dragged), With<Card>>,
-    turn_phase: Res<State<TurnPhase>>,
+    turn_phase: Option<Res<State<TurnPhase>>>,
 ) -> Result {
     trigger.propagate(false);
 
     // Only allow card drags if in planting phase
-    if turn_phase.get() != &TurnPhase::Planting {
+    let Some(phase) = turn_phase else {
+        return Ok(());
+    };
+    if phase.get() != &TurnPhase::Planting {
         return Ok(());
     }
 
@@ -67,12 +70,15 @@ pub fn on_card_darg_start(
     mut trigger: Trigger<Pointer<DragStart>>,
     mut commands: Commands,
     dragged_query: Query<(Entity, &Dragged), With<Card>>,
-    turn_phase: Res<State<TurnPhase>>,
+    turn_phase: Option<Res<State<TurnPhase>>>,
 ) -> Result {
     trigger.propagate(false);
 
     // Only allow card drags if in planting phase
-    if turn_phase.get() != &TurnPhase::Planting {
+    let Some(phase) = turn_phase else {
+        return Ok(());
+    };
+    if phase.get() != &TurnPhase::Planting {
         return Ok(());
     }
 

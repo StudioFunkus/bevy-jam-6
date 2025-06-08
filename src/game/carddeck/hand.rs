@@ -3,20 +3,19 @@
 //! The hand contains the cards that have been drawn and are currently playable by the player.
 //! These are drawn from the deck.
 
-use bevy::{color::palettes::tailwind, prelude::*, sprite::Anchor, text::TextBounds};
+use bevy::prelude::*;
 use std::collections::VecDeque;
 
 use crate::{
     game::{
         carddeck::{
-            card::{Card, CardBundle, spawn_card},
-            constants::{CARD_LAYER, CARD_SIZE, CARD_SPACING},
-            deck::Deck,
+            card::{Card, CardTemplates, spawn_card},
+            constants::{CARD_LAYER, CARD_SPACING},
             events::{DrawEvent, HandChangeEvent},
             markers::Dragged,
         },
         level::assets::LevelAssets,
-        mushrooms::{MushroomDefinitions, MushroomType},
+        mushrooms::MushroomDefinitions,
     },
     screens::Screen,
 };
@@ -28,7 +27,7 @@ pub(super) fn plugin(app: &mut App) {
 
     app.add_systems(OnEnter(Screen::Gameplay), spawn_hand_entity);
 
-    app.add_observer(update_card_origins);
+    app.add_observer(update_card_origins).add_observer(draw_n);
 }
 
 fn spawn_hand_entity(mut commands: Commands, window: Query<&Window>) -> Result {
@@ -40,6 +39,7 @@ fn spawn_hand_entity(mut commands: Commands, window: Query<&Window>) -> Result {
         Transform::from_xyz(0.0, -(0.9 * (window.height() / 2.0)), 0.0),
         CARD_LAYER,
         Visibility::Visible,
+        StateScoped(Screen::Gameplay),
     ));
 
     Ok(())
@@ -102,7 +102,7 @@ pub fn draw_n(
     mut commands: Commands,
     mut hand: ResMut<Hand>,
     hand_entity: Query<Entity, With<HandEntity>>,
-    mut deck: ResMut<Deck>,
+    card_templates: Res<CardTemplates>,
     mushroom_definitions: Res<MushroomDefinitions>,
     level_assets: Res<LevelAssets>,
     mut atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
@@ -132,20 +132,13 @@ pub fn draw_n(
         info!("Cannot fit cards, will draw {}", cards_to_draw);
     }
 
-    // Check the deck has enough cards, otherwise draw less
-    if cards_to_draw > deck.get_card_count() as u32 {
-        cards_to_draw = deck.get_card_count() as u32;
-        info!("Not enough cards in deck, will draw {}", cards_to_draw);
-    }
-
     for _ in 0..cards_to_draw {
-        let Some(drawn_card) = deck.draw() else {
-            break;
-        };
+        let drawn_card = card_templates.draw_random_card();
 
+        let card_component = Card::from(drawn_card);
         let card_entity = spawn_card(
             commands.reborrow(),
-            drawn_card.clone(),
+            card_component.clone(),
             hand_entity,
             &mushroom_definitions,
             &level_assets,
@@ -153,33 +146,13 @@ pub fn draw_n(
         )?;
 
         hand.cards
-            .push_back((drawn_card, Some(card_entity.clone())));
+            .push_back((card_component, Some(card_entity.clone())));
     }
 
     commands.trigger(HandChangeEvent);
 
     Ok(())
 }
-
-// /// Spawn a card, adding the [`Entity`] and [`Card`] component to the [`Hand`] resource.
-// ///
-// /// This ensures that the [`Hand`] resource is kept up-to-date with changes.
-// #[tracing::instrument(skip_all)]
-// fn spawn_card(mut commands: Commands, card: Card, hand_entity: Entity) -> Entity {
-//     let card_color = card.mushroom_type.color().clone();
-//     let card_entity = commands
-//         .spawn(CardBundle {
-//             name: card.name.clone().into(),
-//             card: card,
-//             transform: Transform::default().with_scale(Vec3::new(15.0, 20.0, 1.0)),
-//             sprite: Sprite::from_color(card_color, Vec2::new(3.0, 5.0)),
-//             ..default()
-//         })
-//         .id();
-//     commands.entity(hand_entity).add_child(card_entity);
-
-//     card_entity
-// }
 
 /// Update the value of the origin property on a [`Card`] component.
 ///
@@ -219,85 +192,6 @@ fn update_card_origins(
             commands.entity(*entity).insert(Dragged::Released);
         }
     }
-
-    Ok(())
-}
-
-#[tracing::instrument(skip_all)]
-fn create_test_card(
-    mut commands: Commands,
-    mushroom_definitions: Res<MushroomDefinitions>,
-    hand_query: Query<Entity, With<HandEntity>>,
-    level_assets: Res<LevelAssets>,
-    mut atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
-    mut atlas_layout_handle: Local<Option<Handle<TextureAtlasLayout>>>,
-) -> Result {
-    let mushroom_type = MushroomType::Chain;
-    let mushroom_definition = mushroom_definitions.get(MushroomType::Chain).unwrap();
-
-    let test_card_component = Card {
-        mushroom_type: mushroom_type,
-        name: mushroom_definition.name.clone(),
-        origin: Transform::from_translation(Vec3::ZERO.with_z(10.0)),
-    };
-
-    let hand = hand_query.single()?;
-
-    commands.entity(hand).with_children(|commands| {
-        commands
-            .spawn(CardBundle {
-                name: mushroom_definition.name.clone().into(),
-                card: test_card_component,
-                sprite: Sprite {
-                    color: tailwind::STONE_800.into(),
-                    custom_size: Some(CARD_SIZE),
-                    ..default()
-                },
-                ..default()
-            })
-            .with_children(|commands| {
-                let atlas_layout_handle = atlas_layout_handle.clone().unwrap_or_else(|| {
-                    info!("No layout yet, creating");
-                    let new_handle = atlas_layouts.add(TextureAtlasLayout::from_grid(
-                        UVec2::new(16, 16),
-                        2,
-                        24,
-                        Some(UVec2::new(2, 2)),
-                        None,
-                    ));
-                    *atlas_layout_handle = Some(new_handle.clone());
-
-                    new_handle
-                });
-
-                let atlas = TextureAtlas {
-                    layout: atlas_layout_handle,
-                    index: mushroom_definition.sprite_row * 2,
-                };
-                let mushroom_sprite =
-                    Sprite::from_atlas_image(level_assets.mushroom_texture.clone(), atlas);
-
-                commands.spawn((
-                    CARD_LAYER,
-                    mushroom_sprite,
-                    Transform::from_xyz(0.0, CARD_SIZE.y / 4.0, 2.0).with_scale(Vec3::splat(3.0)),
-                ));
-
-                commands.spawn((
-                    CARD_LAYER,
-                    Anchor::Center,
-                    Text2d::new(mushroom_definition.description.clone()),
-                    TextColor(tailwind::STONE_200.into()),
-                    TextBounds::from(Vec2::new(CARD_SIZE.x * 0.9, CARD_SIZE.y / 2.0)),
-                    TextLayout::new_with_linebreak(LineBreak::WordBoundary),
-                    TextFont {
-                        font_size: 10.0,
-                        ..default()
-                    },
-                    Transform::from_xyz(0.0, -(CARD_SIZE.y / 4.0), 1.0),
-                ));
-            });
-    });
 
     Ok(())
 }
