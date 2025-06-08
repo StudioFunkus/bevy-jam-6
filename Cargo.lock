@@ -462,6 +462,7 @@ dependencies = [
  "bevy_tweening",
  "funkus_dialogue_core",
  "funkus_dialogue_ui",
+ "getrandom 0.3.3",
  "log",
  "rand 0.9.1",
  "tracing",
@@ -926,7 +927,6 @@ dependencies = [
  "ron",
  "serde",
  "thiserror 2.0.12",
- "typetag",
  "wgpu",
 ]
 
@@ -1127,7 +1127,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ca6e15e297754d0bcb7665620c390c4f05665d4ac4ac91b4b5d3c66b9fe1f0e6"
 dependencies = [
  "bevy",
- "bevy_egui",
 ]
 
 [[package]]
@@ -2706,13 +2705,14 @@ dependencies = [
 [[package]]
 name = "getrandom"
 version = "0.3.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "26145e563e54f2cadc477553f1ec5ee650b00862f0a58bcd12cbdc5f0ea2d2f4"
+source = "git+https://github.com/benfrankel/getrandom#8df8846f07478cc3c6ace1fe32c193efe3f8a884"
 dependencies = [
  "cfg-if",
+ "js-sys",
  "libc",
  "r-efi",
  "wasi 0.14.2+wasi-0.2.4",
+ "wasm-bindgen",
 ]
 
 [[package]]
@@ -3192,15 +3192,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
-]
-
-[[package]]
-name = "inventory"
-version = "0.3.20"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ab08d7cd2c5897f2c949e5383ea7c7db03fb19130ffcfbf7eda795137ae3cb83"
-dependencies = [
- "rustversion",
 ]
 
 [[package]]
@@ -5438,30 +5429,6 @@ name = "typeid"
 version = "1.0.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bc7d623258602320d5c55d1bc22793b57daff0ec7efc270ea7d55ce1d5f5471c"
-
-[[package]]
-name = "typetag"
-version = "0.2.20"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "73f22b40dd7bfe8c14230cf9702081366421890435b2d625fa92b4acc4c3de6f"
-dependencies = [
- "erased-serde",
- "inventory",
- "once_cell",
- "serde",
- "typetag-impl",
-]
-
-[[package]]
-name = "typetag-impl"
-version = "0.2.20"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "35f5380909ffc31b4de4f4bdf96b877175a016aa2ca98cee39fcfd8c4d53d952"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn",
-]
 
 [[package]]
 name = "unicode-bidi"

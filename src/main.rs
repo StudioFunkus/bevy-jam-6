@@ -17,12 +17,15 @@ use bevy::{
 };
 use bevy_hanabi::HanabiPlugin;
 use bevy_panorbit_camera::{FocusBoundsShape, PanOrbitCameraPlugin};
-use bevy_rich_text3d::Text3dPlugin;
+use bevy_rich_text3d::{LoadFonts, Text3dPlugin};
 use bevy_sprite3d::Sprite3dPlugin;
 
 fn main() -> AppExit {
     App::new().add_plugins(AppPlugin).run()
 }
+
+// Embed the font at compile time
+const DEFAULT_FONT: &[u8] = include_bytes!("../assets/fonts/PixelOperatorMonoHB.ttf");
 
 pub struct AppPlugin;
 
@@ -55,21 +58,27 @@ impl Plugin for AppPlugin {
             HanabiPlugin,
             DialoguePlugin,
             DialogueUIPlugin,
-            DialogueDebugPlugin,
-            Text3dPlugin {
-                default_atlas_dimension: (1024, 1024),
-                load_system_fonts: true,
-                ..default()
-            },
+            // DialogueDebugPlugin,
         ));
+
+        app.insert_resource(LoadFonts {
+            font_embedded: vec![DEFAULT_FONT],
+            ..Default::default()
+        });
+
+        app.add_plugins(Text3dPlugin {
+            default_atlas_dimension: (1024, 1024),
+            // load_system_fonts: true,
+            ..default()
+        });
 
         // Add other plugins.
         app.add_plugins((
             asset_tracking::plugin,
             audio::plugin,
             game::plugin,
-            #[cfg(feature = "dev")]
-            dev_tools::plugin,
+            // #[cfg(feature = "dev")]
+            // dev_tools::plugin,
             menus::plugin,
             screens::plugin,
             theme::plugin,

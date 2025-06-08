@@ -43,6 +43,21 @@ pub(super) fn plugin(app: &mut App) {
         .add_systems(Update, update_material_time);
 }
 
+/// Consolidated uniforms for the shader
+#[derive(Debug, Clone, Copy, ShaderType)]
+pub struct FieldUniforms {
+    pub time: f32,
+    pub grid_size: Vec2,
+    pub connection_count: u32,
+    pub preview_count: u32,
+    pub mycelium_color_low: Vec4,
+    pub mycelium_color_high: Vec4,
+    pub pulse_speed: f32,
+    pub glow_intensity: f32,
+    pub line_width: f32,
+    pub _padding: Vec3,
+}
+
 /// Connection data for storage buffer
 #[derive(Debug, Clone, Copy, ShaderType)]
 pub struct ConnectionBufferData {
@@ -74,47 +89,17 @@ pub struct FieldGroundExtension {
     #[sampler(103)]
     pub tile_indices: Handle<Image>,
 
-    /// Time for animations
+    /// Consolidated uniforms
     #[uniform(104)]
-    pub time: f32,
-
-    /// Grid dimensions
-    #[uniform(105)]
-    pub grid_size: Vec2,
-
-    /// Number of active connections
-    #[uniform(106)]
-    pub connection_count: u32,
+    pub field_uniforms: FieldUniforms,
 
     /// Connection data storage buffer
-    #[storage(107, read_only)]
+    #[storage(105, read_only)]
     pub connections: Handle<ShaderStorageBuffer>,
 
-    /// Number of preview highlights
-    #[uniform(108)]
-    pub preview_count: u32,
-
     /// Preview highlights storage buffer
-    #[storage(109, read_only)]
+    #[storage(106, read_only)]
     pub preview_highlights: Handle<ShaderStorageBuffer>,
-
-    /// Mycelium colors
-    #[uniform(110)]
-    pub mycelium_color_low: LinearRgba,
-
-    #[uniform(111)]
-    pub mycelium_color_high: LinearRgba,
-
-    /// Animation parameters
-    #[uniform(112)]
-    pub pulse_speed: f32,
-
-    #[uniform(113)]
-    pub glow_intensity: f32,
-
-    /// Line rendering parameters
-    #[uniform(114)]
-    pub line_width: f32,
 }
 
 impl MaterialExtension for FieldGroundExtension {
@@ -178,17 +163,20 @@ pub fn spawn_field_ground(
         extension: FieldGroundExtension {
             tile_texture: tile_texture_handle.clone(),
             tile_indices: tile_indices_handle,
-            time: 0.0,
-            grid_size: Vec2::new(play_field.width as f32, play_field.height as f32),
-            connection_count: 0,
+            field_uniforms: FieldUniforms {
+                time: 0.0,
+                grid_size: Vec2::new(play_field.width as f32, play_field.height as f32),
+                connection_count: 0,
+                preview_count: 0,
+                mycelium_color_low: Vec4::new(0.2, 0.4, 0.2, 1.0),
+                mycelium_color_high: Vec4::new(0.4, 1.0, 0.6, 1.0),
+                pulse_speed: 2.0,
+                glow_intensity: 0.8,
+                line_width: 0.005,
+                _padding: Vec3::ZERO,
+            },
             connections: connections_buffer,
-            preview_count: 0,
             preview_highlights: preview_buffer,
-            mycelium_color_low: LinearRgba::new(0.2, 0.4, 0.2, 1.0),
-            mycelium_color_high: LinearRgba::new(0.4, 1.0, 0.6, 1.0),
-            pulse_speed: 2.0,
-            glow_intensity: 0.8,
-            line_width: 0.005,
         },
     });
 
@@ -265,7 +253,7 @@ fn update_material_time(
 ) {
     for field_ground in query.iter() {
         if let Some(material) = materials.get_mut(&field_ground.material_handle) {
-            material.extension.time = time.elapsed_secs();
+            material.extension.field_uniforms.time = time.elapsed_secs();
         }
     }
 }
@@ -291,7 +279,7 @@ fn update_connection_data(
 
             for connection in connections {
                 // Convert grid positions to normalized UV coordinates
-                let grid_size = material.extension.grid_size;
+                let grid_size = material.extension.field_uniforms.grid_size;
                 let start_uv = Vec2::new(
                     (connection.from_pos.x as f32 + 0.5) / grid_size.x,
                     1.0 - ((connection.from_pos.y as f32 + 0.5) / grid_size.y), // Flip Y coordinate
@@ -328,7 +316,7 @@ fn update_connection_data(
                 buffer.set_data(connection_data.as_slice());
             }
 
-            material.extension.connection_count = connections.len() as u32;
+            material.extension.field_uniforms.connection_count = connections.len() as u32;
 
             info!(
                 "Updated {} mycelium connections in shader",
@@ -352,7 +340,7 @@ fn update_shader_highlights(
     for field_ground in field_grounds.iter() {
         if let Some(material) = materials.get_mut(&field_ground.material_handle) {
             let mut preview_data = Vec::new();
-            let grid_size = material.extension.grid_size;
+            let grid_size = material.extension.field_uniforms.grid_size;
 
             // Check if we have any preview data at all
             let has_preview_data = preview_connections.preview_position.is_some()
@@ -429,7 +417,7 @@ fn update_shader_highlights(
             }
 
             // Set count to 0 if we only have the dummy element
-            material.extension.preview_count = if has_preview_data {
+            material.extension.field_uniforms.preview_count = if has_preview_data {
                 preview_data.len() as u32
             } else {
                 0

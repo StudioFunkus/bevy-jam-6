@@ -18,6 +18,20 @@
 }
 #endif
 
+// Consolidated uniforms struct
+struct FieldUniforms {
+    time: f32,
+    grid_size: vec2<f32>,
+    connection_count: u32,
+    preview_count: u32,
+    mycelium_color_low: vec4<f32>,
+    mycelium_color_high: vec4<f32>,
+    pulse_speed: f32,
+    glow_intensity: f32,
+    line_width: f32,
+    _padding: vec3<f32>,
+};
+
 // Storage buffer for connections
 struct ConnectionData {
     start_pos: vec2<f32>,
@@ -42,30 +56,14 @@ struct PreviewData {
 @group(2) @binding(102) var tile_indices: texture_2d<f32>;
 @group(2) @binding(103) var tile_indices_sampler: sampler;
 
-// Time for animations
-@group(2) @binding(104) var<uniform> time: f32;
-
-// Grid dimensions
-@group(2) @binding(105) var<uniform> grid_size: vec2<f32>;
+// Consolidated uniforms
+@group(2) @binding(104) var<uniform> field_uniforms: FieldUniforms;
 
 // Connection data
-@group(2) @binding(106) var<uniform> connection_count: u32;
-@group(2) @binding(107) var<storage, read> connections: array<ConnectionData>;
+@group(2) @binding(105) var<storage, read> connections: array<ConnectionData>;
 
 // Preview highlights
-@group(2) @binding(108) var<uniform> preview_count: u32;
-@group(2) @binding(109) var<storage, read> preview_highlights: array<PreviewData>;
-
-// Mycelium colors
-@group(2) @binding(110) var<uniform> mycelium_color_low: vec4<f32>;
-@group(2) @binding(111) var<uniform> mycelium_color_high: vec4<f32>;
-
-// Animation parameters
-@group(2) @binding(112) var<uniform> pulse_speed: f32;
-@group(2) @binding(113) var<uniform> glow_intensity: f32;
-
-// Line rendering parameters
-@group(2) @binding(114) var<uniform> line_width: f32;
+@group(2) @binding(106) var<storage, read> preview_highlights: array<PreviewData>;
 
 // SDF for line segment (not technically SDF, but used for line rendering)
 fn sdf_line_segment(p: vec2<f32>, a: vec2<f32>, b: vec2<f32>, width: f32) -> f32 {
@@ -109,8 +107,8 @@ fn fragment(
     var uv = in.uv;
     
     // Calculate which grid cell we're in
-    let grid_pos = floor(uv * grid_size);
-    let cell_uv = fract(uv * grid_size);
+    let grid_pos = floor(uv * field_uniforms.grid_size);
+    let cell_uv = fract(uv * field_uniforms.grid_size);
     
     // Sample tile index from indices texture
     let tile_data = textureSample(tile_indices, tile_indices_sampler, uv);
@@ -127,30 +125,30 @@ fn fragment(
     var existing_target_highlight = 0.0;
     
     // Process preview highlights
-    for (var i = 0u; i < preview_count; i = i + 1u) {
+    for (var i = 0u; i < field_uniforms.preview_count; i = i + 1u) {
         let preview = preview_highlights[i];
         let highlight_pos = preview.position;
-        let cell_dist = length((uv - highlight_pos) * grid_size * 0.7);
+        let cell_dist = length((uv - highlight_pos) * field_uniforms.grid_size * 0.7);
         
         if (cell_dist < 0.5) {
             if (preview.highlight_type == -1.0) {
                 // Preview position highlight (cyan)
-                preview_highlight = max(preview_highlight, 0.6 + 0.2 * sin(time * 3.0));
+                preview_highlight = max(preview_highlight, 0.6 + 0.2 * sin(field_uniforms.time * 3.0));
             } else if (preview.highlight_type == -2.0) {
                 // Connected position highlight (green)
-                connected_highlight = max(connected_highlight, 0.4 + 0.1 * sin(time * 4.0 + 1.57));
+                connected_highlight = max(connected_highlight, 0.4 + 0.1 * sin(field_uniforms.time * 4.0 + 1.57));
             } else if (preview.highlight_type == -3.0) {
                 // Empty connection point highlight (red)
-                empty_connection_highlight = max(empty_connection_highlight, 0.5 + 0.15 * sin(time * 5.0));
+                empty_connection_highlight = max(empty_connection_highlight, 0.5 + 0.15 * sin(field_uniforms.time * 5.0));
             } else if (preview.highlight_type == -4.0) {
                 // Existing target highlight (blue)
-                existing_target_highlight = max(existing_target_highlight, 0.5 + 0.1 * sin(time * 2.0));
+                existing_target_highlight = max(existing_target_highlight, 0.5 + 0.1 * sin(field_uniforms.time * 2.0));
             }
         }
     }
     
     // Process mycelium connections
-    for (var i = 0u; i < connection_count; i = i + 1u) {
+    for (var i = 0u; i < field_uniforms.connection_count; i = i + 1u) {
         let connection = connections[i];
         
         // Skip invalid connections
@@ -159,16 +157,16 @@ fn fragment(
         }
         
         // Calculate mycelium line
-        let line_alpha = sdf_line_segment(uv, connection.start_pos, connection.end_pos, line_width);
+        let line_alpha = sdf_line_segment(uv, connection.start_pos, connection.end_pos, field_uniforms.line_width);
         
         if (line_alpha > 0.0) {
             // Energy pulse animation
             let flow_offset = length(uv - connection.start_pos) / connection.distance;
-            let pulse = sin((flow_offset - time * pulse_speed) * 6.28318) * 0.5 + 0.5;
+            let pulse = sin((flow_offset - field_uniforms.time * field_uniforms.pulse_speed) * 6.28318) * 0.5 + 0.5;
             
             // Mycelium color with pulse
-            let mycelium_color = mix(mycelium_color_low, mycelium_color_high, pulse * connection.strength);
-            let glow = 1.0 + pulse * glow_intensity;
+            let mycelium_color = mix(field_uniforms.mycelium_color_low, field_uniforms.mycelium_color_high, pulse * connection.strength);
+            let glow = 1.0 + pulse * field_uniforms.glow_intensity;
             
             // Blend mycelium over base
             base_color = mix(base_color, mycelium_color * glow, line_alpha * connection.strength);
@@ -204,7 +202,7 @@ fn fragment(
         
         // Dashed edge
         let edge_dist = min(min(cell_uv.x, 1.0 - cell_uv.x), min(cell_uv.y, 1.0 - cell_uv.y));
-        let dash_pattern = sin((cell_uv.x + cell_uv.y) * 20.0 + time * 8.0) * 0.5 + 0.5;
+        let dash_pattern = sin((cell_uv.x + cell_uv.y) * 20.0 + field_uniforms.time * 8.0) * 0.5 + 0.5;
         if (edge_dist < 0.04 && dash_pattern > 0.3) {
             base_color = mix(base_color, empty_color, 0.7);
         }
