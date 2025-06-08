@@ -5,6 +5,7 @@ use bevy::prelude::*;
 pub(crate) mod fixed_timestep;
 pub(crate) mod game_flow;
 pub(crate) mod level;
+pub(crate) mod dialogue;
 mod mushrooms;
 pub(crate) mod play_field;
 mod resources;
@@ -17,6 +18,7 @@ pub(super) fn plugin(app: &mut App) {
     app.add_systems(Update, despawn_timer_system);
 
     app.add_plugins((
+        dialogue::plugin,
         particles::plugin,
         fixed_timestep::plugin,
         resources::plugin,

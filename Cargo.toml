@@ -56,7 +56,6 @@ dev_native = [
     "bevy/embedded_watcher",
 ]
 
-
 [package.metadata.bevy_cli.release]
 # Disable dev features for release builds.
 default-features = false

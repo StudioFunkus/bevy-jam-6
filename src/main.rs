@@ -53,6 +53,8 @@ impl Plugin for AppPlugin {
             MeshPickingPlugin,
             HanabiPlugin,
             DialoguePlugin,
+            DialogueUIPlugin,
+            DialogueDebugPlugin,
             Text3dPlugin {
                 default_atlas_dimension: (1024, 1024),
                 load_system_fonts: true,
@@ -118,7 +120,8 @@ struct Pause(pub bool);
 struct PausableSystems;
 
 use bevy_panorbit_camera::PanOrbitCamera;
-use funkus_dialogue_core::DialoguePlugin;
+use funkus_dialogue_core::{DialogueDebugPlugin, DialoguePlugin};
+use funkus_dialogue_ui::DialogueUIPlugin;
 
 fn spawn_camera(mut commands: Commands) {
     commands.spawn((
