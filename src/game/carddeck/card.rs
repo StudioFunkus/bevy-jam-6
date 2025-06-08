@@ -44,7 +44,7 @@ impl CardTemplates {
         info!("Rarity choices: {:?}", rarity_choices);
         let rarity_weights = [60, 30, 10];
         info!("Rarity weights: {:?}", rarity_weights);
-        let dist = WeightedIndex::new(&rarity_weights).unwrap();
+        let dist = WeightedIndex::new(rarity_weights).unwrap();
         info!("Distribution: {:?}", dist);
         let mut rng = rand::rng();
 

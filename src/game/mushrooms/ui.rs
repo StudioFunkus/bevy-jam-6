@@ -2,7 +2,7 @@
 //! Add this as a new file: src/game/mushrooms/visual_info.rs
 
 use bevy::prelude::*;
-use bevy_rich_text3d::{Text3d, Text3dBounds, Text3dStyling, TextAlign, TextAnchor, TextAtlas};
+use bevy_rich_text3d::{Text3d, TextAtlas};
 
 use crate::game::{
     game_flow::LevelState,

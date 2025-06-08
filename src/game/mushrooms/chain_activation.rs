@@ -6,7 +6,7 @@ use std::collections::VecDeque;
 use std::time::Duration;
 
 use crate::game::{
-    self, DespawnTimer,
+    DespawnTimer,
     fixed_timestep::GameTime,
     game_flow::{CurrentLevel, TurnData},
     mushrooms::events::SporeScoreEvent,
@@ -308,9 +308,7 @@ fn process_single_activation(
         definition.base_production * activation.energy_packet.energy as f64 * tile_modifier as f64;
 
     // Apply behavior-specific modifications
-    match &definition.activation_behavior {
-        _ => {}
-    }
+    {}
 
     // Add spores
     game_state.add_spores(production);
@@ -394,7 +392,7 @@ fn process_propagation(
 
     // Process based on behavior type (for special modifications)
     match behavior {
-        ActivationBehavior::Basic { .. } => {
+        ActivationBehavior::Basic => {
             // No behaviour modification, just propagate if there are connection points
         }
 

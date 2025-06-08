@@ -4,7 +4,7 @@
 //! including highlighting potential connections in the shader.
 
 use bevy::{pbr::NotShadowReceiver, prelude::*};
-use bevy_sprite3d::{Sprite3d, Sprite3dBuilder, Sprite3dParams};
+use bevy_sprite3d::{Sprite3dBuilder, Sprite3dParams};
 
 use crate::game::{
     game_flow::{LevelState, TurnPhase},
@@ -197,7 +197,7 @@ fn update_placement_preview(
                     };
 
                     // Create the sprite builder with transparency settings
-                    let mut sprite_builder = Sprite3dBuilder {
+                    let sprite_builder = Sprite3dBuilder {
                         image: level_assets.mushroom_texture.clone(),
                         pixels_per_metre: 16.0,
                         double_sided: true,

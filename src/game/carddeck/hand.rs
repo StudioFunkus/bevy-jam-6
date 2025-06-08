@@ -146,7 +146,7 @@ pub fn draw_n(
         )?;
 
         hand.cards
-            .push_back((card_component, Some(card_entity.clone())));
+            .push_back((card_component, Some(card_entity)));
     }
 
     commands.trigger(HandChangeEvent);

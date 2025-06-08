@@ -1,7 +1,7 @@
 //! Mycelium connection system (PlayField connections)
 
 use super::GridPosition;
-use crate::game::mushrooms::{Mushroom, MushroomDefinitions, MushroomDirection, MushroomType};
+use crate::game::mushrooms::{Mushroom, MushroomDefinitions, MushroomDirection};
 use crate::game::play_field::PlayField;
 use crate::game::resources::GameState;
 use bevy::prelude::*;
@@ -18,7 +18,7 @@ pub struct ConnectionBuilder {
 
 /// Build mycelium connections in PlayField based on mushroom positions and types
 pub fn build_playfield_connections(
-    mut commands: Commands,
+    commands: Commands,
     new_mushrooms: Query<
         (Entity, &GridPosition, &Mushroom, Option<&MushroomDirection>),
         Added<Mushroom>,

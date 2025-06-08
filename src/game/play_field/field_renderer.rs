@@ -8,7 +8,6 @@ use super::tile_atlas::TileSprite;
 use super::{GridPosition, PlayField, TileType};
 use crate::game::game_flow::LevelState;
 use crate::game::level::assets::LevelAssets;
-use crate::game::play_field::placement_preview::PreviewConnections;
 use crate::game::resources::GameState;
 use bevy::{
     pbr::{ExtendedMaterial, MaterialExtension},
@@ -245,7 +244,9 @@ fn create_tile_indices_texture(play_field: &PlayField) -> Image {
         }
     }
 
-    let image = Image::new(
+    
+
+    Image::new(
         bevy::render::render_resource::Extent3d {
             width,
             height,
@@ -255,9 +256,7 @@ fn create_tile_indices_texture(play_field: &PlayField) -> Image {
         data,
         bevy::render::render_resource::TextureFormat::Rgba8Unorm,
         RenderAssetUsages::RENDER_WORLD | RenderAssetUsages::MAIN_WORLD,
-    );
-
-    image
+    )
 }
 
 /// Update the material time uniform

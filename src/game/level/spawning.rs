@@ -108,16 +108,12 @@ pub fn spawn_level(
 
     if let Ok(music_entity) = music_query.single() {
         // Spawn background music
-        match current_level.level_index {
-            _ => {
-                if music_entity.0 != level_assets.music {
-                    commands.spawn((
-                        Name::new("Gameplay Music"),
-                        StateScoped(Screen::Gameplay),
-                        music(level_assets.music.clone()),
-                    ));
-                }
-            }
+        if music_entity.0 != level_assets.music {
+            commands.spawn((
+                Name::new("Gameplay Music"),
+                StateScoped(Screen::Gameplay),
+                music(level_assets.music.clone()),
+            ));
         }
     } else {
         commands.spawn((

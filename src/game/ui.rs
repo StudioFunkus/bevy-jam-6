@@ -456,7 +456,7 @@ fn update_mushroom_buttons(
         // Update text content if we have a definition
         if let Some(def) = definition {
             // Update name (first child)
-            if let Some(name_entity) = children.iter().nth(0) {
+            if let Some(name_entity) = children.iter().next() {
                 if let Ok(mut text) = texts.get_mut(name_entity) {
                     text.0 = def.name.clone();
                 }
