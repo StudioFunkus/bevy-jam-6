@@ -381,9 +381,7 @@ fn initialize_definitions(mut definitions: ResMut<MushroomDefinitions>) {
         MushroomType::Deleter,
         MushroomDefinition {
             name: "Delita".to_string(),
-            description:
-                "Activation: destroys connected mushrooms and generates 100 spores for each."
-                    .to_string(),
+            description: "Destroy connected.\n100 Spores for each.".to_string(),
             base_production: 100.0,
             cooldown_time: 10.0,
             max_uses_per_turn: 1,
@@ -399,9 +397,7 @@ fn initialize_definitions(mut definitions: ResMut<MushroomDefinitions>) {
         MushroomType::Bomb,
         MushroomDefinition {
             name: "Skullcap".to_string(),
-            description:
-                "Activation: destroys connected mushrooms and generates 100 spores for each."
-                    .to_string(),
+            description: "Destroy connected.\n100 Spores for each.".to_string(),
             base_production: 100.0,
             cooldown_time: 10.0,
             max_uses_per_turn: 1,
