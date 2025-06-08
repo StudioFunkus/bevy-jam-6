@@ -235,6 +235,7 @@ pub enum MushroomType {
     Burst,
     Converter,
     Knight,
+    Unblocker,
     Test,
 }
 
@@ -522,6 +523,27 @@ fn initialize_definitions(mut definitions: ResMut<MushroomDefinitions>) {
             activation_behavior: ActivationBehavior::Basic,
             unlock_requirement: UnlockRequirement::None,
             connection_points: connection_patterns::KNIGHT_FORWARD.to_vec(),
+        },
+    );
+
+    // Unblocker Mushroom
+    defs.insert(
+        MushroomType::Unblocker,
+        MushroomDefinition {
+            name: "Wizard's Stave".to_string(),
+            description: "15 Spores. Unblock 1.".to_string(),
+            base_production: 8.0,
+            cooldown_time: 2.5,
+            max_uses_per_turn: 3,
+            sprite_row: 21,
+            activation_behavior: ActivationBehavior::Converter {
+                convert_to: TileType::Empty,
+                convert_count: 1,
+                can_convert_from: Some(vec![TileType::BlockedMoss, TileType::BlockedRock, TileType::BlockedWater]), // converts blockers
+                search_radius: 2,                              // Searches within 2 tiles
+            },
+            unlock_requirement: UnlockRequirement::None,
+            connection_points: vec![],
         },
     );
 
