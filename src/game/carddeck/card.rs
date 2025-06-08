@@ -5,8 +5,11 @@
 //! These are stored in the player's deck, of which duplicates may exist.
 
 use bevy::{
-    color::palettes::tailwind, prelude::*, render::view::RenderLayers, sprite::Anchor,
-    text::TextBounds,
+    color::palettes::tailwind,
+    prelude::*,
+    render::view::RenderLayers,
+    sprite::Anchor,
+    text::{FontSmoothing, TextBounds},
 };
 use rand::{distr::weighted::WeightedIndex, prelude::*};
 
@@ -262,6 +265,7 @@ pub fn spawn_card(
             ..default()
         })
         .with_children(|commands| {
+            // Mushroom Sprite
             commands.spawn((
                 CARD_LAYER,
                 mushroom_sprite,
@@ -269,19 +273,24 @@ pub fn spawn_card(
                 StateScoped(Screen::Gameplay),
             ));
 
+            // Activation Limit
+            let card_text = format!(
+                "Trigger Limit: {}\n{}",
+                mushroom_definition.max_uses_per_turn, mushroom_definition.description,
+            );
             commands.spawn((
                 CARD_LAYER,
                 Anchor::Center,
-                Text2d::new(mushroom_definition.description.clone()),
+                Text2d::new(card_text),
                 TextColor(tailwind::STONE_200.into()),
                 TextBounds::from(Vec2::new(CARD_SIZE.x * 0.9, CARD_SIZE.y / 2.0)),
-                TextLayout::new_with_linebreak(LineBreak::WordBoundary),
+                TextLayout::new(JustifyText::Left, LineBreak::WordBoundary),
                 TextFont {
                     font_size: 12.0,
+                    font_smoothing: FontSmoothing::AntiAliased,
                     ..default()
                 },
                 Transform::from_xyz(0.0, -(CARD_SIZE.y / 4.0), 1.0),
-                StateScoped(Screen::Gameplay),
             ));
         })
         .id();
