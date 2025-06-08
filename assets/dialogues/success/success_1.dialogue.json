@@ -5,17 +5,17 @@
         {
           "Text": {
             "id": 1,
-            "text": "You succeeded",
-            "speaker": "Test",
-            "portrait": "test"
+            "text": "\nSplendid! I see there's nothing false about your morels!",
+            "speaker": "AGARICUS",
+            "portrait": "wizard"
           }
         },
         {
           "Text": {
             "id": 2,
-            "text": "Test 2",
-            "speaker": "Test2",
-            "portrait": "test2"
+            "text": "\nNow those are some truly magic mushrooms!",
+            "speaker": "AGARICUS",
+            "portrait": "wizard"
           }
         }
       ],

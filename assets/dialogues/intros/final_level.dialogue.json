@@ -5,17 +5,33 @@
         {
           "Text": {
             "id": 1,
-            "text": "final level",
-            "speaker": "Test",
-            "portrait": "test"
+            "text": "\nWell? Are you ready to admit how wrong you were, Madame Moss-For-Brains?",
+            "speaker": "AGARICUS",
+            "portrait": "wizard"
           }
         },
         {
           "Text": {
             "id": 2,
-            "text": "Test 2",
-            "speaker": "Test2",
-            "portrait": "test2"
+            "text": "\nImpressive work, I'll admit. But your little mushroom cave is more suited to a light lunch than a magical banquet. ",
+            "speaker": "ANDREAEA",
+            "portrait": "witch"
+          }
+        },
+        {
+          "Text": {
+            "id": 3,
+            "text": "\r\nYou could do with a light lunch, you dried-up old liverwort. \r",
+            "speaker": "AGARICUS",
+            "portrait": "wizard"
+          }
+        },
+        {
+          "Text": {
+            "id": 4,
+            "text": "\nHe who resorts to personal insults has already lost. Try harder next time, loamy old fool. You've a long way to go before you can best my moss garden.",
+            "speaker": "ANDREAEA",
+            "portrait": "witch"
           }
         }
       ],
@@ -28,14 +44,30 @@
           {
             "label": null
           }
+        ],
+        [
+          1,
+          2,
+          {
+            "label": null
+          }
+        ],
+        [
+          2,
+          3,
+          {
+            "label": null
+          }
         ]
       ]
     },
     "node_indices": {
       "1": 0,
-      "2": 1
+      "2": 1,
+      "3": 2,
+      "4": 3
     },
     "start_node": 1,
-    "name": "New Dialogue"
+    "name": "Level 3"
   }
 }

@@ -5,17 +5,25 @@
         {
           "Text": {
             "id": 1,
-            "text": "you failed",
-            "speaker": "Test",
-            "portrait": "test"
+            "text": "\nWhat mycelial mockery is this! Dare you test me, the great Agaricus?",
+            "speaker": "AGARICUS",
+            "portrait": "wizard"
           }
         },
         {
           "Text": {
             "id": 2,
-            "text": "Test 2",
-            "speaker": "Test2",
-            "portrait": "test2"
+            "text": "\nYou're no mushroom mogul! Why, you're nothing but a fungus fraud!",
+            "speaker": "AGARICUS",
+            "portrait": "wizard"
+          }
+        },
+                {
+          "Text": {
+            "id": 3,
+            "text": "\nWhat a load of old boletes...!!",
+            "speaker": "AGARICUS",
+            "portrait": "wizard"
           }
         }
       ],
@@ -33,7 +41,8 @@
     },
     "node_indices": {
       "1": 0,
-      "2": 1
+      "2": 1,
+      "3": 2
     },
     "start_node": 1,
     "name": "New Dialogue"

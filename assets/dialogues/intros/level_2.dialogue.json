@@ -5,17 +5,33 @@
         {
           "Text": {
             "id": 1,
-            "text": "level 2",
-            "speaker": "Test",
-            "portrait": "test"
+            "text": "\nStill harping on about mushroom magic are we? Isn't it time you stopped talking shiitake, Agaricus?",
+            "speaker": "ANDREAEA",
+            "portrait": "witch"
           }
         },
         {
           "Text": {
             "id": 2,
-            "text": "Test 2",
-            "speaker": "Test2",
-            "portrait": "test2"
+            "text": "\nWhat would you know about magic, you mossy witch? Bog off why don't you. I'm busy.",
+            "speaker": "AGARICUS",
+            "portrait": "wizard"
+          }
+        },
+        {
+          "Text": {
+            "id": 3,
+            "text": "\nYou're wasting your time. My magical moss garden knocks the spores off your sad little fungus cave. Admit it. You can't possibly compete with me.",
+            "speaker": "ANDREAEA",
+            "portrait": "witch"
+          }
+        },
+        {
+          "Text": {
+            "id": 4,
+            "text": "\nI shall admit nothing of the sort! You're full of loam, interfering old bat. We'll see who wins the spore war.",
+            "speaker": "AGARICUS",
+            "portrait": "wizard"
           }
         }
       ],
@@ -28,14 +44,30 @@
           {
             "label": null
           }
+        ],
+        [
+          1,
+          2,
+          {
+            "label": null
+          }
+        ],
+        [
+          2,
+          3,
+          {
+            "label": null
+          }
         ]
       ]
     },
     "node_indices": {
       "1": 0,
-      "2": 1
+      "2": 1,
+      "4": 3,
+      "3": 2
     },
     "start_node": 1,
-    "name": "New Dialogue"
+    "name": "Level 2"
   }
 }
