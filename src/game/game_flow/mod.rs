@@ -10,7 +10,7 @@ use crate::{
 };
 
 pub(super) fn plugin(app: &mut App) {
-    // Initialise states
+    // Initialize states
     app.init_state::<LevelState>();
     app.add_sub_state::<TurnPhase>();
 
@@ -39,7 +39,7 @@ pub(super) fn plugin(app: &mut App) {
     app.add_systems(OnEnter(LevelState::Success), spawn_level_success_ui);
     app.add_systems(OnEnter(LevelState::Failed), spawn_level_failed_ui);
 
-    // Initialise resources
+    // Initialize resources
     app.init_resource::<TurnData>();
     app.init_resource::<CurrentLevel>();
 }
@@ -50,7 +50,9 @@ pub(super) fn plugin(app: &mut App) {
 pub enum LevelState {
     #[default]
     NotPlaying,
+    StartDialogue,
     Playing,
+    EndDialogue,
     Success,
     Failed,
 }

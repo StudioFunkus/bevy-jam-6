@@ -303,6 +303,8 @@ fn update_turn_phase_display(
             }
             LevelState::Failed => "LEVEL COMPLETE (FAILURE)!",
             LevelState::Success => "LEVEL COMPLETE (SUCCESS)!",
+            LevelState::StartDialogue => "Start Dialogue",
+            LevelState::EndDialogue => "End Dialogue",
             LevelState::NotPlaying => "Not in game",
         };
 
