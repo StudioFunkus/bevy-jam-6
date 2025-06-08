@@ -142,7 +142,7 @@ impl Default for LevelDefinitions {
                     ],
                 },
                 
-                // Level 3 - lots of moss rocks, so lower score threshold
+                // Level 3 - lots of moss rocks, same score threshold as previous
                 LevelDefinition {
                     name: "Level 3".to_string(),
                     grid_width: 12,

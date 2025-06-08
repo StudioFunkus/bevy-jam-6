@@ -121,13 +121,13 @@ pub fn create_card_definitions(mut card_templates: ResMut<CardTemplates>) -> Res
             rarity: Rarity::Uncommon,
         },
         CardTemplate {
-            name: "Fourway_amplifier".into(),
-            mushroom_type: MushroomType::FourwayAmplifier,
+            name: "Twoway_amplifier".into(),
+            mushroom_type: MushroomType::TwoWayAmplifier,
             rarity: Rarity::Rare,
         },
         CardTemplate {
-            name: "Splitter".into(),
-            mushroom_type: MushroomType::Splitter,
+            name: "Threeway_Amplifier".into(),
+            mushroom_type: MushroomType::ThreeWayAmplifier,
             rarity: Rarity::Rare,
         },
         CardTemplate {
