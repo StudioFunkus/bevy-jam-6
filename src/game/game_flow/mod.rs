@@ -284,7 +284,7 @@ fn handle_level_complete_action(
             {
                 // Transition from Success/Failed -> Playing directly
                 // StateScoped entities will be cleaned up automatically
-                level_state.set(LevelState::Playing);
+                level_state.set(LevelState::StartDialogue);
             }
         }
 
