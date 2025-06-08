@@ -129,7 +129,7 @@ where
                         Name::new("Button Text"),
                         Text(text),
                         TextFont::from_font_size(40.0),
-                        TextColor(Color::BLACK),
+                        TextColor(Color::WHITE),
                         // Don't bubble picking events from the text up to the button.
                         Pickable::IGNORE,
                     )],

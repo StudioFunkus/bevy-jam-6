@@ -1,6 +1,9 @@
 //! The main menu (seen on the title screen).
 
-use bevy::prelude::*;
+use std::time::Duration;
+
+use bevy::{ecs::spawn::SpawnWith, prelude::*};
+use bevy_tweening::{lens::UiPositionLens, Animator, RepeatCount, RepeatStrategy, Tween};
 
 use crate::{
     asset_tracking::ResourceHandles,
@@ -17,6 +20,8 @@ pub(super) fn plugin(app: &mut App) {
 }
 
 //component to store floating parameters for spores
+#[derive(Component)]
+struct Spore;
 
 // spawn all menu widgets
 
@@ -45,66 +50,105 @@ fn spawn_main_menu(mut commands: Commands, _screen_assets: Res<ScreenAssets>) {
 
 fn spawn_main_menu_art_assets(mut commands: Commands, screen_assets: Res<ScreenAssets>) {
     commands.spawn((
-        widget::ui_root("Main Menu"),
+        Name::new("Main Menu - Art"),
+        Node {
+            position_type: PositionType::Absolute,
+            width: Val::Percent(100.0),
+            height: Val::Percent(100.0),
+            align_items: AlignItems::Default,
+            justify_content: JustifyContent::Default,
+            flex_direction: FlexDirection::Row,
+            ..default()
+        },
+        Pickable::IGNORE,
         GlobalZIndex(0),
         StateScoped(Menu::Main),
         children![
-            // splash art
-            widget::image(
-                screen_assets.titlescreen.clone(),
-                Some(Val::Px(0.)),
-                None,
-                None,
-                None,
-                Val::Percent(60.),
-                Val::Auto,
-                PositionType::Relative,
+            // Splash Art
+            (
+                Name::new("Container - Splash Art"),
+                Node {
+                    width: Val::Percent(60.0),
+                    align_items: AlignItems::Center,
+                    justify_items: JustifyItems::Center,
+                    align_content: AlignContent::Center,
+                    justify_content: JustifyContent::Center,
+                    ..default()
+                },
+                children![(
+                    Name::new("Splash Art"),
+                    Pickable::IGNORE,
+                    ImageNode::new(screen_assets.titlescreen.clone()),
+                    Node {
+                        left: Val::Percent(22.5),
+                        top: Val::Percent(0.0),
+                        height: Val::Percent(90.0),
+                        ..default()
+                    }
+                )],
             ),
-            // game title
-            widget::image(
-                screen_assets.gametitle.clone(),
-                None,
-                None,
-                None,
-                None,
-                Val::Px(1000.),
-                Val::Px(200.),
-                PositionType::Absolute,
+            // Game Title
+            (
+                Name::new("Container - Game Title"),
+                Node {
+                    width: Val::Percent(60.0),
+                    align_items: AlignItems::Center,
+                    justify_items: JustifyItems::Center,
+                    align_content: AlignContent::Center,
+                    justify_content: JustifyContent::Center,
+                    ..default()
+                },
+                children![(
+                    Name::new("Game Title"),
+                    Pickable::IGNORE,
+                    ImageNode::new(screen_assets.gametitle.clone()),
+                    Node {
+                        left: Val::Percent(-70.0),
+                        top: Val::Percent(25.0),
+                        height: Val::Percent(60.0),
+                        ..default()
+                    }
+                )],
             ),
-            // lil spore 1
-            widget::image(
-                screen_assets.spore1.clone(),
-                None,
-                None,
-                None,
-                None,
-                Val::Px(20.),
-                Val::Px(20.),
-                PositionType::Absolute,
-            ),
-            // lil spore 2
-            widget::image(
-                screen_assets.spore2.clone(),
-                None,
-                None,
-                None,
-                None,
-                Val::Px(20.),
-                Val::Px(20.),
-                PositionType::Absolute,
-            ),
-            //lil spore 3
-            widget::image(
-                screen_assets.spore3.clone(),
-                None,
-                None,
-                None,
-                None,
-                Val::Px(20.),
-                Val::Px(20.),
-                PositionType::Absolute,
-            )
         ],
+    ));
+
+    commands.spawn((
+        Name::new("Main Menu - Spores"),
+        Node {
+            position_type: PositionType::Absolute,
+            width: Val::Percent(100.0),
+            height: Val::Percent(100.0),
+            align_items: AlignItems::Default,
+            justify_content: JustifyContent::Default,
+            flex_direction: FlexDirection::Row,
+            ..default()
+        },
+        Pickable::IGNORE,
+        GlobalZIndex(0),
+        StateScoped(Menu::Main),
+        children![(
+            Name::new("Spore 1"),
+            Node {
+                height: Val::Px(30.),
+                position_type: PositionType::Absolute,
+                ..default()
+            },
+            ImageNode::new(screen_assets.spore1.clone()),
+            Pickable::IGNORE,
+            Animator::new(
+                Tween::new(
+                    EaseFunction::QuadraticInOut,
+                    Duration::from_secs(2),
+                    UiPositionLens {
+                        start: UiRect::new(Val::Auto, Val::Percent(40.), Val::Percent(42.), Val::Auto,),
+                        end: UiRect::new(Val::Auto, Val::Percent(30.), Val::Percent(47.), Val::Auto,),
+                    },
+                )
+                .with_repeat_count(RepeatCount::Infinite)
+                .with_repeat_strategy(RepeatStrategy::MirroredRepeat)
+            )
+        )],
     ));
 }
 
