@@ -6,7 +6,6 @@ use funkus_dialogue_core::{
     SelectDialogueChoice, StartDialogue as StartDialogueEvent,
 };
 use rand::prelude::*;
-use rand::rand_core::le;
 use rand::rng;
 
 use crate::game::{

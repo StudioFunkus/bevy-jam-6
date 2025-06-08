@@ -70,13 +70,11 @@ impl Default for LevelDefinitions {
                     grid_height: 12,
                     target_score: 500.0,
                     max_turns: 5,
-                    starting_mushrooms: vec![
-                        StartingMushroom {
-                            x: 2,
-                            y: 2,
-                            mushroom_type: MushroomType::Pulse,
-                        }
-                    ],
+                    starting_mushrooms: vec![StartingMushroom {
+                        x: 2,
+                        y: 2,
+                        mushroom_type: MushroomType::Pulse,
+                    }],
                     tile_configuration: vec![
                         // Create interesting terrain
                         (GridPosition::new(0, 0), TileType::Fertile),

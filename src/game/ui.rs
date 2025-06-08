@@ -416,7 +416,8 @@ fn update_spore_display(
     if let Ok(mut text) = spore_display.single_mut() {
         text.0 = format!(
             "Spores: {}/{}",
-            current_level.total_spores_earned.trunc() as i32, current_level.target_score.trunc() as i32,
+            current_level.total_spores_earned.trunc() as i32,
+            current_level.target_score.trunc() as i32,
         );
     }
 
