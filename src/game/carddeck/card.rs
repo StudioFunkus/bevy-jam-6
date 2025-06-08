@@ -42,7 +42,7 @@ impl CardTemplates {
     pub fn draw_random_card(&self) -> &CardTemplate {
         let rarity_choices = [Rarity::Common, Rarity::Uncommon, Rarity::Rare];
         info!("Rarity choices: {:?}", rarity_choices);
-        let rarity_weights = [60, 30, 10];
+        let rarity_weights = [40, 40, 20];
         info!("Rarity weights: {:?}", rarity_weights);
         let dist = WeightedIndex::new(rarity_weights).unwrap();
         info!("Distribution: {:?}", dist);
@@ -68,7 +68,7 @@ pub fn create_card_definitions(mut card_templates: ResMut<CardTemplates>) -> Res
         CardTemplate {
             name: "Basic".into(),
             mushroom_type: MushroomType::Basic,
-            rarity: Rarity::Common,
+            rarity: Rarity::Uncommon,
         },
         CardTemplate {
             name: "Pulse".into(),
@@ -93,7 +93,7 @@ pub fn create_card_definitions(mut card_templates: ResMut<CardTemplates>) -> Res
         CardTemplate {
             name: "Diagonal".into(),
             mushroom_type: MushroomType::Diagonal,
-            rarity: Rarity::Uncommon,
+            rarity: Rarity::Common,
         },
         CardTemplate {
             name: "Surround".into(),
@@ -138,7 +138,7 @@ pub fn create_card_definitions(mut card_templates: ResMut<CardTemplates>) -> Res
         CardTemplate {
             name: "Burst".into(),
             mushroom_type: MushroomType::Burst,
-            rarity: Rarity::Uncommon,
+            rarity: Rarity::Rare,
         },
         CardTemplate {
             name: "Converter".into(),
