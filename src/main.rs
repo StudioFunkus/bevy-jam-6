@@ -16,7 +16,7 @@ use bevy::{
     asset::AssetMetaCheck, pbr::light_consts, picking::mesh_picking::MeshPickingPlugin, prelude::*,
 };
 use bevy_hanabi::HanabiPlugin;
-use bevy_panorbit_camera::PanOrbitCameraPlugin;
+use bevy_panorbit_camera::{FocusBoundsShape, PanOrbitCameraPlugin};
 use bevy_rich_text3d::Text3dPlugin;
 use bevy_sprite3d::Sprite3dPlugin;
 
@@ -154,7 +154,16 @@ fn spawn_camera(mut commands: Commands) {
         },
         MainCamera,
         Camera::default(),
-        PanOrbitCamera::default(),
+        PanOrbitCamera {
+            button_orbit: MouseButton::Middle,
+            pitch_upper_limit: Some(1.0),
+            pitch_lower_limit: Some(0.25),
+            zoom_upper_limit: Some(20.0),
+            zoom_lower_limit: 5.0,
+            focus_bounds_origin: Vec3::ZERO,
+            focus_bounds_shape: Some(FocusBoundsShape::Cuboid(Cuboid::new(12.0, 0.0, 12.0))),
+            ..default()
+        },
         Transform::from_xyz(0.0, 7.0, 14.0).looking_at(Vec3::new(0.0, 1.0, 0.0), Vec3::Y),
     ));
 }
