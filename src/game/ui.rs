@@ -150,7 +150,7 @@ fn spawn_game_ui(mut commands: Commands, definitions: Res<MushroomDefinitions>) 
         .with_children(|parent| {
             parent.spawn((
                 Name::new("Button Text"),
-                Text::new("Next Phase (Space)"),
+                Text::new("Next Phase"),
                 TextFont::from_font_size(20.0),
                 TextColor(Color::WHITE),
                 Pickable::IGNORE,
@@ -303,6 +303,8 @@ fn update_turn_phase_display(
             }
             LevelState::Failed => "LEVEL COMPLETE (FAILURE)!",
             LevelState::Success => "LEVEL COMPLETE (SUCCESS)!",
+            LevelState::StartDialogue => "Start Dialogue",
+            LevelState::EndDialogue => "End Dialogue",
             LevelState::NotPlaying => "Not in game",
         };
 

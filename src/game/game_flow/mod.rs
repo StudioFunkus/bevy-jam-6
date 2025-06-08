@@ -4,13 +4,16 @@ use bevy::prelude::*;
 
 use crate::{
     game::{
-        level::definitions::{load_level_config, LevelDefinitions}, mushrooms::{chain_activation::reset_mushroom_states, ChainManager}, play_field::placement_preview::PreviewConnections, resources::GameState
+        level::definitions::{LevelDefinitions, load_level_config},
+        mushrooms::{ChainManager, chain_activation::reset_mushroom_states},
+        play_field::placement_preview::PreviewConnections,
+        resources::GameState,
     },
     screens::Screen,
 };
 
 pub(super) fn plugin(app: &mut App) {
-    // Initialise states
+    // Initialize states
     app.init_state::<LevelState>();
     app.add_sub_state::<TurnPhase>();
 
@@ -22,7 +25,7 @@ pub(super) fn plugin(app: &mut App) {
     app.add_systems(OnExit(Screen::Gameplay), cleanup_gameplay_state);
     app.add_systems(
         Update,
-        (manual_phase_advance, check_phase_completion).run_if(in_state(Screen::Gameplay)),
+        check_phase_completion.run_if(in_state(Screen::Gameplay)),
     );
 
     // Handle level complete actions
@@ -39,7 +42,7 @@ pub(super) fn plugin(app: &mut App) {
     app.add_systems(OnEnter(LevelState::Success), spawn_level_success_ui);
     app.add_systems(OnEnter(LevelState::Failed), spawn_level_failed_ui);
 
-    // Initialise resources
+    // Initialize resources
     app.init_resource::<TurnData>();
     app.init_resource::<CurrentLevel>();
 }
@@ -50,7 +53,9 @@ pub(super) fn plugin(app: &mut App) {
 pub enum LevelState {
     #[default]
     NotPlaying,
+    StartDialogue,
     Playing,
+    EndDialogue,
     Success,
     Failed,
 }
@@ -83,6 +88,7 @@ pub struct CurrentLevel {
     pub target_score: f64,
     pub max_turns: u32,
     pub total_spores_earned: f64,
+    pub level_completed_successfully: Option<bool>, // None = still playing, Some(true) = won, Some(false) = lost
 }
 
 /// Actions available when a level is complete
@@ -109,6 +115,7 @@ fn load_level(
             target_score: level_def.target_score,
             max_turns: level_def.max_turns,
             total_spores_earned: 0.0,
+            level_completed_successfully: None, // Not completed yet
         };
 
         *turn_data = TurnData {
@@ -153,7 +160,7 @@ fn enter_first_level(
         &mut game_state,
     ) {
         Ok(_) => {
-            level_state.set(LevelState::Playing);
+            level_state.set(LevelState::StartDialogue);
         }
         Err(e) => {
             error!("{}", e);
@@ -236,14 +243,16 @@ fn enter_score_phase(
     // Check win condition
     if current_level.total_spores_earned >= current_level.target_score {
         info!("Level complete - SUCCESS!");
-        level_state.set(LevelState::Success);
+        current_level.level_completed_successfully = Some(true);
+        level_state.set(LevelState::EndDialogue);
         return;
     }
 
     // Check loss condition (out of turns)
     if turn_data.current_turn >= current_level.max_turns {
         info!("Level complete - FAILED (out of turns)");
-        level_state.set(LevelState::Failed);
+        current_level.level_completed_successfully = Some(false);
+        level_state.set(LevelState::EndDialogue);
         return;
     }
 
@@ -291,9 +300,8 @@ fn handle_level_complete_action(
                 &mut game_state,
             ) {
                 Ok(_) => {
-                    // Transition from Success/Failed -> Playing directly
-                    // StateScoped entities will be cleaned up automatically
-                    level_state.set(LevelState::Playing);
+                    // Change this line from Playing to StartDialogue
+                    level_state.set(LevelState::StartDialogue);
                 }
                 Err(_) => {
                     info!("No more levels! Game complete!");
@@ -344,43 +352,6 @@ fn cleanup_gameplay_state(
     preview_connections.empty_connection_points.clear();
     preview_connections.existing_connection_targets.clear();
     preview_connections.preview_position = None;
-
-}
-
-/// Manual state advancement for testing
-fn manual_phase_advance(
-    keyboard: Res<ButtonInput<KeyCode>>,
-    current_phase: Option<Res<State<TurnPhase>>>,
-    current_level_state: Res<State<LevelState>>,
-    mut next_phase: ResMut<NextState<TurnPhase>>,
-    mut turn_data: ResMut<TurnData>,
-) {
-    if !keyboard.just_pressed(KeyCode::Space) {
-        return;
-    }
-
-    if *current_level_state.get() != LevelState::Playing {
-        return;
-    }
-
-    // Only proceed if we have a valid phase state
-    let Some(phase_state) = current_phase else {
-        return;
-    };
-
-    let next = match phase_state.get() {
-        TurnPhase::Draw => TurnPhase::Planting,
-        TurnPhase::Planting => TurnPhase::Chain,
-        TurnPhase::Chain => TurnPhase::Score,
-        TurnPhase::Score => {
-            // Increment turn counter when going from Score to Draw
-            turn_data.current_turn += 1;
-            TurnPhase::Draw
-        }
-    };
-
-    info!("Manual advance: {:?} -> {:?}", phase_state.get(), next);
-    next_phase.set(next);
 }
 
 /// Automatically advance phases based on completion conditions

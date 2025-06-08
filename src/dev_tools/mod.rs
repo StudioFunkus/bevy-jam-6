@@ -17,10 +17,12 @@ pub(super) fn plugin(app: &mut App) {
     app.add_systems(Update, log_transitions::<Screen>);
 
     // Add Bevy Inspector egui
-    app.add_plugins(EguiPlugin {
-        enable_multipass_for_primary_context: true,
-    })
-    .add_plugins(WorldInspectorPlugin::new());
+    if !app.is_plugin_added::<EguiPlugin>() {
+        app.add_plugins(EguiPlugin {
+            enable_multipass_for_primary_context: true,
+        });
+    }
+    app.add_plugins(WorldInspectorPlugin::new());
 
     // Toggle the debug overlay for UI.
     app.add_systems(

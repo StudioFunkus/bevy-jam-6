@@ -22,6 +22,8 @@ bevy_sprite3d = "5.0.0"
 bevy_panorbit_camera = { version = "0.26.0", features = ["bevy_egui"] }
 bevy_rich_text3d = "0.3"
 bevy_hanabi = "0.16.0"
+funkus_dialogue_core = { git = "https://github.com/StudioFunkus/funkus_dialogue", branch = "bevy-jam-6" }
+funkus_dialogue_ui = { git = "https://github.com/StudioFunkus/funkus_dialogue", branch = "bevy-jam-6" }
 
 # Your web builds will start failing if you add a dependency that pulls in `getrandom` v0.3+.
 # To fix this, you should tell `getrandom` to use the `wasm_js` backend on Wasm.
@@ -53,7 +55,6 @@ dev_native = [
     # Enable embedded asset hot reloading for native dev builds.
     "bevy/embedded_watcher",
 ]
-
 
 [package.metadata.bevy_cli.release]
 # Disable dev features for release builds.

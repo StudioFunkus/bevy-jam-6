@@ -1,0 +1,41 @@
+{
+  "graph": {
+    "graph": {
+      "nodes": [
+        {
+          "Text": {
+            "id": 1,
+            "text": "final level",
+            "speaker": "Test",
+            "portrait": "test"
+          }
+        },
+        {
+          "Text": {
+            "id": 2,
+            "text": "Test 2",
+            "speaker": "Test2",
+            "portrait": "test2"
+          }
+        }
+      ],
+      "node_holes": [],
+      "edge_property": "directed",
+      "edges": [
+        [
+          0,
+          1,
+          {
+            "label": null
+          }
+        ]
+      ]
+    },
+    "node_indices": {
+      "1": 0,
+      "2": 1
+    },
+    "start_node": 1,
+    "name": "New Dialogue"
+  }
+}
