@@ -66,6 +66,7 @@ pub struct GameTime {
     pub delta_seconds: f32,
 }
 
+#[allow(dead_code)]
 impl GameTime {
     /// Tick a timer using game time
     pub fn tick_timer(&self, timer: &mut Timer) {

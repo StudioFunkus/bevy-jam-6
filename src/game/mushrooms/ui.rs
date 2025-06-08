@@ -2,7 +2,7 @@
 //! Add this as a new file: src/game/mushrooms/visual_info.rs
 
 use bevy::prelude::*;
-use bevy_rich_text3d::{Text3d, Text3dBounds, Text3dStyling, TextAlign, TextAnchor, TextAtlas};
+use bevy_rich_text3d::{Text3d, TextAtlas};
 
 use crate::game::{
     game_flow::LevelState,
@@ -33,7 +33,8 @@ pub struct SporePopup {
 }
 
 impl SporePopup {
-    pub fn new(duration: f32, start_y: f32, text_span_entity: Entity) -> Self {
+    #[allow(dead_code)]
+    pub fn new(duration: f32, start_y: f32, _text_span_entity: Entity) -> Self {
         Self {
             timer: Timer::from_seconds(duration, TimerMode::Once),
             start_y,

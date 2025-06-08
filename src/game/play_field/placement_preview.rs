@@ -4,16 +4,13 @@
 //! including highlighting potential connections in the shader.
 
 use bevy::{pbr::NotShadowReceiver, prelude::*};
-use bevy_sprite3d::{Sprite3d, Sprite3dBuilder, Sprite3dParams};
+use bevy_sprite3d::{Sprite3dBuilder, Sprite3dParams};
 
 use crate::game::{
     game_flow::{LevelState, TurnPhase},
     level::assets::LevelAssets,
     mushrooms::{Mushroom, MushroomDefinitions, MushroomDirection, SelectedMushroomType},
-    play_field::{
-        GridPosition, PlayField,
-        events::GridCell,
-    },
+    play_field::{GridPosition, PlayField, events::GridCell},
     resources::GameState,
     visual_effects::FaceCamera,
 };
@@ -90,6 +87,7 @@ pub struct PreviewState {
 
 /// Event fired when the hovered cell changes
 #[derive(Event, Debug)]
+#[allow(dead_code)]
 pub struct CellHoverChanged {
     pub old_position: Option<GridPosition>,
     pub new_position: Option<GridPosition>,
@@ -134,7 +132,7 @@ fn clear_preview_connections(
     preview_connections.existing_connection_targets.clear();
     preview_connections.preview_position = None;
     hovered_cell.position = None;
-    
+
     info!("Cleared preview connections for level transition");
 }
 
@@ -233,7 +231,7 @@ fn update_placement_preview(
                     };
 
                     // Create the sprite builder with transparency settings
-                    let mut sprite_builder = Sprite3dBuilder {
+                    let sprite_builder = Sprite3dBuilder {
                         image: level_assets.mushroom_texture.clone(),
                         pixels_per_metre: 16.0,
                         double_sided: true,
@@ -379,7 +377,7 @@ fn update_existing_mushroom_connections(
     preview_connections.existing_connection_targets.clear();
 
     // Calculate connection targets for all placed mushrooms
-    for (entity, pos, mushroom, direction) in all_mushrooms.iter() {
+    for (_entity, pos, mushroom, direction) in all_mushrooms.iter() {
         let Some(definition) = definitions.get(mushroom.0) else {
             continue;
         };

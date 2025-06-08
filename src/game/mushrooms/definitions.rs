@@ -1,6 +1,6 @@
 //! Mmushroom definitions
 
-use bevy::{color::palettes::tailwind, prelude::*};
+use bevy::prelude::*;
 use std::collections::HashMap;
 
 use crate::game::play_field::TileType;
@@ -58,21 +58,21 @@ pub mod connection_patterns {
 
     /// Fork (NE/NW)
     pub const FORK: &[GridOffset] = &[
-        GridOffset::new(1, 1),   // NE
-        GridOffset::new(-1, 1),  // NW
+        GridOffset::new(1, 1),  // NE
+        GridOffset::new(-1, 1), // NW
     ];
 
     /// Threeway in a T shape (N/E/W)
     pub const THREEWAY: &[GridOffset] = &[
-        GridOffset::new(0, 1),   // N
-        GridOffset::new(1, 0),   // E
-        GridOffset::new(-1, 0),  // W
+        GridOffset::new(0, 1),  // N
+        GridOffset::new(1, 0),  // E
+        GridOffset::new(-1, 0), // W
     ];
 
     /// Diagonal line (NE/SW)
     pub const DIAGONALLINE: &[GridOffset] = &[
-    GridOffset::new(1, 1),   // NE
-    GridOffset::new(-1, -1), // SW
+        GridOffset::new(1, 1),   // NE
+        GridOffset::new(-1, -1), // SW
     ];
 
     /// Single direction
@@ -127,7 +127,7 @@ pub enum ActivationBehavior {
     /// Modifies terrain and forwards energy
     Converter {
         /// What tile type to convert adjacent tiles to
-        convert_to: TileType,    
+        convert_to: TileType,
     },
     /// Deletes a mushroom in the connected square
     Deleter,
@@ -135,6 +135,7 @@ pub enum ActivationBehavior {
 
 /// Requirements to unlock a mushroom type
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub enum UnlockRequirement {
     /// Always unlocked
     None,
@@ -187,6 +188,7 @@ impl MushroomDefinitions {
     }
 
     /// Get all mushroom types
+    #[allow(dead_code)]
     pub fn all_types(&self) -> Vec<MushroomType> {
         self.definitions.keys().copied().collect()
     }
@@ -221,29 +223,13 @@ pub enum MushroomType {
     Deleter,
     Bomb,
     Amplifier,
-    Fourway_amplifier,
+    FourwayAmplifier,
     Splitter,
     Chain,
     Burst,
     Converter,
     Knight,
     Test,
-}
-
-impl MushroomType {
-    pub fn color(self) -> Srgba {
-        match self {
-            MushroomType::Amplifier => tailwind::AMBER_400,
-            MushroomType::Basic => tailwind::YELLOW_950,
-            MushroomType::Burst => tailwind::CYAN_600,
-            MushroomType::Chain => tailwind::LIME_400,
-            MushroomType::Converter => tailwind::GREEN_700,
-            MushroomType::Knight => tailwind::SLATE_500,
-            MushroomType::Pulse => tailwind::VIOLET_500,
-            MushroomType::Splitter => tailwind::FUCHSIA_400,
-            _ => tailwind::RED_600,
-        }
-    }
 }
 
 /// Plugin to initialize mushroom definitions
@@ -294,14 +280,15 @@ fn initialize_definitions(mut definitions: ResMut<MushroomDefinitions>) {
         MushroomType::Sideways,
         MushroomDefinition {
             name: "Dicholoma".to_string(),
-            description: "Activation: produces 2 spores, then activates two adjacent mushrooms either side."
-                .to_string(),
+            description:
+                "Activation: produces 2 spores, then activates two adjacent mushrooms either side."
+                    .to_string(),
             base_production: 2.0,
             cooldown_time: 1.0,
             max_uses_per_turn: 2,
             sprite_row: 19,
             activation_behavior: ActivationBehavior::Amplifier { boost_factor: 2.0 },
-            unlock_requirement: UnlockRequirement::None, 
+            unlock_requirement: UnlockRequirement::None,
             connection_points: connection_patterns::SIDEWAYS.to_vec(),
         },
     );
@@ -396,8 +383,7 @@ fn initialize_definitions(mut definitions: ResMut<MushroomDefinitions>) {
         MushroomType::Deleter,
         MushroomDefinition {
             name: "Delita".to_string(),
-            description: "Activation: produces 30 spores, but destroys 1 mushroom."
-                .to_string(),
+            description: "Activation: produces 30 spores, but destroys 1 mushroom.".to_string(),
             base_production: 30.0,
             cooldown_time: 10.0,
             max_uses_per_turn: 2,
@@ -414,8 +400,7 @@ fn initialize_definitions(mut definitions: ResMut<MushroomDefinitions>) {
         MushroomType::Bomb,
         MushroomDefinition {
             name: "Skullcap".to_string(),
-            description: "Activation: produces 100 spores, but destroys 4 mushrooms."
-                .to_string(),
+            description: "Activation: produces 100 spores, but destroys 4 mushrooms.".to_string(),
             base_production: 100.0,
             cooldown_time: 10.0,
             max_uses_per_turn: 2,
@@ -432,8 +417,7 @@ fn initialize_definitions(mut definitions: ResMut<MushroomDefinitions>) {
         MushroomType::Burst,
         MushroomDefinition {
             name: "Puffball".to_string(),
-            description: "Activation: produces 50 spores when activated."
-                .to_string(),
+            description: "Activation: produces 50 spores when activated.".to_string(),
             base_production: 50.0,
             cooldown_time: 5.0,
             max_uses_per_turn: 1,
@@ -443,8 +427,8 @@ fn initialize_definitions(mut definitions: ResMut<MushroomDefinitions>) {
             connection_points: vec![], // No connections
         },
     );
-    
-        // Amplifier Mushroom - connects to all cardinal directions
+
+    // Amplifier Mushroom - connects to all cardinal directions
     defs.insert(
         MushroomType::Amplifier,
         MushroomDefinition {
@@ -460,10 +444,9 @@ fn initialize_definitions(mut definitions: ResMut<MushroomDefinitions>) {
         },
     );
 
-    
     // Amplifier Mushroom - connects to all cardinal directions
     defs.insert(
-        MushroomType::Fourway_amplifier,
+        MushroomType::FourwayAmplifier,
         MushroomDefinition {
             name: "Enoki".to_string(),
             description: "Boosts energy by 50% and forwards to 4 adjacent mushrooms.".to_string(),

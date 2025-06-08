@@ -1,5 +1,5 @@
-use bevy_hanabi::prelude::*;
 use bevy::prelude::*;
+use bevy_hanabi::prelude::*;
 
 pub fn activate_effect() -> EffectAsset {
     // Define a color gradient from red to transparent black
@@ -53,8 +53,9 @@ pub fn activate_effect() -> EffectAsset {
     // lifetime. This maps the gradient key 0 to the particle spawn
     // time, and the gradient key 1 to the particle death (10s).
     .render(SizeOverLifetimeModifier {
-            gradient: Gradient::constant(Vec3::ONE * 0.05),
-            screen_space_size: false,})
+        gradient: Gradient::constant(Vec3::ONE * 0.05),
+        screen_space_size: false,
+    })
     .render(ColorOverLifetimeModifier {
         gradient,
         ..default()

@@ -145,8 +145,7 @@ pub fn draw_n(
             &atlas_layout_handle,
         )?;
 
-        hand.cards
-            .push_back((card_component, Some(card_entity.clone())));
+        hand.cards.push_back((card_component, Some(card_entity)));
     }
 
     commands.trigger(HandChangeEvent);

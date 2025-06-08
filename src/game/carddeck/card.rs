@@ -5,8 +5,8 @@
 //! These are stored in the player's deck, of which duplicates may exist.
 
 use bevy::{
-    color::palettes::tailwind, math::VectorSpace, prelude::*, render::view::RenderLayers,
-    sprite::Anchor, text::TextBounds,
+    color::palettes::tailwind, prelude::*, render::view::RenderLayers, sprite::Anchor,
+    text::TextBounds,
 };
 use rand::{distr::weighted::WeightedIndex, prelude::*};
 
@@ -44,7 +44,7 @@ impl CardTemplates {
         info!("Rarity choices: {:?}", rarity_choices);
         let rarity_weights = [60, 30, 10];
         info!("Rarity weights: {:?}", rarity_weights);
-        let dist = WeightedIndex::new(&rarity_weights).unwrap();
+        let dist = WeightedIndex::new(rarity_weights).unwrap();
         info!("Distribution: {:?}", dist);
         let mut rng = rand::rng();
 
@@ -122,7 +122,7 @@ pub fn create_card_definitions(mut card_templates: ResMut<CardTemplates>) -> Res
         },
         CardTemplate {
             name: "Fourway_amplifier".into(),
-            mushroom_type: MushroomType::Fourway_amplifier,
+            mushroom_type: MushroomType::FourwayAmplifier,
             rarity: Rarity::Common,
         },
         CardTemplate {

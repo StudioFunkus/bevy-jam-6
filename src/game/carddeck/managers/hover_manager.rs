@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use bevy_tweening::{Animator, lens::TransformScaleLens};
+use bevy_tweening::lens::TransformScaleLens;
 
 use crate::game::carddeck::{card::Card, markers::Hovered};
 
@@ -21,7 +21,7 @@ fn on_card_hover(
     trigger.propagate(false);
 
     // Only add hovered if the target is a card
-    if let Ok(_) = cards_query.get(trigger.target) {
+    if cards_query.get(trigger.target).is_ok() {
         commands.entity(trigger.target).insert(Hovered);
     };
 
@@ -36,7 +36,7 @@ fn on_hover_finish(
 ) -> Result {
     trigger.propagate(false);
 
-    if let Ok(_) = cards_query.get(trigger.target) {
+    if cards_query.get(trigger.target).is_ok() {
         commands.entity(trigger.target).remove::<Hovered>();
     }
 

@@ -8,7 +8,6 @@ use super::tile_atlas::TileSprite;
 use super::{GridPosition, PlayField, TileType};
 use crate::game::game_flow::LevelState;
 use crate::game::level::assets::LevelAssets;
-use crate::game::play_field::placement_preview::PreviewConnections;
 use crate::game::resources::GameState;
 use bevy::{
     pbr::{ExtendedMaterial, MaterialExtension},
@@ -36,8 +35,8 @@ fn grid_pos_to_texture_index(
 }
 
 pub(super) fn plugin(app: &mut App) {
-    app.add_plugins(MaterialPlugin::
-        <ExtendedMaterial<StandardMaterial, FieldGroundExtension>,
+    app.add_plugins(MaterialPlugin::<
+        ExtendedMaterial<StandardMaterial, FieldGroundExtension>,
     >::default())
         .add_systems(Update, update_connection_data)
         .add_systems(Update, update_shader_highlights)
@@ -245,7 +244,7 @@ fn create_tile_indices_texture(play_field: &PlayField) -> Image {
         }
     }
 
-    let image = Image::new(
+    Image::new(
         bevy::render::render_resource::Extent3d {
             width,
             height,
@@ -255,9 +254,7 @@ fn create_tile_indices_texture(play_field: &PlayField) -> Image {
         data,
         bevy::render::render_resource::TextureFormat::Rgba8Unorm,
         RenderAssetUsages::RENDER_WORLD | RenderAssetUsages::MAIN_WORLD,
-    );
-
-    image
+    )
 }
 
 /// Update the material time uniform
@@ -288,10 +285,10 @@ fn update_connection_data(
         if let Some(material) = materials.get_mut(&field_ground.material_handle) {
             // Get all connections from PlayField
             let connections = game_state.play_field.get_all_connections();
-            
+
             // Create buffer data
             let mut connection_data = Vec::with_capacity(connections.len().max(1));
-            
+
             for connection in connections {
                 // Convert grid positions to normalized UV coordinates
                 let grid_size = material.extension.grid_size;
@@ -303,9 +300,9 @@ fn update_connection_data(
                     (connection.to_pos.x as f32 + 0.5) / grid_size.x,
                     1.0 - ((connection.to_pos.y as f32 + 0.5) / grid_size.y), // Flip Y coordinate
                 );
-                
+
                 let distance = start_uv.distance(end_uv);
-                
+
                 connection_data.push(ConnectionBufferData {
                     start_pos: start_uv,
                     end_pos: end_uv,

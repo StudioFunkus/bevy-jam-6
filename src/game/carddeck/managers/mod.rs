@@ -108,17 +108,13 @@ fn on_finish_transform_tween(
     mut commands: Commands,
     dragged_query: Query<&Dragged, With<Card>>,
 ) -> Result {
-    match trigger.user_data {
-        // Translation
-        1 => {
-            let mut entity_commands = commands.entity(trigger.entity);
-            if let Ok(dragged_component) = dragged_query.get(trigger.entity) {
-                if *dragged_component == Dragged::Released {
-                    entity_commands.remove::<Dragged>();
-                }
+    if trigger.user_data == 1 {
+        let mut entity_commands = commands.entity(trigger.entity);
+        if let Ok(dragged_component) = dragged_query.get(trigger.entity) {
+            if *dragged_component == Dragged::Released {
+                entity_commands.remove::<Dragged>();
             }
         }
-        _ => {}
     }
 
     Ok(())

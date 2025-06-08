@@ -11,6 +11,7 @@ pub const CELL_SPACING: f32 = 0.0;
 
 /// Mycelium connection data for rendering and gameplay
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub struct Connection {
     pub from_pos: GridPosition,
     pub to_pos: GridPosition,

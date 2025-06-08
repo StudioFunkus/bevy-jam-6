@@ -63,7 +63,7 @@ struct MushroomButton {
 #[derive(Component)]
 struct ChainInfoDisplay;
 
-fn spawn_game_ui(mut commands: Commands, definitions: Res<MushroomDefinitions>) {
+fn spawn_game_ui(mut commands: Commands, _definitions: Res<MushroomDefinitions>) {
     // Top bar for game stats
     commands
         .spawn((
@@ -217,6 +217,7 @@ fn spawn_game_ui(mut commands: Commands, definitions: Res<MushroomDefinitions>) 
     //         ));
 }
 
+#[allow(dead_code)]
 fn spawn_mushroom_button(
     mushroom_type: MushroomType,
     definitions: &MushroomDefinitions,
@@ -456,7 +457,7 @@ fn update_mushroom_buttons(
         // Update text content if we have a definition
         if let Some(def) = definition {
             // Update name (first child)
-            if let Some(name_entity) = children.iter().nth(0) {
+            if let Some(name_entity) = children.iter().next() {
                 if let Ok(mut text) = texts.get_mut(name_entity) {
                     text.0 = def.name.clone();
                 }
