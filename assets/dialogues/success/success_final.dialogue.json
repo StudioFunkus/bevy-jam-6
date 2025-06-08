@@ -1,0 +1,57 @@
+{
+  "graph": {
+    "graph": {
+      "nodes": [
+        {
+          "Text": {
+            "id": 1,
+            "text": "\nCongratulamellations! You truly exceeded all my expectations. That mossbag next door will have no choice but to admit defeat!",
+            "speaker": "AGARICUS",
+            "portrait": "wizard"
+          }
+        },
+        {
+          "Text": {
+            "id": 2,
+            "text": "\nWhat a mycological marvel you are! Together, we'll show the Bog Magician's Guild the true power of fungi!",
+            "speaker": "AGARICUS",
+            "portrait": "wizard"
+          }
+        },
+        {
+          "Text": {
+            "id": 3,
+            "text": "\nCurse you, Agaricus! You and your horrid toadstools have taken over my entire garden. There's not mushroom left for my beautiful moss...",
+            "speaker": "ANDREAEA",
+            "portrait": "witch"
+          }
+        }
+      ],
+      "node_holes": [],
+      "edge_property": "directed",
+      "edges": [
+        [
+          0,
+          1,
+          {
+            "label": null
+          }
+        ],
+        [
+          1,
+          2,
+          {
+            "label": null
+          }
+        ]
+      ]
+    },
+    "node_indices": {
+      "1": 0,
+      "2": 1,
+      "3": 2
+    },
+    "start_node": 1,
+    "name": "Final success"
+  }
+}

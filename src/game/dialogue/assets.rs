@@ -24,10 +24,12 @@ pub struct DialogueAssets {
     pub level_4_intro: Handle<DialogueAsset>,
     #[dependency]
     pub final_level_intro: Handle<DialogueAsset>,
+    #[dependency]
+    pub final_level_success: Handle<DialogueAsset>,
 
     // Pool of success dialogues
     #[dependency]
-    pub success_dialogues_1: Vec<Handle<DialogueAsset>>,
+    pub success_dialogues: Vec<Handle<DialogueAsset>>,
 
     // Pool of failure dialogues
     #[dependency]
@@ -56,8 +58,9 @@ impl FromWorld for DialogueAssets {
             level_3_intro: asset_server.load("dialogues/intros/level_3.dialogue.json"),
             level_4_intro: asset_server.load("dialogues/intros/level_4.dialogue.json"),
             final_level_intro: asset_server.load("dialogues/intros/final_level.dialogue.json"),
+            final_level_success: asset_server.load("dialogues/success/success_final.dialogue.json"),
 
-            success_dialogues_1: vec![
+            success_dialogues: vec![
                 asset_server.load("dialogues/success/success_1.dialogue.json"),
                 asset_server.load("dialogues/success/success_1.dialogue.2.json"),
                 asset_server.load("dialogues/success/success_1.dialogue.3.json"),

@@ -124,10 +124,16 @@ pub enum ActivationBehavior {
         /// Multiplication factor for energy
         boost_factor: f32,
     },
-    /// Modifies terrain and forwards energy
+    /// Modifies terrain at end of turn
     Converter {
-        /// What tile type to convert adjacent tiles to
+        /// What tile type to convert to
         convert_to: TileType,
+        /// Number of tiles to convert per turn
+        convert_count: u32,
+        /// What tiles can be converted (None = any non-target tile)
+        can_convert_from: Option<Vec<TileType>>,
+        /// Search radius (how far to look for convertible tiles)
+        search_radius: i32,
     },
     /// Deletes a mushroom in the connected square
     Deleter,
@@ -223,8 +229,8 @@ pub enum MushroomType {
     Deleter,
     Bomb,
     Amplifier,
-    FourwayAmplifier,
-    Splitter,
+    TwoWayAmplifier,
+    ThreeWayAmplifier,
     Chain,
     Burst,
     Converter,
@@ -266,7 +272,7 @@ fn initialize_definitions(mut definitions: ResMut<MushroomDefinitions>) {
             description: "5 Spores.\nConnect 1.".to_string(),
             base_production: 5.0,
             cooldown_time: 0.1,
-            max_uses_per_turn: 2,
+            max_uses_per_turn: 3,
             sprite_row: 6,
             activation_behavior: ActivationBehavior::Basic,
             unlock_requirement: UnlockRequirement::None,
@@ -281,8 +287,8 @@ fn initialize_definitions(mut definitions: ResMut<MushroomDefinitions>) {
             name: "Dicholoma".to_string(),
             description: "2 Spores.\nConnect 2.".to_string(),
             base_production: 2.0,
-            cooldown_time: 1.0,
-            max_uses_per_turn: 2,
+            cooldown_time: 0.5,
+            max_uses_per_turn: 3,
             sprite_row: 19,
             activation_behavior: ActivationBehavior::Amplifier { boost_factor: 2.0 },
             unlock_requirement: UnlockRequirement::None,
@@ -300,7 +306,7 @@ fn initialize_definitions(mut definitions: ResMut<MushroomDefinitions>) {
             cooldown_time: 1.0,
             max_uses_per_turn: 2,
             sprite_row: 9,
-            activation_behavior: ActivationBehavior::Amplifier { boost_factor: 3.0 },
+            activation_behavior: ActivationBehavior::Amplifier { boost_factor: 2.0 },
             unlock_requirement: UnlockRequirement::None,
             connection_points: connection_patterns::FORK.to_vec(),
         },
@@ -332,7 +338,7 @@ fn initialize_definitions(mut definitions: ResMut<MushroomDefinitions>) {
             cooldown_time: 2.0,
             max_uses_per_turn: 2,
             sprite_row: 7,
-            activation_behavior: ActivationBehavior::Amplifier { boost_factor: 2.0 },
+            activation_behavior: ActivationBehavior::Amplifier { boost_factor: 3.0 },
             unlock_requirement: UnlockRequirement::None,
             connection_points: connection_patterns::THREEWAY.to_vec(),
         },
@@ -345,7 +351,7 @@ fn initialize_definitions(mut definitions: ResMut<MushroomDefinitions>) {
             name: "Umberella".to_string(),
             description: "4 Spores.\nConnect 8.".to_string(),
             base_production: 4.0,
-            cooldown_time: 3.0,
+            cooldown_time: 1.0,
             max_uses_per_turn: 2,
             sprite_row: 1,
             activation_behavior: ActivationBehavior::Amplifier { boost_factor: 8.0 },
@@ -370,35 +376,37 @@ fn initialize_definitions(mut definitions: ResMut<MushroomDefinitions>) {
         },
     );
 
-    // Deleter - deletes a mushroom (currently dummy behaviour)
+    // Deleter - deletes a mushroom
     defs.insert(
         MushroomType::Deleter,
         MushroomDefinition {
             name: "Delita".to_string(),
-            description: "Activation: produces 30 Spores, but destroys 1 mushroom.".to_string(),
-            base_production: 30.0,
+            description:
+                "Activation: destroys connected mushrooms and generates 100 spores for each."
+                    .to_string(),
+            base_production: 100.0,
             cooldown_time: 10.0,
-            max_uses_per_turn: 2,
+            max_uses_per_turn: 1,
             sprite_row: 3,
-            //doesn't actually delete a mushroom because that behaviour isn't implemented
-            activation_behavior: ActivationBehavior::Basic,
+            activation_behavior: ActivationBehavior::Deleter,
             unlock_requirement: UnlockRequirement::None,
             connection_points: connection_patterns::FORWARD.to_vec(),
         },
     );
 
-    // Bomb - deletes 4 mushrooms (currently dummy behaviour)
+    // Bomb - deletes 4 mushrooms
     defs.insert(
         MushroomType::Bomb,
         MushroomDefinition {
             name: "Skullcap".to_string(),
-            description: "Activation: produces 100 Spores, but destroys 4 mushrooms.".to_string(),
+            description:
+                "Activation: destroys connected mushrooms and generates 100 spores for each."
+                    .to_string(),
             base_production: 100.0,
             cooldown_time: 10.0,
-            max_uses_per_turn: 2,
+            max_uses_per_turn: 1,
             sprite_row: 4,
-            //doesn't actually delete a mushroom because that behaviour isn't implemented
-            activation_behavior: ActivationBehavior::Basic,
+            activation_behavior: ActivationBehavior::Deleter,
             unlock_requirement: UnlockRequirement::None,
             connection_points: connection_patterns::DIAGONAL.to_vec(),
         },
@@ -411,8 +419,8 @@ fn initialize_definitions(mut definitions: ResMut<MushroomDefinitions>) {
             name: "Puffball".to_string(),
             description: "25 Spores.".to_string(),
             base_production: 25.0,
-            cooldown_time: 5.0,
-            max_uses_per_turn: 1,
+            cooldown_time: 0.2,
+            max_uses_per_turn: 3,
             sprite_row: 5,
             activation_behavior: ActivationBehavior::Basic,
             unlock_requirement: UnlockRequirement::None,
@@ -425,7 +433,7 @@ fn initialize_definitions(mut definitions: ResMut<MushroomDefinitions>) {
         MushroomType::Amplifier,
         MushroomDefinition {
             name: "Amplicus".to_string(),
-            description: "1 Spore.\nConnect 1.\nEnergy Boost 2.".to_string(),
+            description: "3 Spores.\nConnect 1.\nEnergy Boost 2.".to_string(),
             base_production: 1.0,
             cooldown_time: 1.5,
             max_uses_per_turn: 1,
@@ -438,33 +446,33 @@ fn initialize_definitions(mut definitions: ResMut<MushroomDefinitions>) {
 
     // Four Way Amplifier Mushroom - connects to all cardinal directions
     defs.insert(
-        MushroomType::FourwayAmplifier,
+        MushroomType::TwoWayAmplifier,
         MushroomDefinition {
             name: "Enoki".to_string(),
-            description: "1 Spore.\nConnect 4.\nEnergy Boost 1.".to_string(),
-            base_production: 1.0,
+            description: "2 Spores.\nConnect 2.\nEnergy Boost 1.".to_string(),
+            base_production: 2.0,
             cooldown_time: 1.5,
             max_uses_per_turn: 1,
             sprite_row: 16,
-            activation_behavior: ActivationBehavior::Amplifier { boost_factor: 5.0 },
+            activation_behavior: ActivationBehavior::Amplifier { boost_factor: 2.5 },
             unlock_requirement: UnlockRequirement::None,
-            connection_points: connection_patterns::CARDINAL.to_vec(),
+            connection_points: connection_patterns::SIDEWAYS.to_vec(),
         },
     );
 
     // Splitter Mushroom - connects to cardinal directions (can be configured for diagonals)
     defs.insert(
-        MushroomType::Splitter,
+        MushroomType::ThreeWayAmplifier,
         MushroomDefinition {
             name: "Ink Cap".to_string(),
-            description: "5 Spores.\nConnect 4.\nEnergy Boost 2.".to_string(),
-            base_production: 5.0,
+            description: "1 Spore.\nConnect 3.\nEnergy Boost 1.".to_string(),
+            base_production: 1.0,
             cooldown_time: 3.0,
-            max_uses_per_turn: 2,
+            max_uses_per_turn: 1,
             sprite_row: 17,
-            activation_behavior: ActivationBehavior::Amplifier { boost_factor: 6.0 },
+            activation_behavior: ActivationBehavior::Amplifier { boost_factor: 3.75 },
             unlock_requirement: UnlockRequirement::None,
-            connection_points: connection_patterns::CARDINAL.to_vec(),
+            connection_points: connection_patterns::THREEWAY.to_vec(),
         },
     );
 
@@ -475,8 +483,8 @@ fn initialize_definitions(mut definitions: ResMut<MushroomDefinitions>) {
             name: "Mumbling Truffle".to_string(),
             description: "5 Spores.\nConnect 1.\nRapid Fire.".to_string(),
             base_production: 5.0,
-            cooldown_time: 0.8,
-            max_uses_per_turn: 5,
+            cooldown_time: 0.01,
+            max_uses_per_turn: 15,
             sprite_row: 14,
             activation_behavior: ActivationBehavior::Basic,
             unlock_requirement: UnlockRequirement::None,
@@ -491,11 +499,14 @@ fn initialize_definitions(mut definitions: ResMut<MushroomDefinitions>) {
             name: "False Broccoli".to_string(),
             description: "8 Spores.\nConnect 1.\nFertilise 1.".to_string(),
             base_production: 8.0,
-            cooldown_time: 2.5,
+            cooldown_time: 0.3,
             max_uses_per_turn: 3,
             sprite_row: 18,
             activation_behavior: ActivationBehavior::Converter {
                 convert_to: TileType::Fertile,
+                convert_count: 1,
+                can_convert_from: Some(vec![TileType::Empty]), // Only converts empty soil
+                search_radius: 2,                              // Searches within 2 tiles
             },
             unlock_requirement: UnlockRequirement::None,
             connection_points: connection_patterns::FORWARD.to_vec(),
@@ -509,7 +520,7 @@ fn initialize_definitions(mut definitions: ResMut<MushroomDefinitions>) {
             name: "Unicorn's Mane".to_string(),
             description: "15 Spores.\nConnect 1.".to_string(),
             base_production: 10.0,
-            cooldown_time: 1.8,
+            cooldown_time: 0.2,
             max_uses_per_turn: 3,
             sprite_row: 12,
             activation_behavior: ActivationBehavior::Basic,

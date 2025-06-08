@@ -77,7 +77,7 @@ impl Plugin for AppPlugin {
             audio::plugin,
             game::plugin,
             // #[cfg(feature = "dev")]
-            dev_tools::plugin,
+            // dev_tools::plugin,
             menus::plugin,
             screens::plugin,
             theme::plugin,
