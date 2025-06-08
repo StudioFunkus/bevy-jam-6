@@ -111,12 +111,12 @@ pub fn create_card_definitions(mut card_templates: ResMut<CardTemplates>) -> Res
         CardTemplate {
             name: "Deleter".into(),
             mushroom_type: MushroomType::Deleter,
-            rarity: Rarity::Common,
+            rarity: Rarity::Uncommon,
         },
         CardTemplate {
             name: "Bomb".into(),
             mushroom_type: MushroomType::Bomb,
-            rarity: Rarity::Common,
+            rarity: Rarity::Rare,
         },
         CardTemplate {
             name: "Amplifier".into(),
