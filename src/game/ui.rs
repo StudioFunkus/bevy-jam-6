@@ -134,8 +134,8 @@ fn spawn_game_ui(mut commands: Commands, _definitions: Res<MushroomDefinitions>)
             Name::new("Phase Control"),
             Node {
                 position_type: PositionType::Absolute,
-                bottom: Val::Px(100.0),
-                left: Val::Percent(70.0),
+                bottom: Val::Px(280.0),
+                left: Val::Percent(73.0),
                 width: Val::Px(200.0),
                 height: Val::Px(60.0),
                 align_items: AlignItems::Center,
@@ -159,6 +159,7 @@ fn spawn_game_ui(mut commands: Commands, _definitions: Res<MushroomDefinitions>)
             parent.spawn((
                 Name::new("Button Text"),
                 Text::new("Next Phase"),
+                TextLayout::new_with_justify(JustifyText::Center),
                 TextFont::from_font_size(20.0),
                 TextColor(Color::WHITE),
                 Pickable::IGNORE,

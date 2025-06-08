@@ -277,7 +277,7 @@ pub fn spawn_card(
                 TextBounds::from(Vec2::new(CARD_SIZE.x * 0.9, CARD_SIZE.y / 2.0)),
                 TextLayout::new_with_linebreak(LineBreak::WordBoundary),
                 TextFont {
-                    font_size: 10.0,
+                    font_size: 12.0,
                     ..default()
                 },
                 Transform::from_xyz(0.0, -(CARD_SIZE.y / 4.0), 1.0),

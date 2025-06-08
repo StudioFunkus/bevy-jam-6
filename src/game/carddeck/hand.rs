@@ -10,7 +10,7 @@ use crate::{
     game::{
         carddeck::{
             card::{Card, CardTemplates, spawn_card},
-            constants::{CARD_LAYER, CARD_SPACING},
+            constants::{CARD_LAYER, CARD_SIZE, CARD_SPACING, HAND_SIZE_LIMIT},
             events::{DrawEvent, HandChangeEvent},
             markers::Dragged,
         },
@@ -36,7 +36,7 @@ fn spawn_hand_entity(mut commands: Commands, window: Query<&Window>) -> Result {
     commands.spawn((
         Name::from("Hand"),
         HandEntity,
-        Transform::from_xyz(0.0, -(0.9 * (window.height() / 2.0)), 0.0),
+        Transform::from_xyz(0.0, -((window.height() / 2.0) - (CARD_SIZE.y / 2.0)), 0.0),
         CARD_LAYER,
         Visibility::Visible,
         StateScoped(Screen::Gameplay),
@@ -75,13 +75,27 @@ impl Hand {
 
         Ok(())
     }
+
+    pub fn empty_hand(&mut self, mut commands: Commands) -> Result {
+        let card_entities: Vec<Entity> = self
+            .cards
+            .drain(..)
+            .map(|(_, entity)| entity.unwrap())
+            .collect();
+
+        for entity in card_entities {
+            commands.entity(entity).despawn();
+        }
+
+        Ok(())
+    }
 }
 
 impl Default for Hand {
     fn default() -> Self {
         Self {
             cards: VecDeque::new(),
-            max_cards: 9,
+            max_cards: HAND_SIZE_LIMIT,
         }
     }
 }
@@ -164,14 +178,11 @@ fn update_card_origins(
     hand: Res<Hand>,
     mut cards_query: Query<(&mut Card, &Transform)>,
 ) -> Result {
-    info!("==========");
-    info!("Updating card origins in hand");
-    info!("==========");
     let number_of_cards: f32 = hand.get_card_count() as f32;
     debug!("Number of cards: {}", number_of_cards);
     debug!("Using spacing: {}", CARD_SPACING);
 
-    let first_card_offset: f32 = ((number_of_cards - 1.0) / 2.0) * CARD_SPACING;
+    let first_card_offset: f32 = ((number_of_cards - 1.0) / 2.0) * (CARD_SPACING + CARD_SIZE.x);
 
     for (index, card_tuple) in hand.cards.iter().enumerate() {
         if let (_, Some(entity)) = card_tuple {
@@ -179,7 +190,7 @@ fn update_card_origins(
             let new_origin = card_component
                 .origin
                 .translation
-                .with_x(-first_card_offset + (index as f32 * CARD_SPACING))
+                .with_x(-first_card_offset + (index as f32 * (CARD_SPACING + CARD_SIZE.x)))
                 .with_z((index + 1) as f32);
             debug!("Card at index {} will have offset {}", index, new_origin.x);
 
