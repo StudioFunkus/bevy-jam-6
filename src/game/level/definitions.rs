@@ -68,7 +68,7 @@ impl Default for LevelDefinitions {
                     name: "Level 1".to_string(),
                     grid_width: 12,
                     grid_height: 12,
-                    target_score: 300.0,
+                    target_score: 500.0,
                     max_turns: 5,
                     starting_mushrooms: vec![
                         StartingMushroom {
@@ -98,7 +98,7 @@ impl Default for LevelDefinitions {
                     name: "Level 2".to_string(),
                     grid_width: 12,
                     grid_height: 12,
-                    target_score: 500.0,
+                    target_score: 1000.0,
                     max_turns: 5,
                     starting_mushrooms: vec![StartingMushroom {
                         x: 10,
@@ -140,7 +140,7 @@ impl Default for LevelDefinitions {
                     name: "Level 3".to_string(),
                     grid_width: 12,
                     grid_height: 12,
-                    target_score: 500.0,
+                    target_score: 1000.0,
                     max_turns: 6,
                     starting_mushrooms: vec![
                         StartingMushroom {
@@ -231,7 +231,7 @@ impl Default for LevelDefinitions {
                     name: "Level 4".to_string(),
                     grid_width: 12,
                     grid_height: 12,
-                    target_score: 500.0,
+                    target_score: 1000.0,
                     max_turns: 5,
                     starting_mushrooms: vec![],
                     tile_configuration: vec![
@@ -336,7 +336,7 @@ impl Default for LevelDefinitions {
                     name: "Level 5".to_string(),
                     grid_width: 12,
                     grid_height: 12,
-                    target_score: 500.0,
+                    target_score: 1500.0,
                     max_turns: 5,
                     starting_mushrooms: vec![],
                     tile_configuration: vec![
