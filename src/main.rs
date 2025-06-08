@@ -116,6 +116,10 @@ enum AppSystems {
 #[states(scoped_entities)]
 struct Pause(pub bool);
 
+#[derive(Component)]
+/// A marker component for the main camera entity.
+pub struct MainCamera;
+
 /// A system set for systems that shouldn't run while the game is paused.
 #[derive(SystemSet, Copy, Clone, Eq, PartialEq, Hash, Debug)]
 struct PausableSystems;
@@ -148,6 +152,7 @@ fn spawn_camera(mut commands: Commands) {
             },
             ..default()
         },
+        MainCamera,
         Camera::default(),
         PanOrbitCamera {
             button_orbit: MouseButton::Middle,
