@@ -77,9 +77,9 @@ fn spawn_main_menu_art_assets(mut commands: Commands, screen_assets: Res<ScreenA
                     Pickable::IGNORE,
                     ImageNode::new(screen_assets.titlescreen.clone()),
                     Node {
-                        left: Val::Percent(25.0),
+                        left: Val::Percent(22.5),
                         top: Val::Percent(0.0),
-                        height: Val::Percent(170.0),
+                        height: Val::Percent(90.0),
                         ..default()
                     }
                 )],
@@ -112,10 +112,8 @@ fn spawn_main_menu_art_assets(mut commands: Commands, screen_assets: Res<ScreenA
                 Name::new("Spore 1"),
                 Node {
                     height: Val::Px(100.0),
-                    align_items: AlignItems::Center,
-                    justify_items: JustifyItems::Center,
-                    align_content: AlignContent::Center,
-                    justify_content: JustifyContent::Center,
+                    justify_self: JustifySelf::Center,
+                    align_self: AlignSelf::Center,
                     ..default()
                 },
                 ImageNode::new(screen_assets.spore1.clone()),
