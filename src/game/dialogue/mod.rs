@@ -284,7 +284,7 @@ fn enter_end_dialogue(
     current_level: Res<CurrentLevel>,
     mut start_dialogue_events: EventWriter<StartDialogueEvent>,
     mut delay: ResMut<DialogueAdvanceDelay>,
-    level_definitions: Res<crate::game::level::definitions::LevelDefinitions>
+    level_definitions: Res<crate::game::level::definitions::LevelDefinitions>,
 ) {
     info!("Starting level outro dialogue");
 
@@ -295,30 +295,32 @@ fn enter_end_dialogue(
     let is_final_level = current_level.level_index == total_levels - 1;
 
     // Check if this is the final level success case
-    let dialogue_handle = if is_final_level && current_level.level_completed_successfully == Some(true) {
-        // Special dialogue for completing the game
-        info!("Using final level success dialogue - game complete!");
-        dialogue_assets.final_level_success.clone()
-    } else {
-        // For all other cases (including final level failure), use normal random selection
-        let dialogue_pool: &Vec<Handle<DialogueAsset>> = match current_level.level_completed_successfully {
-            Some(true) => &dialogue_assets.success_dialogues,
-            Some(false) => &dialogue_assets.failure_dialogues,
-            None => {
-                warn!("No completion status set, defaulting to failure dialogue");
-                &dialogue_assets.failure_dialogues
+    let dialogue_handle =
+        if is_final_level && current_level.level_completed_successfully == Some(true) {
+            // Special dialogue for completing the game
+            info!("Using final level success dialogue - game complete!");
+            dialogue_assets.final_level_success.clone()
+        } else {
+            // For all other cases (including final level failure), use normal random selection
+            let dialogue_pool: &Vec<Handle<DialogueAsset>> =
+                match current_level.level_completed_successfully {
+                    Some(true) => &dialogue_assets.success_dialogues,
+                    Some(false) => &dialogue_assets.failure_dialogues,
+                    None => {
+                        warn!("No completion status set, defaulting to failure dialogue");
+                        &dialogue_assets.failure_dialogues
+                    }
+                };
+
+            // Pick a random dialogue from the pool
+            if dialogue_pool.is_empty() {
+                error!("No dialogues in pool!");
+                return;
+            } else {
+                let index = rng().random_range(0..dialogue_pool.len());
+                dialogue_pool[index].clone()
             }
         };
-
-        // Pick a random dialogue from the pool
-        if dialogue_pool.is_empty() {
-            error!("No dialogues in pool!");
-            return;
-        } else {
-            let index = rng().random_range(0..dialogue_pool.len());
-            dialogue_pool[index].clone()
-        }
-    };
 
     // Create dialogue entity
     let dialogue_entity = commands

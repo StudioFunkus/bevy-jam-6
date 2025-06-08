@@ -299,7 +299,7 @@ fn process_single_activation(
         definition.cooldown_time,
         TimerMode::Once,
     ));
-    
+
     // Calculate spore production
     let tile_modifier = game_state
         .play_field
@@ -315,56 +315,72 @@ fn process_single_activation(
         ActivationBehavior::Deleter => {
             // First, collect all mushrooms to delete
             let mut targets_to_delete = Vec::new();
-            
+
             // Calculate target positions based on connection points
             for connection_point in &definition.connection_points {
                 let target_pos = if let Some(dir) = direction {
                     let rotated = rotate_connection_point(connection_point, dir);
                     GridPosition::new(position.x + rotated.x, position.y + rotated.y)
                 } else {
-                    GridPosition::new(position.x + connection_point.x, position.y + connection_point.y)
+                    GridPosition::new(
+                        position.x + connection_point.x,
+                        position.y + connection_point.y,
+                    )
                 };
-                
+
                 // Check if there's a mushroom at the target position
                 if let Some(target_entity) = game_state.play_field.get(target_pos) {
                     targets_to_delete.push((target_entity, target_pos));
                 }
             }
-            
+
             // Process deletions
             let mut deleted_count = 0;
             for (target_entity, target_pos) in targets_to_delete {
                 // Spawn delete effect at target position before deletion
                 let delete_effect = effects.add(crate::game::particles::assets::delete_effect());
                 let target_world_pos = target_pos.to_world_in(&game_state.play_field);
-                
+
                 commands.spawn((
                     Name::new("Delete Effect"),
                     ParticleEffect::new(delete_effect),
-                    Transform::from_translation(Vec3::new(target_world_pos.x, 0.7, -target_world_pos.z)),
+                    Transform::from_translation(Vec3::new(
+                        target_world_pos.x,
+                        0.7,
+                        -target_world_pos.z,
+                    )),
                     DespawnTimer::new(1.0),
                 ));
-                
+
                 // Delete the mushroom
                 commands.entity(target_entity).despawn();
                 game_state.play_field.remove(target_pos);
                 deleted_count += 1;
-                info!("Deleter mushroom at {:?} destroyed mushroom at {:?}", position, target_pos);
+                info!(
+                    "Deleter mushroom at {:?} destroyed mushroom at {:?}",
+                    position, target_pos
+                );
             }
-            
+
             // Award bonus spores: base production * number of mushrooms destroyed
             if deleted_count > 0 {
                 production *= deleted_count as f64;
-                info!("Deleter mushroom destroyed {} mushrooms, production multiplied to: {}", deleted_count, production);
+                info!(
+                    "Deleter mushroom destroyed {} mushrooms, production multiplied to: {}",
+                    deleted_count, production
+                );
             } else {
                 production = 0.0; // No targets, no production
-                info!("Deleter mushroom found no targets to destroy, producing base amount: {}", production);
+                info!(
+                    "Deleter mushroom found no targets to destroy, producing base amount: {}",
+                    production
+                );
             }
-            
+
             // Deleter does not propagate
             false
         }
-        _ => true // Other behaviors propagate normally
+        _ => true, // Other behaviors propagate normally
     };
 
     // Add spores

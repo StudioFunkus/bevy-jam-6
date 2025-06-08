@@ -124,10 +124,16 @@ pub enum ActivationBehavior {
         /// Multiplication factor for energy
         boost_factor: f32,
     },
-    /// Modifies terrain and forwards energy
+    /// Modifies terrain at end of turn
     Converter {
-        /// What tile type to convert adjacent tiles to
+        /// What tile type to convert to
         convert_to: TileType,
+        /// Number of tiles to convert per turn
+        convert_count: u32,
+        /// What tiles can be converted (None = any non-target tile)
+        can_convert_from: Option<Vec<TileType>>,
+        /// Search radius (how far to look for convertible tiles)
+        search_radius: i32,
     },
     /// Deletes a mushroom in the connected square
     Deleter,
@@ -375,7 +381,9 @@ fn initialize_definitions(mut definitions: ResMut<MushroomDefinitions>) {
         MushroomType::Deleter,
         MushroomDefinition {
             name: "Delita".to_string(),
-            description: "Activation: destroys connected mushrooms and generates 100 spores for each.".to_string(),
+            description:
+                "Activation: destroys connected mushrooms and generates 100 spores for each."
+                    .to_string(),
             base_production: 100.0,
             cooldown_time: 10.0,
             max_uses_per_turn: 1,
@@ -391,7 +399,9 @@ fn initialize_definitions(mut definitions: ResMut<MushroomDefinitions>) {
         MushroomType::Bomb,
         MushroomDefinition {
             name: "Skullcap".to_string(),
-            description: "Activation: destroys connected mushrooms and generates 100 spores for each.".to_string(),
+            description:
+                "Activation: destroys connected mushrooms and generates 100 spores for each."
+                    .to_string(),
             base_production: 100.0,
             cooldown_time: 10.0,
             max_uses_per_turn: 1,
@@ -494,6 +504,9 @@ fn initialize_definitions(mut definitions: ResMut<MushroomDefinitions>) {
             sprite_row: 18,
             activation_behavior: ActivationBehavior::Converter {
                 convert_to: TileType::Fertile,
+                convert_count: 1,
+                can_convert_from: Some(vec![TileType::Empty]), // Only converts empty soil
+                search_radius: 2,                              // Searches within 2 tiles
             },
             unlock_requirement: UnlockRequirement::None,
             connection_points: connection_patterns::FORWARD.to_vec(),

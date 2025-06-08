@@ -3,7 +3,7 @@
 use std::time::Duration;
 
 use bevy::{ecs::spawn::SpawnWith, prelude::*};
-use bevy_tweening::{lens::UiPositionLens, Animator, RepeatCount, RepeatStrategy, Tween};
+use bevy_tweening::{Animator, RepeatCount, RepeatStrategy, Tween, lens::UiPositionLens};
 
 use crate::{
     asset_tracking::ResourceHandles,
@@ -141,8 +141,18 @@ fn spawn_main_menu_art_assets(mut commands: Commands, screen_assets: Res<ScreenA
                     EaseFunction::QuadraticInOut,
                     Duration::from_secs(2),
                     UiPositionLens {
-                        start: UiRect::new(Val::Auto, Val::Percent(40.), Val::Percent(42.), Val::Auto,),
-                        end: UiRect::new(Val::Auto, Val::Percent(30.), Val::Percent(47.), Val::Auto,),
+                        start: UiRect::new(
+                            Val::Auto,
+                            Val::Percent(40.),
+                            Val::Percent(42.),
+                            Val::Auto,
+                        ),
+                        end: UiRect::new(
+                            Val::Auto,
+                            Val::Percent(30.),
+                            Val::Percent(47.),
+                            Val::Auto,
+                        ),
                     },
                 )
                 .with_repeat_count(RepeatCount::Infinite)

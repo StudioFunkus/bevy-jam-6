@@ -18,6 +18,7 @@ pub use events::SpawnMushroomEvent;
 pub use resources::SelectedMushroomType;
 
 pub mod chain_activation;
+pub mod converter_system;
 pub mod definitions;
 pub mod events;
 pub mod resources;
@@ -26,6 +27,7 @@ pub mod ui;
 
 pub(super) fn plugin(app: &mut App) {
     app.add_plugins((
+        converter_system::plugin,
         definitions::plugin,
         chain_activation::plugin,
         events::plugin,

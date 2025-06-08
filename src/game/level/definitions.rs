@@ -140,7 +140,6 @@ impl Default for LevelDefinitions {
                         (GridPosition::new(2, 5), TileType::BlockedRock),
                     ],
                 },
-                
                 // Level 3 - lots of moss & some rocks, same score threshold as previous
                 LevelDefinition {
                     name: "Level 3".to_string(),
@@ -226,15 +225,13 @@ impl Default for LevelDefinitions {
                         (GridPosition::new(10, 10), TileType::BlockedRock),
                         (GridPosition::new(11, 10), TileType::BlockedRock),
                         (GridPosition::new(11, 10), TileType::BlockedRock),
-
                         // bits of water
                         (GridPosition::new(5, 3), TileType::BlockedWater),
                         (GridPosition::new(11, 9), TileType::BlockedWater),
                         (GridPosition::new(3, 11), TileType::BlockedWater),
                     ],
                 },
-
-                // Level 4 - grid of "rooms" 
+                // Level 4 - grid of "rooms"
                 LevelDefinition {
                     name: "Level 4".to_string(),
                     grid_width: 12,
@@ -256,7 +253,6 @@ impl Default for LevelDefinitions {
                         (GridPosition::new(9, 10), TileType::BlockedMoss),
                         (GridPosition::new(10, 10), TileType::BlockedMoss),
                         (GridPosition::new(10, 9), TileType::BlockedWater),
-                        
                         // vertical & horizontal barriers with a few gaps
                         (GridPosition::new(0, 0), TileType::BlockedRock),
                         (GridPosition::new(1, 0), TileType::BlockedRock),
@@ -270,7 +266,7 @@ impl Default for LevelDefinitions {
                         (GridPosition::new(9, 0), TileType::BlockedRock),
                         (GridPosition::new(10, 0), TileType::BlockedRock),
                         (GridPosition::new(11, 0), TileType::BlockedRock),
-			            (GridPosition::new(0, 4), TileType::BlockedRock),
+                        (GridPosition::new(0, 4), TileType::BlockedRock),
                         (GridPosition::new(2, 4), TileType::BlockedRock),
                         (GridPosition::new(3, 4), TileType::BlockedRock),
                         (GridPosition::new(4, 4), TileType::BlockedRock),
@@ -279,7 +275,7 @@ impl Default for LevelDefinitions {
                         (GridPosition::new(8, 4), TileType::BlockedRock),
                         (GridPosition::new(10, 4), TileType::BlockedRock),
                         (GridPosition::new(11, 4), TileType::BlockedRock),
-			            (GridPosition::new(0, 7), TileType::BlockedRock),
+                        (GridPosition::new(0, 7), TileType::BlockedRock),
                         (GridPosition::new(1, 7), TileType::BlockedRock),
                         (GridPosition::new(3, 7), TileType::BlockedRock),
                         (GridPosition::new(4, 7), TileType::BlockedRock),
@@ -340,8 +336,7 @@ impl Default for LevelDefinitions {
                         (GridPosition::new(11, 10), TileType::BlockedRock),
                     ],
                 },
-
-            // Level 5 - Central pool, rocky sides, mossy corners
+                // Level 5 - Central pool, rocky sides, mossy corners
                 LevelDefinition {
                     name: "Level 5".to_string(),
                     grid_width: 12,
@@ -353,64 +348,53 @@ impl Default for LevelDefinitions {
                         // Central pool
                         (GridPosition::new(5, 3), TileType::BlockedWater),
                         (GridPosition::new(6, 3), TileType::BlockedWater),
-
                         (GridPosition::new(4, 4), TileType::BlockedWater),
                         (GridPosition::new(5, 4), TileType::BlockedWater),
                         (GridPosition::new(6, 4), TileType::BlockedWater),
                         (GridPosition::new(7, 4), TileType::BlockedWater),
-
                         (GridPosition::new(3, 5), TileType::BlockedWater),
                         (GridPosition::new(4, 5), TileType::BlockedWater),
                         (GridPosition::new(5, 5), TileType::BlockedWater),
                         (GridPosition::new(6, 5), TileType::BlockedWater),
                         (GridPosition::new(7, 5), TileType::BlockedWater),
                         (GridPosition::new(8, 5), TileType::BlockedWater),
-
                         (GridPosition::new(3, 6), TileType::BlockedWater),
                         (GridPosition::new(4, 6), TileType::BlockedWater),
                         (GridPosition::new(5, 6), TileType::BlockedWater),
                         (GridPosition::new(6, 6), TileType::BlockedWater),
                         (GridPosition::new(7, 6), TileType::BlockedWater),
                         (GridPosition::new(8, 6), TileType::BlockedWater),
-
                         (GridPosition::new(4, 7), TileType::BlockedWater),
                         (GridPosition::new(5, 7), TileType::BlockedWater),
                         (GridPosition::new(6, 7), TileType::BlockedWater),
                         (GridPosition::new(7, 7), TileType::BlockedWater),
-
                         (GridPosition::new(5, 8), TileType::BlockedWater),
                         (GridPosition::new(6, 8), TileType::BlockedWater),
-
                         //Fertile patches
                         (GridPosition::new(4, 3), TileType::Fertile),
                         (GridPosition::new(3, 4), TileType::Fertile),
                         (GridPosition::new(8, 7), TileType::Fertile),
                         (GridPosition::new(7, 8), TileType::Fertile),
-
                         //Rocky Sides
                         (GridPosition::new(4, 0), TileType::BlockedRock),
                         (GridPosition::new(5, 0), TileType::BlockedRock),
                         (GridPosition::new(6, 0), TileType::BlockedRock),
                         (GridPosition::new(7, 1), TileType::BlockedRock),
-
- 		            	(GridPosition::new(4, 11), TileType::BlockedRock),
+                        (GridPosition::new(4, 11), TileType::BlockedRock),
                         (GridPosition::new(5, 11), TileType::BlockedRock),
                         (GridPosition::new(6, 11), TileType::BlockedRock),
                         (GridPosition::new(7, 11), TileType::BlockedRock),
                         (GridPosition::new(6, 10), TileType::BlockedRock),
-
                         (GridPosition::new(0, 4), TileType::BlockedRock),
                         (GridPosition::new(0, 5), TileType::BlockedRock),
                         (GridPosition::new(0, 6), TileType::BlockedRock),
                         (GridPosition::new(0, 7), TileType::BlockedRock),
                         (GridPosition::new(0, 8), TileType::BlockedRock),
                         (GridPosition::new(1, 7), TileType::BlockedRock),
-
                         (GridPosition::new(11, 5), TileType::BlockedRock),
                         (GridPosition::new(11, 6), TileType::BlockedRock),
                         (GridPosition::new(11, 7), TileType::BlockedRock),
                         (GridPosition::new(10, 6), TileType::BlockedRock),
-
                         // Mossy corners
                         (GridPosition::new(0, 0), TileType::BlockedMoss),
                         (GridPosition::new(0, 1), TileType::BlockedMoss),
@@ -418,21 +402,18 @@ impl Default for LevelDefinitions {
                         (GridPosition::new(2, 1), TileType::BlockedMoss),
                         (GridPosition::new(2, 2), TileType::BlockedMoss),
                         (GridPosition::new(3, 3), TileType::BlockedMoss),
-
                         (GridPosition::new(0, 11), TileType::BlockedMoss),
                         (GridPosition::new(0, 10), TileType::BlockedMoss),
                         (GridPosition::new(1, 11), TileType::BlockedMoss),
                         (GridPosition::new(2, 11), TileType::BlockedMoss),
                         (GridPosition::new(3, 9), TileType::BlockedMoss),
                         (GridPosition::new(3, 10), TileType::BlockedMoss),
-                        
                         (GridPosition::new(11, 0), TileType::BlockedMoss),
                         (GridPosition::new(10, 0), TileType::BlockedMoss),
                         (GridPosition::new(11, 1), TileType::BlockedMoss),
                         (GridPosition::new(10, 2), TileType::BlockedMoss),
                         (GridPosition::new(10, 3), TileType::BlockedMoss),
                         (GridPosition::new(9, 4), TileType::BlockedMoss),
-
                         (GridPosition::new(11, 10), TileType::BlockedMoss),
                         (GridPosition::new(10, 11), TileType::BlockedMoss),
                         (GridPosition::new(11, 11), TileType::BlockedMoss),
@@ -440,7 +421,7 @@ impl Default for LevelDefinitions {
                         (GridPosition::new(9, 9), TileType::BlockedMoss),
                         (GridPosition::new(8, 8), TileType::BlockedMoss),
                     ],
-                },    
+                },
             ],
         }
     }

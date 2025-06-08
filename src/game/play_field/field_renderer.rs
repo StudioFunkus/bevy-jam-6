@@ -17,6 +17,10 @@ use bevy::{
     render::storage::ShaderStorageBuffer,
 };
 
+/// Component to track if tiles have been modified
+#[derive(Component)]
+pub struct TilesDirty;
+
 /// Convert grid Y coordinate to texture Y coordinate
 /// Grid Y=0 is at TOP, texture Y=0 is at BOTTOM
 fn grid_y_to_texture_y(grid_y: u32, texture_height: u32) -> u32 {
@@ -40,7 +44,33 @@ pub(super) fn plugin(app: &mut App) {
     >::default())
         .add_systems(Update, update_connection_data)
         .add_systems(Update, update_shader_highlights)
-        .add_systems(Update, update_material_time);
+        .add_systems(Update, update_material_time)
+        .add_systems(Update, update_tile_texture);
+}
+
+/// Update tile texture when tiles have been modified
+fn update_tile_texture(
+    mut commands: Commands,
+    field_grounds: Query<(Entity, &FieldGround), With<TilesDirty>>,
+    mut materials: ResMut<Assets<ExtendedMaterial<StandardMaterial, FieldGroundExtension>>>,
+    mut images: ResMut<Assets<Image>>,
+    game_state: Res<GameState>,
+) {
+    for (entity, field_ground) in field_grounds.iter() {
+        if let Some(material) = materials.get_mut(&field_ground.material_handle) {
+            // Recreate tile indices texture
+            let new_tile_texture = create_tile_indices_texture(&game_state.play_field);
+            let new_handle = images.add(new_tile_texture);
+
+            // Update the material
+            material.extension.tile_indices = new_handle;
+
+            info!("Updated tile texture for field ground");
+        }
+
+        // Remove the dirty flag
+        commands.entity(entity).remove::<TilesDirty>();
+    }
 }
 
 /// Consolidated uniforms for the shader
