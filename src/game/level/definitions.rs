@@ -62,19 +62,55 @@ impl LevelDefinitions {
 impl Default for LevelDefinitions {
     fn default() -> Self {
         Self {
-            levels: vec![
-                // Level 1 - Larger demo grid with variety of tile types
+            levels: vec![                
+                // Level 1 - Sandbox level with few blockers, low score threshold
                 LevelDefinition {
                     name: "Level 1".to_string(),
                     grid_width: 12,
                     grid_height: 12,
-                    target_score: 100.0,
+                    target_score: 300.0,
+                    max_turns: 5,
+                    starting_mushrooms: vec![
+                        
+                        StartingMushroom {
+                            x: 2,
+                            y: 2,
+                            mushroom_type: MushroomType::Pulse,
+                        }, 
+                        StartingMushroom {
+                            x: 2,
+                            y: 3,
+                            mushroom_type: MushroomType::Basic,
+                        }
+                    ],
+                    tile_configuration: vec![
+                        // Create interesting terrain
+                        (GridPosition::new(0, 0), TileType::Fertile),
+                        (GridPosition::new(7, 7), TileType::Fertile),
+                        // Rocky cross pattern
+                        (GridPosition::new(4, 5), TileType::BlockedRock),
+                        (GridPosition::new(4, 6), TileType::BlockedRock),
+                        (GridPosition::new(3, 6), TileType::BlockedRock),
+                        (GridPosition::new(5, 6), TileType::BlockedRock),
+                        //Moss patches
+                        (GridPosition::new(8, 8), TileType::BlockedMoss),
+                        (GridPosition::new(9, 9), TileType::BlockedMoss),
+                        (GridPosition::new(1, 11), TileType::BlockedMoss),
+                        (GridPosition::new(2, 10), TileType::BlockedMoss),
+                    ],
+                },
+                // Level 2 - More blockers, higher score threshold
+                LevelDefinition {
+                    name: "Level 2".to_string(),
+                    grid_width: 12,
+                    grid_height: 12,
+                    target_score: 500.0,
                     max_turns: 5,
                     starting_mushrooms: vec![StartingMushroom {
-                        x: 2,
-                        y: 2,
-                        mushroom_type: MushroomType::Pulse,
-                    }],
+                            x: 10,
+                            y: 7,
+                            mushroom_type: MushroomType::Burst,
+                        }],
                     tile_configuration: vec![
                         // Fertile patches
                         (GridPosition::new(1, 1), TileType::Fertile),
@@ -98,46 +134,113 @@ impl Default for LevelDefinitions {
                         // Moss obstacles (single tiles)
                         (GridPosition::new(0, 5), TileType::BlockedMoss),
                         (GridPosition::new(11, 4), TileType::BlockedMoss),
+                        (GridPosition::new(1, 6), TileType::BlockedMoss),
+                        (GridPosition::new(10, 3), TileType::BlockedMoss),
                         // Single rock blockers
                         (GridPosition::new(5, 8), TileType::BlockedRock),
                         (GridPosition::new(2, 5), TileType::BlockedRock),
                     ],
                 },
-                // Level 2 - Chain intro?
-                LevelDefinition {
-                    name: "Level 2".to_string(),
-                    grid_width: 8,
-                    grid_height: 8,
-                    target_score: 100.0,
-                    max_turns: 4,
-                    starting_mushrooms: vec![],
-                    tile_configuration: vec![
-                        // Create interesting terrain
-                        (GridPosition::new(0, 0), TileType::Fertile),
-                        (GridPosition::new(7, 7), TileType::Fertile),
-                        // Rocky cross pattern
-                        (GridPosition::new(4, 3), TileType::BlockedRock),
-                        (GridPosition::new(4, 4), TileType::BlockedRock),
-                        (GridPosition::new(3, 4), TileType::BlockedRock),
-                        (GridPosition::new(5, 4), TileType::BlockedRock),
-                    ],
-                },
-                // Level 3 - Larger grid
+                
+                // Level 3 - lots of moss rocks, so lower score threshold
                 LevelDefinition {
                     name: "Level 3".to_string(),
-                    grid_width: 10,
-                    grid_height: 10,
-                    target_score: 200.0,
+                    grid_width: 12,
+                    grid_height: 12,
+                    target_score: 500.0,
                     max_turns: 6,
-                    starting_mushrooms: vec![],
-                    tile_configuration: vec![],
+                    starting_mushrooms: vec![
+                        StartingMushroom {
+                            x: 1,
+                            y: 2,
+                            mushroom_type: MushroomType::Burst,
+                        },
+                        StartingMushroom {
+                            x: 5,
+                            y: 10,
+                            mushroom_type: MushroomType::Burst,
+                        },
+                        StartingMushroom {
+                            x: 9,
+                            y: 3,
+                            mushroom_type: MushroomType::Burst,
+                        }
+                    ],
+                    tile_configuration: vec![                        
+                        // mossy cage 1
+                        (GridPosition::new(0, 1), TileType::BlockedMoss),
+                        (GridPosition::new(0, 2), TileType::BlockedMoss),
+                        (GridPosition::new(0, 3), TileType::BlockedMoss),
+                        (GridPosition::new(1, 1), TileType::BlockedMoss),
+                        (GridPosition::new(1, 3), TileType::BlockedMoss),
+                        (GridPosition::new(2, 1), TileType::BlockedMoss),
+                        (GridPosition::new(2, 2), TileType::BlockedMoss),
+                        (GridPosition::new(0, 4), TileType::BlockedMoss),
+                        (GridPosition::new(3, 3), TileType::BlockedMoss),
+                        (GridPosition::new(2, 4), TileType::BlockedMoss),
+                        (GridPosition::new(3, 0), TileType::BlockedMoss),
+                        //mossy cage 2
+                        (GridPosition::new(4, 7), TileType::BlockedMoss),
+                        (GridPosition::new(4, 10), TileType::BlockedMoss),
+                        (GridPosition::new(4, 11), TileType::BlockedMoss),
+                        (GridPosition::new(5, 9), TileType::BlockedMoss),
+                        (GridPosition::new(5, 11), TileType::BlockedMoss),
+                        (GridPosition::new(6, 9), TileType::BlockedMoss),
+                        (GridPosition::new(6, 10), TileType::BlockedMoss),
+                        (GridPosition::new(6, 11), TileType::BlockedMoss),
+                        (GridPosition::new(3, 9), TileType::BlockedMoss),
+                        (GridPosition::new(5, 8), TileType::BlockedMoss),
+                        (GridPosition::new(7, 10), TileType::BlockedMoss),
+                        (GridPosition::new(7, 12), TileType::BlockedMoss),
+                        //mossy cage 3
+                        (GridPosition::new(8, 1), TileType::BlockedMoss),
+                        (GridPosition::new(8, 3), TileType::BlockedMoss),
+                        (GridPosition::new(8, 4), TileType::BlockedMoss),
+                        (GridPosition::new(9, 2), TileType::BlockedMoss),
+                        (GridPosition::new(9, 4), TileType::BlockedMoss),
+                        (GridPosition::new(10, 2), TileType::BlockedMoss),
+                        (GridPosition::new(11, 3), TileType::BlockedMoss),
+                        (GridPosition::new(10, 4), TileType::BlockedMoss),
+                        (GridPosition::new(8, 5), TileType::BlockedMoss),
+                        (GridPosition::new(7, 6), TileType::BlockedMoss),
+                        (GridPosition::new(10, 1), TileType::BlockedMoss),
+                        (GridPosition::new(11, 5), TileType::BlockedMoss),
+                        //rock formation
+                        (GridPosition::new(0, 11), TileType::BlockedRock),
+                        (GridPosition::new(1, 11), TileType::BlockedRock),
+                        (GridPosition::new(0, 10), TileType::BlockedRock),
+                        (GridPosition::new(1, 10), TileType::BlockedRock),
+                        (GridPosition::new(1, 9), TileType::BlockedRock),
+                        (GridPosition::new(2, 8), TileType::BlockedRock),
+                        (GridPosition::new(2, 7), TileType::BlockedRock),
+                        (GridPosition::new(3, 6), TileType::BlockedRock),
+                        (GridPosition::new(5, 6), TileType::BlockedRock),
+                        (GridPosition::new(6, 6), TileType::BlockedRock),
+                        (GridPosition::new(6, 4), TileType::BlockedRock),
+                        (GridPosition::new(5, 2), TileType::BlockedRock),
+                        (GridPosition::new(5, 0), TileType::BlockedRock),
+                        (GridPosition::new(6, 0), TileType::BlockedRock),
+                        (GridPosition::new(6, 3), TileType::BlockedRock),
+                        (GridPosition::new(7, 7), TileType::BlockedRock),
+                        (GridPosition::new(7, 8), TileType::BlockedRock),
+                        (GridPosition::new(8, 9), TileType::BlockedRock),
+                        (GridPosition::new(10, 10), TileType::BlockedRock),
+                        (GridPosition::new(11, 10), TileType::BlockedRock),
+                        (GridPosition::new(11, 10), TileType::BlockedRock),
+
+                        //bits of water
+                        (GridPosition::new(5, 3), TileType::BlockedWater),
+                        (GridPosition::new(11, 9), TileType::BlockedWater),
+                        (GridPosition::new(3, 11), TileType::BlockedWater),
+
+                        ],
                 },
                 // Level 4 - Vertical?
                 LevelDefinition {
                     name: "Level 4".to_string(),
-                    grid_width: 6,
+                    grid_width: 12,
                     grid_height: 12,
-                    target_score: 1000.0,
+                    target_score: 500.0,
                     max_turns: 5,
                     starting_mushrooms: vec![],
                     tile_configuration: vec![
