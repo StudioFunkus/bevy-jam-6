@@ -5,7 +5,7 @@
         {
           "Text": {
             "id": 1,
-            "text": "\nWhat mycelial mockery is this! Dare you test me, the great Agaricus?",
+            "text": "\n.....hm? Oh sorry, I was trying to work chicken-of-the-woods into a celebratory pun, but it just wasn't working. Well done, though!",
             "speaker": "AGARICUS",
             "portrait": "wizard"
           }
@@ -19,6 +19,6 @@
       "1": 0
     },
     "start_node": 1,
-    "name": "Failure"
+    "name": "Success 1"
   }
 }

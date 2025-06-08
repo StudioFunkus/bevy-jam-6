@@ -5,9 +5,9 @@
         {
           "Text": {
             "id": 1,
-            "text": "\nWhat mycelial mockery is this! Dare you test me, the great Agaricus?",
-            "speaker": "AGARICUS",
-            "portrait": "wizard"
+            "text": "\nSo much for the great bog wizard Agaricus. You're nothing but a common stinkhorn.",
+            "speaker": "ANDREAEA",
+            "portrait": "witch"
           }
         }
       ],

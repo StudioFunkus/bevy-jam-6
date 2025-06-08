@@ -105,6 +105,8 @@ fn enter_start_dialogue(
     let dialogue_handle = match current_level.level_index {
         0 => Some(dialogue_assets.level_1_intro.clone()), // Level 1
         1 => Some(dialogue_assets.level_2_intro.clone()), // Level 2
+        2 => Some(dialogue_assets.level_3_intro.clone()), // Level 3
+        3 => Some(dialogue_assets.level_4_intro.clone()), // Level 4
         n if n == total_levels - 1 => Some(dialogue_assets.final_level_intro.clone()), // Last level
         _ => None,                                        // Other levels have no intro
     };
@@ -169,7 +171,7 @@ fn enter_end_dialogue(
 
     // Select random dialogue based on success/failure
     let dialogue_pool = match current_level.level_completed_successfully {
-        Some(true) => &dialogue_assets.success_dialogues,
+        Some(true) => &dialogue_assets.success_dialogues_1,
         Some(false) => &dialogue_assets.failure_dialogues,
         None => {
             warn!("No completion status set, defaulting to failure dialogue");
