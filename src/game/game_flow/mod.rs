@@ -5,8 +5,11 @@ use bevy::prelude::*;
 use crate::{
     game::{
         carddeck::events::DrawEvent,
-        level::{definitions::{load_level_config, LevelDefinitions}, CurrentGameplayMusic},
-        mushrooms::{chain_activation::reset_mushroom_states, ChainManager},
+        level::{
+            CurrentGameplayMusic,
+            definitions::{LevelDefinitions, load_level_config},
+        },
+        mushrooms::{ChainManager, chain_activation::reset_mushroom_states},
         play_field::placement_preview::PreviewConnections,
         resources::GameState,
     },
@@ -47,12 +50,12 @@ pub(super) fn plugin(app: &mut App) {
     // Level lifecycle management
     app.add_systems(OnEnter(LevelState::StartDialogue), activate_level_lifecycle);
     app.add_systems(
-        OnEnter(LevelState::Success), 
-        deactivate_level_lifecycle.after(spawn_level_success_ui)
+        OnEnter(LevelState::Success),
+        deactivate_level_lifecycle.after(spawn_level_success_ui),
     );
     app.add_systems(
-        OnEnter(LevelState::Failed), 
-        deactivate_level_lifecycle.after(spawn_level_failed_ui)
+        OnEnter(LevelState::Failed),
+        deactivate_level_lifecycle.after(spawn_level_failed_ui),
     );
     app.add_systems(OnEnter(LevelState::NotPlaying), deactivate_level_lifecycle);
 

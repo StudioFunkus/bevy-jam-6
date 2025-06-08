@@ -9,14 +9,15 @@ use std::collections::VecDeque;
 use crate::{
     game::{
         carddeck::{
-            card::{spawn_card, Card, CardTemplates},
+            card::{Card, CardTemplates, spawn_card},
             constants::{CARD_LAYER, CARD_SIZE, CARD_SPACING, HAND_SIZE_LIMIT},
             events::{DrawEvent, HandChangeEvent},
             markers::Dragged,
         },
         game_flow::LevelCompleteAction,
         level::assets::LevelAssets,
-        mushrooms::MushroomDefinitions, ui::GameplayUI,
+        mushrooms::MushroomDefinitions,
+        ui::GameplayUI,
     },
     screens::Screen,
 };
@@ -51,10 +52,7 @@ fn spawn_hand_entity(mut commands: Commands, window: Query<&Window>) -> Result {
 }
 
 /// Empty the hand when exiting gameplay
-fn empty_hand_on_exit(
-    commands: Commands,
-    mut hand: ResMut<Hand>,
-) -> Result {
+fn empty_hand_on_exit(commands: Commands, mut hand: ResMut<Hand>) -> Result {
     hand.empty_hand(commands)?;
     Ok(())
 }

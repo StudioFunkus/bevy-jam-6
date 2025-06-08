@@ -4,13 +4,15 @@ use super::super::play_field::events::on_grid_cell_click;
 use bevy::{pbr::ExtendedMaterial, prelude::*, render::storage::ShaderStorageBuffer};
 
 use crate::{
-    audio::{music, Music},
+    audio::{Music, music},
     game::{
         game_flow::{CurrentLevel, LevelLifecycle, LevelState},
-        level::{definitions::LevelDefinitions, CurrentGameplayMusic},
-        mushrooms::{events::SpawnMushroomEvent, MushroomDefinitions},
+        level::{CurrentGameplayMusic, definitions::LevelDefinitions},
+        mushrooms::{MushroomDefinitions, events::SpawnMushroomEvent},
         play_field::{
-            events::GridCell, field_renderer::{spawn_field_ground, FieldGroundExtension}, GridPosition, CELL_SIZE
+            CELL_SIZE, GridPosition,
+            events::GridCell,
+            field_renderer::{FieldGroundExtension, spawn_field_ground},
         },
         resources::GameState,
     },
@@ -106,28 +108,31 @@ pub fn spawn_level(
     }
 
     // Check if we need to change music
-    let mut current_music = music_query.iter().find(|player| {
-        player.0 == level_assets.music
-    }).is_some();
-    
+    let mut current_music = music_query
+        .iter()
+        .find(|player| player.0 == level_assets.music)
+        .is_some();
+
     // Only spawn new music if it's different from what's playing
     if gameplay_music.current_track.as_ref() != Some(&level_assets.music) {
         // Despawn old music if it exists
         if let Some(entity) = gameplay_music.entity {
             commands.entity(entity).despawn();
         }
-        
+
         // Spawn new music
-        let music_entity = commands.spawn((
-            Name::new("Gameplay Music"),
-            StateScoped(Screen::Gameplay),
-            music(level_assets.music.clone()),
-        )).id();
-        
+        let music_entity = commands
+            .spawn((
+                Name::new("Gameplay Music"),
+                StateScoped(Screen::Gameplay),
+                music(level_assets.music.clone()),
+            ))
+            .id();
+
         // Update tracking resource
         gameplay_music.current_track = Some(level_assets.music.clone());
         gameplay_music.entity = Some(music_entity);
-        
+
         info!("Changed gameplay music track");
     } else {
         info!("Keeping current music track");

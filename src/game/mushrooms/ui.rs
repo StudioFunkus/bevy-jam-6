@@ -44,7 +44,10 @@ impl SporePopup {
 
 /// Update uses display when mushroom activation state changes
 fn update_uses_display(
-    mushrooms: Query<(Entity, &Mushroom, &MushroomActivationState), Changed<MushroomActivationState>>,
+    mushrooms: Query<
+        (Entity, &Mushroom, &MushroomActivationState),
+        Changed<MushroomActivationState>,
+    >,
     definitions: Res<MushroomDefinitions>,
     mut uses_displays: Query<(Entity, &ChildOf), With<UsesDisplay>>,
     mut commands: Commands,
@@ -60,14 +63,14 @@ fn update_uses_display(
         let remaining_uses = definition
             .max_uses_per_turn
             .saturating_sub(state.activations_this_turn);
-        
+
         // Find uses displays that are children of this mushroom
         for (display_entity, child_of) in uses_displays.iter_mut() {
             if child_of.parent() == entity {
                 // Replace the Text3d component with updated text
-                commands.entity(display_entity).insert(
-                    Text3d::new(format!("{remaining_uses}"))
-                );
+                commands
+                    .entity(display_entity)
+                    .insert(Text3d::new(format!("{remaining_uses}")));
             }
         }
     }

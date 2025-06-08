@@ -62,7 +62,7 @@ impl LevelDefinitions {
 impl Default for LevelDefinitions {
     fn default() -> Self {
         Self {
-            levels: vec![                
+            levels: vec![
                 // Level 1 - Sandbox level with few blockers, low score threshold
                 LevelDefinition {
                     name: "Level 1".to_string(),
@@ -71,17 +71,16 @@ impl Default for LevelDefinitions {
                     target_score: 300.0,
                     max_turns: 5,
                     starting_mushrooms: vec![
-                        
                         StartingMushroom {
                             x: 2,
                             y: 2,
                             mushroom_type: MushroomType::Pulse,
-                        }, 
+                        },
                         StartingMushroom {
                             x: 2,
                             y: 3,
                             mushroom_type: MushroomType::Basic,
-                        }
+                        },
                     ],
                     tile_configuration: vec![
                         // Create interesting terrain
@@ -107,10 +106,10 @@ impl Default for LevelDefinitions {
                     target_score: 500.0,
                     max_turns: 5,
                     starting_mushrooms: vec![StartingMushroom {
-                            x: 10,
-                            y: 7,
-                            mushroom_type: MushroomType::Burst,
-                        }],
+                        x: 10,
+                        y: 7,
+                        mushroom_type: MushroomType::Burst,
+                    }],
                     tile_configuration: vec![
                         // Fertile patches
                         (GridPosition::new(1, 1), TileType::Fertile),
@@ -141,7 +140,6 @@ impl Default for LevelDefinitions {
                         (GridPosition::new(2, 5), TileType::BlockedRock),
                     ],
                 },
-                
                 // Level 3 - lots of moss rocks, so lower score threshold
                 LevelDefinition {
                     name: "Level 3".to_string(),
@@ -164,9 +162,9 @@ impl Default for LevelDefinitions {
                             x: 9,
                             y: 3,
                             mushroom_type: MushroomType::Burst,
-                        }
+                        },
                     ],
-                    tile_configuration: vec![                        
+                    tile_configuration: vec![
                         // mossy cage 1
                         (GridPosition::new(0, 1), TileType::BlockedMoss),
                         (GridPosition::new(0, 2), TileType::BlockedMoss),
@@ -227,13 +225,11 @@ impl Default for LevelDefinitions {
                         (GridPosition::new(10, 10), TileType::BlockedRock),
                         (GridPosition::new(11, 10), TileType::BlockedRock),
                         (GridPosition::new(11, 10), TileType::BlockedRock),
-
                         //bits of water
                         (GridPosition::new(5, 3), TileType::BlockedWater),
                         (GridPosition::new(11, 9), TileType::BlockedWater),
                         (GridPosition::new(3, 11), TileType::BlockedWater),
-
-                        ],
+                    ],
                 },
                 // Level 4 - Vertical?
                 LevelDefinition {

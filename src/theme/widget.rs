@@ -18,7 +18,7 @@ pub fn ui_root(name: impl Into<Cow<'static, str>>) -> impl Bundle {
             position_type: PositionType::Absolute,
             width: Percent(100.0),
             height: Percent(100.0),
-            padding: UiRect{
+            padding: UiRect {
                 left: Px(10.),
                 right: Px(50.),
                 top: Px(10.),
@@ -73,12 +73,7 @@ where
                 justify_content: JustifyContent::Center,
                 ..default()
             },
-            BorderRadius::new(
-                Val::Px(10.),
-                Val::Px(10.),
-                Val::Px(10.),
-                Val::Px(10.),
-            ),
+            BorderRadius::new(Val::Px(10.), Val::Px(10.), Val::Px(10.), Val::Px(10.)),
         ),
     )
 }
@@ -155,8 +150,7 @@ pub fn image(
     width: Val,
     height: Val,
     position_type: PositionType,
-) -> impl Bundle
-{
+) -> impl Bundle {
     (
         Name::new("UI_image"),
         Node {
@@ -170,12 +164,11 @@ pub fn image(
             ..default()
         },
         Children::spawn(SpawnWith(|parent: &mut ChildSpawner| {
-            parent
-                .spawn((
-                    Name::new("Image Inner"),
-                    Pickable::IGNORE,
-                    ImageNode::new(handle),
-                ));
+            parent.spawn((
+                Name::new("Image Inner"),
+                Pickable::IGNORE,
+                ImageNode::new(handle),
+            ));
         })),
     )
 }

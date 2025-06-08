@@ -263,8 +263,7 @@ fn initialize_definitions(mut definitions: ResMut<MushroomDefinitions>) {
         MushroomType::Pulse,
         MushroomDefinition {
             name: "Pulcini".to_string(),
-            description: "5 Spores. Connect 1."
-                .to_string(),
+            description: "5 Spores. Connect 1.".to_string(),
             base_production: 5.0,
             cooldown_time: 0.1,
             max_uses_per_turn: 2,
@@ -280,9 +279,7 @@ fn initialize_definitions(mut definitions: ResMut<MushroomDefinitions>) {
         MushroomType::Sideways,
         MushroomDefinition {
             name: "Dicholoma".to_string(),
-            description:
-                "2 Spores. Connect 2."
-                    .to_string(),
+            description: "2 Spores. Connect 2.".to_string(),
             base_production: 2.0,
             cooldown_time: 1.0,
             max_uses_per_turn: 2,
@@ -298,8 +295,7 @@ fn initialize_definitions(mut definitions: ResMut<MushroomDefinitions>) {
         MushroomType::Fork,
         MushroomDefinition {
             name: "Forchione".to_string(),
-            description: "2 Spores. Connect 2."
-                .to_string(),
+            description: "2 Spores. Connect 2.".to_string(),
             base_production: 2.0,
             cooldown_time: 1.0,
             max_uses_per_turn: 2,
@@ -315,8 +311,7 @@ fn initialize_definitions(mut definitions: ResMut<MushroomDefinitions>) {
         MushroomType::Diagonal,
         MushroomDefinition {
             name: "Wizard's Cap".to_string(),
-            description: "5 Spores. Connect 2."
-                .to_string(),
+            description: "5 Spores. Connect 2.".to_string(),
             base_production: 5.0,
             cooldown_time: 1.0,
             max_uses_per_turn: 2,
@@ -332,8 +327,7 @@ fn initialize_definitions(mut definitions: ResMut<MushroomDefinitions>) {
         MushroomType::Threeway,
         MushroomDefinition {
             name: "Spliitake".to_string(),
-            description: "8 spores. Connect 3."
-                .to_string(),
+            description: "8 spores. Connect 3.".to_string(),
             base_production: 8.0,
             cooldown_time: 2.0,
             max_uses_per_turn: 2,
@@ -349,8 +343,7 @@ fn initialize_definitions(mut definitions: ResMut<MushroomDefinitions>) {
         MushroomType::Surround,
         MushroomDefinition {
             name: "Umberella".to_string(),
-            description: "4 Spores. Connect 8."
-                .to_string(),
+            description: "4 Spores. Connect 8.".to_string(),
             base_production: 4.0,
             cooldown_time: 3.0,
             max_uses_per_turn: 2,
@@ -366,8 +359,7 @@ fn initialize_definitions(mut definitions: ResMut<MushroomDefinitions>) {
         MushroomType::Skipper,
         MushroomDefinition {
             name: "Portini".to_string(),
-            description: "8 Spores. Connect 1."
-                .to_string(),
+            description: "8 Spores. Connect 1.".to_string(),
             base_production: 8.0,
             cooldown_time: 1.0,
             max_uses_per_turn: 2,
@@ -465,8 +457,7 @@ fn initialize_definitions(mut definitions: ResMut<MushroomDefinitions>) {
         MushroomType::Splitter,
         MushroomDefinition {
             name: "Ink Cap".to_string(),
-            description: "5 Spores. Connect 4. Energy Boost 2."
-                    .to_string(),
+            description: "5 Spores. Connect 4. Energy Boost 2.".to_string(),
             base_production: 5.0,
             cooldown_time: 3.0,
             max_uses_per_turn: 2,
@@ -482,8 +473,7 @@ fn initialize_definitions(mut definitions: ResMut<MushroomDefinitions>) {
         MushroomType::Chain,
         MushroomDefinition {
             name: "Mumbling Truffle".to_string(),
-            description: "5 Spores. Connect 1. Rapid Fire."
-                .to_string(),
+            description: "5 Spores. Connect 1. Rapid Fire.".to_string(),
             base_production: 5.0,
             cooldown_time: 0.8,
             max_uses_per_turn: 5,
@@ -499,8 +489,7 @@ fn initialize_definitions(mut definitions: ResMut<MushroomDefinitions>) {
         MushroomType::Converter,
         MushroomDefinition {
             name: "False Broccoli".to_string(),
-            description: "8 Spores. Connect 1. Fertilise 1."
-                .to_string(),
+            description: "8 Spores. Connect 1. Fertilise 1.".to_string(),
             base_production: 8.0,
             cooldown_time: 2.5,
             max_uses_per_turn: 3,

@@ -70,7 +70,7 @@ impl FromWorld for DialogueAssets {
                 asset_server.load("dialogues/success/success_4.dialogue.json"),
                 asset_server.load("dialogues/success/success_4.dialogue.2.json"),
                 asset_server.load("dialogues/success/success_4.dialogue.3.json"),
-                ],
+            ],
 
             failure_dialogues: vec![
                 asset_server.load("dialogues/failure/failure_1.dialogue.json"),
@@ -85,8 +85,7 @@ impl FromWorld for DialogueAssets {
                 asset_server.load("dialogues/failure/failure_4.dialogue.json"),
                 asset_server.load("dialogues/failure/failure_4.dialogue.2.json"),
                 asset_server.load("dialogues/failure/failure_4.dialogue.3.json"),
-
-                ],
+            ],
 
             portraits: PortraitAssets {
                 wizard: asset_server.load("images/portraits/wizard.png"),

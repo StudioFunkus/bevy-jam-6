@@ -1,6 +1,9 @@
 //! Visual effects and feedback for game interactions
 
-use crate::{game::mushrooms::{Mushroom, MushroomDefinitions, MushroomSprite}, MainCamera};
+use crate::{
+    MainCamera,
+    game::mushrooms::{Mushroom, MushroomDefinitions, MushroomSprite},
+};
 use bevy::prelude::*;
 use bevy_sprite3d::Sprite3d;
 

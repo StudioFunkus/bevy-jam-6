@@ -26,8 +26,7 @@ pub(super) fn plugin(app: &mut App) {
 
     app.add_systems(
         Update,
-        detect_hover_changes
-            .run_if(in_state(TurnPhase::Planting).or(in_state(TurnPhase::Chain))),
+        detect_hover_changes.run_if(in_state(TurnPhase::Planting).or(in_state(TurnPhase::Chain))),
     );
 
     // Add cleanup when level lifecycle ends
@@ -52,8 +51,7 @@ pub(super) fn plugin(app: &mut App) {
     // Chain phase hover highlight
     app.add_systems(
         Update,
-        update_chain_hover
-            .run_if(in_state(TurnPhase::Chain)),
+        update_chain_hover.run_if(in_state(TurnPhase::Chain)),
     );
 
     // Cleanup
@@ -118,7 +116,7 @@ fn update_chain_hover(
     preview_connections.empty_connection_points.clear();
     preview_connections.existing_connection_targets.clear();
     preview_connections.preview_position = None;
-    
+
     // Only highlight if there's a mushroom at the hovered position
     if let Some(position) = hovered_cell.position {
         if game_state.play_field.get(position).is_some() {

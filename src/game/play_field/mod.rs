@@ -34,7 +34,7 @@ pub(super) fn plugin(app: &mut App) {
         OnEnter(crate::game::game_flow::LevelState::Playing),
         clear_play_field_connections,
     );
-    
+
     // Also clear connections when level lifecycle ends
     app.add_systems(
         OnExit(crate::game::game_flow::LevelLifecycle::Active),

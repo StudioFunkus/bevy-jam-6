@@ -6,7 +6,7 @@
 
 use super::tile_atlas::TileSprite;
 use super::{GridPosition, PlayField, TileType};
-use crate::game::game_flow::{LevelState, LevelLifecycle};
+use crate::game::game_flow::LevelLifecycle;
 use crate::game::level::assets::LevelAssets;
 use crate::game::resources::GameState;
 use bevy::{
