@@ -18,7 +18,13 @@ pub fn ui_root(name: impl Into<Cow<'static, str>>) -> impl Bundle {
             position_type: PositionType::Absolute,
             width: Percent(100.0),
             height: Percent(100.0),
-            align_items: AlignItems::Center,
+            padding: UiRect{
+                left: Px(10.),
+                right: Px(50.),
+                top: Px(10.),
+                bottom: Px(10.),
+            },
+            align_items: AlignItems::End,
             justify_content: JustifyContent::Center,
             flex_direction: FlexDirection::Column,
             row_gap: Px(20.0),
@@ -61,13 +67,18 @@ where
         action,
         (
             Node {
-                width: Px(380.0),
+                width: Px(250.0),
                 height: Px(80.0),
                 align_items: AlignItems::Center,
                 justify_content: JustifyContent::Center,
                 ..default()
             },
-            BorderRadius::MAX,
+            BorderRadius::new(
+                Val::Px(10.),
+                Val::Px(10.),
+                Val::Px(10.),
+                Val::Px(10.),
+            ),
         ),
     )
 }
@@ -123,13 +134,48 @@ where
                         Name::new("Button Text"),
                         Text(text),
                         TextFont::from_font_size(40.0),
-                        TextColor(BUTTON_TEXT),
+                        TextColor(Color::BLACK),
                         // Don't bubble picking events from the text up to the button.
                         Pickable::IGNORE,
                     )],
                 ))
                 .insert(button_bundle)
                 .observe(action);
+        })),
+    )
+}
+
+/// A simple button with text and an action defined as an [`Observer`]. The button's layout is provided by `button_bundle`.
+pub fn image(
+    handle: Handle<Image>,
+    left: Option<Val>,
+    right: Option<Val>,
+    top: Option<Val>,
+    bottom: Option<Val>,
+    width: Val,
+    height: Val,
+    position_type: PositionType,
+) -> impl Bundle
+{
+    (
+        Name::new("UI_image"),
+        Node {
+            left: left.unwrap_or_default(),
+            right: right.unwrap_or_default(),
+            top: top.unwrap_or_default(),
+            bottom: bottom.unwrap_or_default(),
+            width: width,
+            height: height,
+            position_type: position_type,
+            ..default()
+        },
+        Children::spawn(SpawnWith(|parent: &mut ChildSpawner| {
+            parent
+                .spawn((
+                    Name::new("Image Inner"),
+                    Pickable::IGNORE,
+                    ImageNode::new(handle),
+                ));
         })),
     )
 }

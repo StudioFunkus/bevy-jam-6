@@ -2,13 +2,25 @@
 
 use bevy::prelude::*;
 
-use crate::{asset_tracking::ResourceHandles, menus::Menu, screens::Screen, theme::widget};
+use crate::{
+    asset_tracking::ResourceHandles,
+    menus::Menu,
+    screens::{Screen, assets::ScreenAssets},
+    theme::widget,
+};
 
 pub(super) fn plugin(app: &mut App) {
-    app.add_systems(OnEnter(Menu::Main), spawn_main_menu);
+    app.add_systems(
+        OnEnter(Menu::Main),
+        (spawn_main_menu, spawn_main_menu_art_assets),
+    );
 }
 
-fn spawn_main_menu(mut commands: Commands) {
+//component to store floating parameters for spores
+
+// spawn all menu widgets
+
+fn spawn_main_menu(mut commands: Commands, screen_assets: Res<ScreenAssets>) {
     commands.spawn((
         widget::ui_root("Main Menu"),
         GlobalZIndex(2),
@@ -20,14 +32,78 @@ fn spawn_main_menu(mut commands: Commands) {
             widget::button("Credits", open_credits_menu),
             widget::button("Exit", exit_app),
         ],
-        #[cfg(target_family = "wasm")]
+    ));
+}
+
+// spawn all main menu art assets
+
+fn spawn_main_menu_art_assets(mut commands: Commands, screen_assets: Res<ScreenAssets>) {
+    commands.spawn((
+        widget::ui_root("Main Menu"),
+        GlobalZIndex(0),
+        StateScoped(Menu::Main),
+        #[cfg(not(target_family = "wasm"))]
         children![
-            widget::button("Play", enter_loading_or_gameplay_screen),
-            widget::button("Settings", open_settings_menu),
-            widget::button("Credits", open_credits_menu),
+            // splash art
+            widget::image(
+                screen_assets.titlescreen.clone(),
+                Some(Val::Px(0.)),
+                None,
+                None,
+                None,
+                Val::Percent(60.),
+                Val::Auto,
+                PositionType::Relative,
+            ),
+            // game title
+            widget::image(
+                screen_assets.gametitle.clone(),
+                None,
+                None,
+                None,
+                None,
+                Val::Px(1000.),
+                Val::Px(200.),
+                PositionType::Absolute,
+            ),
+            // lil spore 1
+            widget::image(
+                screen_assets.spore1.clone(),
+                None,
+                None,
+                None,
+                None,
+                Val::Px(20.),
+                Val::Px(20.),
+                PositionType::Absolute,
+            ),
+            // lil spore 2
+            widget::image(
+                screen_assets.spore2.clone(),
+                None,
+                None,
+                None,
+                None,
+                Val::Px(20.),
+                Val::Px(20.),
+                PositionType::Absolute,
+            ),
+            //lil spore 3
+            widget::image(
+                screen_assets.spore3.clone(),
+                None,
+                None,
+                None,
+                None,
+                Val::Px(20.),
+                Val::Px(20.),
+                PositionType::Absolute,
+            )
         ],
     ));
 }
+
+// navigation tools for the main menu widgets
 
 fn enter_loading_or_gameplay_screen(
     _: Trigger<Pointer<Click>>,
@@ -53,3 +129,5 @@ fn open_credits_menu(_: Trigger<Pointer<Click>>, mut next_menu: ResMut<NextState
 fn exit_app(_: Trigger<Pointer<Click>>, mut app_exit: EventWriter<AppExit>) {
     app_exit.write(AppExit::Success);
 }
+
+//system for making spores move in the main menu
