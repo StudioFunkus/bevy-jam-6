@@ -148,6 +148,10 @@ where
 /// A simple button with text and an action defined as an [`Observer`]. The button's layout is provided by `button_bundle`.
 pub fn image(
     handle: Handle<Image>,
+    left: Option<Val>,
+    right: Option<Val>,
+    top: Option<Val>,
+    bottom: Option<Val>,
     width: Val,
     height: Val,
     position_type: PositionType,
@@ -156,9 +160,13 @@ pub fn image(
     (
         Name::new("UI_image"),
         Node {
+            left: left.unwrap_or_default(),
+            right: right.unwrap_or_default(),
+            top: top.unwrap_or_default(),
+            bottom: bottom.unwrap_or_default(),
             width: width,
-            position_type: position_type,
             height: height,
+            position_type: position_type,
             ..default()
         },
         Children::spawn(SpawnWith(|parent: &mut ChildSpawner| {

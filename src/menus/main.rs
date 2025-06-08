@@ -44,35 +44,60 @@ fn spawn_main_menu_art_assets(mut commands: Commands, screen_assets: Res<ScreenA
         StateScoped(Menu::Main),
         #[cfg(not(target_family = "wasm"))]
         children![
+            // splash art
             widget::image(
                 screen_assets.titlescreen.clone(),
-                Val::Percent(100.),
-                Val::Percent(100.),
-                PositionType::Absolute,
+                Some(Val::Px(0.)),
+                None,
+                None,
+                None,
+                Val::Percent(60.),
+                Val::Auto,
+                PositionType::Relative,
             ),
+            // game title
             widget::image(
                 screen_assets.gametitle.clone(),
+                None,
+                None,
+                None,
+                None,
                 Val::Px(1000.),
                 Val::Px(200.),
                 PositionType::Absolute,
             ),
+            // lil spore 1
             widget::image(
                 screen_assets.spore1.clone(),
+                None,
+                None,
+                None,
+                None,
                 Val::Px(20.),
                 Val::Px(20.),
-                PositionType::Relative,
+                PositionType::Absolute,
             ),
+            // lil spore 2
             widget::image(
                 screen_assets.spore2.clone(),
+                None,
+                None,
+                None,
+                None,
                 Val::Px(20.),
                 Val::Px(20.),
-                PositionType::Relative,
+                PositionType::Absolute,
             ),
+            //lil spore 3
             widget::image(
                 screen_assets.spore3.clone(),
+                None,
+                None,
+                None,
+                None,
                 Val::Px(20.),
                 Val::Px(20.),
-                PositionType::Relative,
+                PositionType::Absolute,
             )
         ],
     ));
