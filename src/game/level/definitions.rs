@@ -75,12 +75,7 @@ impl Default for LevelDefinitions {
                             x: 2,
                             y: 2,
                             mushroom_type: MushroomType::Pulse,
-                        },
-                        StartingMushroom {
-                            x: 2,
-                            y: 3,
-                            mushroom_type: MushroomType::Basic,
-                        },
+                        }
                     ],
                     tile_configuration: vec![
                         // Create interesting terrain

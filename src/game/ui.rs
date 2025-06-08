@@ -84,9 +84,18 @@ fn spawn_game_ui(mut commands: Commands, _definitions: Res<MushroomDefinitions>)
             StateScoped(Screen::Gameplay),
         ))
         .with_children(|parent| {
+            // Add level progress display
+            parent.spawn((
+                Name::new("Level Progress"),
+                Text::new("Level 1 - Turn 1/5"),
+                TextFont::from_font_size(18.0),
+                TextColor(ui_palette::LABEL_TEXT),
+                LevelProgressDisplay,
+            ));
+
             parent.spawn((
                 Name::new("Spore Count"),
-                Text::new("Spores: 0"),
+                Text::new("Spores: 0/100"),
                 TextFont::from_font_size(32.0),
                 TextColor(ui_palette::HEADER_TEXT),
                 SporeDisplay,
@@ -94,38 +103,29 @@ fn spawn_game_ui(mut commands: Commands, _definitions: Res<MushroomDefinitions>)
 
             parent.spawn((
                 Name::new("Stats"),
-                Text::new("Activations: 0 | Chains: 0"),
+                Text::new("Shroom Activations: 0"),
                 TextFont::from_font_size(20.0),
                 TextColor(ui_palette::LABEL_TEXT),
                 StatsDisplay,
             ));
 
             // Add turn phase display
-            parent.spawn((
-                Name::new("Turn Phase"),
-                Text::new("Phase: Loading..."),
-                TextFont::from_font_size(24.0),
-                TextColor(Color::srgb(0.8, 0.8, 0.2)),
-                TurnPhaseDisplay,
-            ));
-
-            // Add level progress display
-            parent.spawn((
-                Name::new("Level Progress"),
-                Text::new("Level 1 - Turn 1/5 - Goal: 0/100"),
-                TextFont::from_font_size(18.0),
-                TextColor(ui_palette::LABEL_TEXT),
-                LevelProgressDisplay,
-            ));
+            // parent.spawn((
+            //     Name::new("Turn Phase"),
+            //     Text::new("Phase: Loading..."),
+            //     TextFont::from_font_size(24.0),
+            //     TextColor(Color::srgb(0.8, 0.8, 0.2)),
+            //     TurnPhaseDisplay,
+            // ));
 
             // Add chain info display
-            parent.spawn((
-                Name::new("Chain Info"),
-                Text::new(""),
-                TextFont::from_font_size(16.0),
-                TextColor(Color::srgb(0.4, 0.8, 1.0)),
-                ChainInfoDisplay,
-            ));
+            // parent.spawn((
+            //     Name::new("Chain Info"),
+            //     Text::new(""),
+            //     TextFont::from_font_size(16.0),
+            //     TextColor(Color::srgb(0.4, 0.8, 1.0)),
+            //     ChainInfoDisplay,
+            // ));
         });
 
     // Add phase control button
@@ -303,23 +303,23 @@ fn update_turn_phase_display(
             LevelState::Playing => {
                 if let Some(ref phase) = current_phase {
                     match phase.get() {
-                        TurnPhase::Draw => "DRAW PHASE - Draw mushrooms from your bag",
+                        TurnPhase::Draw => "",
                         TurnPhase::Planting => "PLANTING PHASE - Place mushrooms on the grid",
                         TurnPhase::Chain => "CHAIN PHASE - Click a mushroom to start the reaction",
-                        TurnPhase::Score => "SCORE PHASE - Checking results...",
+                        TurnPhase::Score => "",
                     }
                 } else {
                     "Waiting..."
                 }
             }
-            LevelState::Failed => "LEVEL COMPLETE (FAILURE)!",
-            LevelState::Success => "LEVEL COMPLETE (SUCCESS)!",
-            LevelState::StartDialogue => "Start Dialogue",
-            LevelState::EndDialogue => "End Dialogue",
-            LevelState::NotPlaying => "Not in game",
+            LevelState::Failed => "",
+            LevelState::Success => "",
+            LevelState::StartDialogue => "",
+            LevelState::EndDialogue => "",
+            LevelState::NotPlaying => "",
         };
 
-        text.0 = format!("Phase: {phase_text}");
+        text.0 = format!("{phase_text}");
 
         // Change color based on phase
         if let Some(ref phase) = current_phase {
@@ -342,7 +342,14 @@ fn update_phase_button(
     if let Ok((children, mut visibility)) = button.single_mut() {
         // Update button visibility
         *visibility = if *current_level_state.get() == LevelState::Playing {
-            Visibility::Inherited
+            if let Some(ref phase) = current_phase {
+                match phase.get() {
+                    TurnPhase::Chain => Visibility::Hidden,
+                    _ => Visibility::Inherited,
+                }
+            } else {
+                Visibility::Hidden
+            }
         } else {
             Visibility::Hidden
         };
@@ -391,12 +398,10 @@ fn update_level_progress_display(
 ) {
     if let Ok(mut text) = progress_display.single_mut() {
         text.0 = format!(
-            "Level {} - Turn {}/{} - Goal: {:.0}/{:.0} spores",
+            "Level {} - Turn {}/{}",
             current_level.level_index + 1,
             turn_data.current_turn,
             current_level.max_turns,
-            current_level.total_spores_earned,
-            current_level.target_score,
         );
     }
 }
@@ -405,18 +410,19 @@ fn update_spore_display(
     game_state: Res<GameState>,
     mut spore_display: Query<&mut Text, (With<SporeDisplay>, Without<StatsDisplay>)>,
     mut stats_display: Query<&mut Text, (With<StatsDisplay>, Without<SporeDisplay>)>,
+    current_level: Res<CurrentLevel>,
 ) {
     // Update spore count
     if let Ok(mut text) = spore_display.single_mut() {
-        text.0 = format!("Spores: {:.0}", game_state.spores);
+        text.0 = format!(
+            "Spores: {}/{}",
+            current_level.total_spores_earned.trunc() as i32, current_level.target_score.trunc() as i32,
+        );
     }
 
     // Update stats
     if let Ok(mut text) = stats_display.single_mut() {
-        text.0 = format!(
-            "Activations: {} | Chains: {}",
-            game_state.total_activations, game_state.chain_activations,
-        );
+        text.0 = format!("Shroom Activations: {}", game_state.total_activations,);
     }
 }
 
