@@ -5,6 +5,8 @@ use funkus_dialogue_core::{
     AdvanceDialogue, DialogueAsset, DialogueEnded, DialogueNode, DialogueRunner, DialogueState,
     SelectDialogueChoice, StartDialogue as StartDialogueEvent,
 };
+use rand::prelude::*;
+use rand::rng;
 
 use crate::game::{
     dialogue::assets::DialogueAssets,
@@ -180,7 +182,7 @@ fn enter_end_dialogue(
         error!("No dialogues in pool!");
         return;
     } else {
-        let index = rand::random::<usize>() % dialogue_pool.len();
+        let index = rng().random_range(0..dialogue_pool.len());
         dialogue_pool[index].clone()
     };
 
