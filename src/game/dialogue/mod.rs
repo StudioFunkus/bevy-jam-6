@@ -1,6 +1,7 @@
 //! Loading and managing dialogue assets
 
 use bevy::prelude::*;
+use bevy::text::FontSmoothing;
 use funkus_dialogue_core::{
     AdvanceDialogue, DialogueAsset, DialogueEnded, DialogueNode, DialogueRunner, DialogueState,
     SelectDialogueChoice, StartDialogue as StartDialogueEvent,
@@ -212,6 +213,7 @@ fn enter_start_dialogue(
     mut start_dialogue_events: EventWriter<StartDialogueEvent>,
     mut level_state: ResMut<NextState<LevelState>>,
     mut delay: ResMut<DialogueAdvanceDelay>,
+    asset_server: Res<AssetServer>,
 ) {
     // Reset dialogue delay
     delay.reset(0.5);
@@ -243,7 +245,7 @@ fn enter_start_dialogue(
             .id();
 
         // Spawn UI
-        spawn_dialogue_ui(&mut commands, LevelState::StartDialogue);
+        spawn_dialogue_ui(&mut commands, LevelState::StartDialogue, &asset_server);
 
         // Start dialogue
         start_dialogue_events.write(StartDialogueEvent {
@@ -284,6 +286,7 @@ fn enter_end_dialogue(
     mut start_dialogue_events: EventWriter<StartDialogueEvent>,
     mut delay: ResMut<DialogueAdvanceDelay>,
     level_definitions: Res<crate::game::level::definitions::LevelDefinitions>,
+    asset_server: Res<AssetServer>,
 ) {
     info!("Starting level outro dialogue");
 
@@ -331,7 +334,7 @@ fn enter_end_dialogue(
         .id();
 
     // Spawn UI
-    spawn_dialogue_ui(&mut commands, LevelState::EndDialogue);
+    spawn_dialogue_ui(&mut commands, LevelState::EndDialogue, &asset_server);
 
     // Start dialogue
     start_dialogue_events.write(StartDialogueEvent {
@@ -365,7 +368,7 @@ fn handle_end_dialogue_end(
 }
 
 /// Spawn dialogue UI
-fn spawn_dialogue_ui(commands: &mut Commands, state: LevelState) {
+fn spawn_dialogue_ui(commands: &mut Commands, state: LevelState, asset_server: &Res<AssetServer>) {
     // First spawn the default UI
     let ui_entity = funkus_dialogue_ui::spawn_dialogue_ui(commands);
 
@@ -398,7 +401,12 @@ fn spawn_dialogue_ui(commands: &mut Commands, state: LevelState) {
                 ..default()
             },
             Text::new("Click or press Space to continue..."),
-            TextFont::from_font_size(14.0),
+            TextFont {
+                font: asset_server.load("fonts/PixelOperatorMonoHB.ttf"),
+                font_size: 14.0,
+                font_smoothing: FontSmoothing::AntiAliased,
+                ..default()
+            },
             TextColor(Color::srgba(0.8, 0.8, 0.8, 0.6)),
             DialogueClickHint,
         ));

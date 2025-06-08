@@ -241,6 +241,7 @@ pub fn spawn_card(
     mushroom_definitions: &Res<MushroomDefinitions>,
     level_assets: &Res<LevelAssets>,
     atlas_layout_handle: &Handle<TextureAtlasLayout>,
+    asset_server: &Res<AssetServer>,
 ) -> Result<Entity, BevyError> {
     let mushroom_definition = mushroom_definitions
         .get(card_component.mushroom_type)
@@ -291,6 +292,7 @@ pub fn spawn_card(
                 TextColor(tailwind::STONE_200.into()),
                 TextLayout::new(JustifyText::Center, LineBreak::NoWrap),
                 TextFont {
+                    font: asset_server.load("fonts/PixelOperatorMonoHB.ttf"),
                     font_size: 14.0,
                     font_smoothing: FontSmoothing::AntiAliased,
                     ..default()
@@ -319,6 +321,7 @@ pub fn spawn_card(
                 TextBounds::from(Vec2::new(CARD_SIZE.x * 0.8, CARD_SIZE.y / 2.0)),
                 TextLayout::new(JustifyText::Left, LineBreak::WordBoundary),
                 TextFont {
+                    font: asset_server.load("fonts/PixelOperatorMonoHB.ttf"),
                     font_size: 12.0,
                     font_smoothing: FontSmoothing::AntiAliased,
                     ..default()

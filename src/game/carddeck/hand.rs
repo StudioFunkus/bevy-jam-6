@@ -133,6 +133,7 @@ pub fn draw_n(
     level_assets: Res<LevelAssets>,
     mut atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
     mut local_atlas_layout: Local<Option<Handle<TextureAtlasLayout>>>,
+    asset_server: Res<AssetServer>,
 ) -> Result {
     // Create the atlas layout if none
     let atlas_layout_handle = local_atlas_layout.clone().unwrap_or_else(|| {
@@ -169,6 +170,7 @@ pub fn draw_n(
             &mushroom_definitions,
             &level_assets,
             &atlas_layout_handle,
+            &asset_server,
         )?;
 
         hand.cards.push_back((card_component, Some(card_entity)));

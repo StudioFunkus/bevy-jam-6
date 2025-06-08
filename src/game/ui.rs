@@ -63,7 +63,7 @@ struct MushroomButton {
 #[derive(Component)]
 struct ChainInfoDisplay;
 
-fn spawn_game_ui(mut commands: Commands, _definitions: Res<MushroomDefinitions>) {
+fn spawn_game_ui(mut commands: Commands, _definitions: Res<MushroomDefinitions>, asset_server: Res<AssetServer>) {
     // Top bar for game stats
     commands
         .spawn((
@@ -88,7 +88,11 @@ fn spawn_game_ui(mut commands: Commands, _definitions: Res<MushroomDefinitions>)
             parent.spawn((
                 Name::new("Level Progress"),
                 Text::new("Level 1 - Turn 1/5"),
-                TextFont::from_font_size(18.0),
+                TextFont {
+                    font: asset_server.load("fonts/PixelOperatorMonoHB.ttf"),
+                    font_size: 18.0,
+                    ..default()
+                },
                 TextColor(ui_palette::LABEL_TEXT),
                 LevelProgressDisplay,
             ));
@@ -96,7 +100,11 @@ fn spawn_game_ui(mut commands: Commands, _definitions: Res<MushroomDefinitions>)
             parent.spawn((
                 Name::new("Spore Count"),
                 Text::new("Spores: 0/100"),
-                TextFont::from_font_size(32.0),
+                TextFont {
+                    font: asset_server.load("fonts/PixelOperatorMonoHB.ttf"),
+                    font_size: 32.0,
+                    ..default()
+                },
                 TextColor(ui_palette::HEADER_TEXT),
                 SporeDisplay,
             ));
@@ -104,7 +112,11 @@ fn spawn_game_ui(mut commands: Commands, _definitions: Res<MushroomDefinitions>)
             parent.spawn((
                 Name::new("Stats"),
                 Text::new("Shroom Activations: 0"),
-                TextFont::from_font_size(20.0),
+                TextFont {
+                    font: asset_server.load("fonts/PixelOperatorMonoHB.ttf"),
+                    font_size: 20.0,
+                    ..default()
+                },
                 TextColor(ui_palette::LABEL_TEXT),
                 StatsDisplay,
             ));
@@ -160,7 +172,11 @@ fn spawn_game_ui(mut commands: Commands, _definitions: Res<MushroomDefinitions>)
                 Name::new("Button Text"),
                 Text::new("Next Phase"),
                 TextLayout::new_with_justify(JustifyText::Center),
-                TextFont::from_font_size(20.0),
+                TextFont {
+                    font: asset_server.load("fonts/PixelOperatorMonoHB.ttf"),
+                    font_size: 20.0,
+                    ..default()
+                },
                 TextColor(Color::WHITE),
                 Pickable::IGNORE,
             ));
