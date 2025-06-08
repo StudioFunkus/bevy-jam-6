@@ -251,46 +251,79 @@ pub fn spawn_card(
         index: mushroom_definition.sprite_row * 2,
     };
 
-    let mushroom_sprite = Sprite::from_atlas_image(level_assets.mushroom_texture.clone(), atlas);
+    // Mushroom Sprite
+    let mut mushroom_sprite =
+        Sprite::from_atlas_image(level_assets.mushroom_texture.clone(), atlas);
+    mushroom_sprite.anchor = Anchor::BottomCenter;
 
+    // Card Back
+    let card_back_image = match card_component.rarity {
+        Rarity::Common => level_assets.card_common.clone(),
+        Rarity::Uncommon => level_assets.card_uncommon.clone(),
+        Rarity::Rare => level_assets.card_rare.clone(),
+    };
+    let card_back_slice = SpriteImageMode::Sliced(TextureSlicer {
+        border: BorderRect::all(4.0),
+        center_scale_mode: SliceScaleMode::Stretch,
+        sides_scale_mode: SliceScaleMode::Stretch,
+        max_corner_scale: 4.0,
+    });
+    let card_back_sprite = Sprite {
+        image: card_back_image,
+        custom_size: Some(CARD_SIZE),
+        image_mode: card_back_slice,
+        ..default()
+    };
+
+    // Spawn the Card
     let card_entity = commands
         .spawn(CardBundle {
             name: card_component.name.clone().into(),
             card: card_component.clone(),
-            sprite: Sprite {
-                color: tailwind::STONE_800.into(),
-                custom_size: Some(CARD_SIZE),
-                ..default()
-            },
+            sprite: card_back_sprite,
             ..default()
         })
         .with_children(|commands| {
+            commands.spawn((
+                CARD_LAYER,
+                Anchor::TopCenter,
+                Text2d::new(mushroom_definition.name.clone()),
+                TextColor(tailwind::STONE_200.into()),
+                TextLayout::new(JustifyText::Center, LineBreak::NoWrap),
+                TextFont {
+                    font_size: 14.0,
+                    font_smoothing: FontSmoothing::AntiAliased,
+                    ..default()
+                },
+                Transform::from_xyz(0.0, (CARD_SIZE.y / 2.0) - 10.0, 1.0),
+            ));
+
             // Mushroom Sprite
             commands.spawn((
                 CARD_LAYER,
                 mushroom_sprite,
-                Transform::from_xyz(0.0, CARD_SIZE.y / 4.0, 2.0).with_scale(Vec3::splat(3.0)),
+                Transform::from_xyz(0.0, 0.0, 1.0).with_scale(Vec3::splat(3.0)),
                 StateScoped(Screen::Gameplay),
             ));
 
             // Activation Limit
             let card_text = format!(
-                "Trigger Limit: {}\n{}",
+                "Triggers: {}\n{}",
                 mushroom_definition.max_uses_per_turn, mushroom_definition.description,
             );
             commands.spawn((
                 CARD_LAYER,
-                Anchor::Center,
+                Anchor::TopCenter,
                 Text2d::new(card_text),
                 TextColor(tailwind::STONE_200.into()),
-                TextBounds::from(Vec2::new(CARD_SIZE.x * 0.9, CARD_SIZE.y / 2.0)),
+                TextBounds::from(Vec2::new(CARD_SIZE.x * 0.8, CARD_SIZE.y / 2.0)),
                 TextLayout::new(JustifyText::Left, LineBreak::WordBoundary),
                 TextFont {
                     font_size: 12.0,
                     font_smoothing: FontSmoothing::AntiAliased,
                     ..default()
                 },
-                Transform::from_xyz(0.0, -(CARD_SIZE.y / 4.0), 1.0),
+                Transform::from_xyz(0.0, -10.0, 1.0),
             ));
         })
         .id();
