@@ -5,12 +5,14 @@ use bevy_hanabi::{EffectAsset, ParticleEffect};
 use rand::{prelude::*, rng};
 
 use crate::game::{
+    DespawnTimer,
     game_flow::{LevelState, TurnPhase},
     mushrooms::{Mushroom, MushroomActivationState, MushroomDefinitions},
     play_field::{
-        field_renderer::{FieldGround, TilesDirty}, GridPosition, TileType
+        GridPosition, TileType,
+        field_renderer::{FieldGround, TilesDirty},
     },
-    resources::GameState, DespawnTimer,
+    resources::GameState,
 };
 
 use super::definitions::ActivationBehavior;
@@ -87,17 +89,16 @@ fn process_end_of_turn_conversions(
 
             // Spawn conversion effect at the tile position
             let world_pos = pos.to_world_in(&game_state.play_field);
-            let conversion_effect = effects.add(
-                crate::game::particles::assets::tile_conversion_effect()
-            );
-            
+            let conversion_effect =
+                effects.add(crate::game::particles::assets::tile_conversion_effect());
+
             commands.spawn((
                 Name::new("Tile Conversion Effect"),
                 ParticleEffect::new(conversion_effect),
                 Transform::from_translation(Vec3::new(
-                    world_pos.x, 
-                    0.1,  // Just above ground level
-                    -world_pos.z
+                    world_pos.x,
+                    0.1, // Just above ground level
+                    -world_pos.z,
                 )),
                 DespawnTimer::new(1.0),
             ));
