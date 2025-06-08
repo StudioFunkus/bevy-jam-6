@@ -247,7 +247,7 @@ fn initialize_definitions(mut definitions: ResMut<MushroomDefinitions>) {
         MushroomType::Basic,
         MushroomDefinition {
             name: "Button".to_string(),
-            description: "Activation: produces 10 spores".to_string(),
+            description: "10 spores.".to_string(),
             base_production: 10.0,
             cooldown_time: 0.1,
             max_uses_per_turn: 5,
@@ -263,9 +263,9 @@ fn initialize_definitions(mut definitions: ResMut<MushroomDefinitions>) {
         MushroomType::Pulse,
         MushroomDefinition {
             name: "Pulcini".to_string(),
-            description: "Activation: produces 2 spores, then activates one adjacent mushroom."
+            description: "5 Spores. Connect 1."
                 .to_string(),
-            base_production: 2.0,
+            base_production: 5.0,
             cooldown_time: 0.1,
             max_uses_per_turn: 2,
             sprite_row: 6,
@@ -281,7 +281,7 @@ fn initialize_definitions(mut definitions: ResMut<MushroomDefinitions>) {
         MushroomDefinition {
             name: "Dicholoma".to_string(),
             description:
-                "Activation: produces 2 spores, then activates two adjacent mushrooms either side."
+                "2 Spores. Connect 2."
                     .to_string(),
             base_production: 2.0,
             cooldown_time: 1.0,
@@ -295,10 +295,10 @@ fn initialize_definitions(mut definitions: ResMut<MushroomDefinitions>) {
 
     // Fork mushroom - two connections, forwards
     defs.insert(
-        MushroomType::Threeway,
+        MushroomType::Fork,
         MushroomDefinition {
             name: "Forchione".to_string(),
-            description: "Activation: produces 2 spores, then activates two adjacent mushrooms in a forking pattern."
+            description: "2 Spores. Connect 2."
                 .to_string(),
             base_production: 2.0,
             cooldown_time: 1.0,
@@ -315,7 +315,7 @@ fn initialize_definitions(mut definitions: ResMut<MushroomDefinitions>) {
         MushroomType::Diagonal,
         MushroomDefinition {
             name: "Wizard's Cap".to_string(),
-            description: "Activation: produces 2 spores, then activates two mushrooms diagonally."
+            description: "5 Spores. Connect 2."
                 .to_string(),
             base_production: 5.0,
             cooldown_time: 1.0,
@@ -329,12 +329,12 @@ fn initialize_definitions(mut definitions: ResMut<MushroomDefinitions>) {
 
     // T Mushroom - three connections in a T shape
     defs.insert(
-        MushroomType::Fork,
+        MushroomType::Threeway,
         MushroomDefinition {
             name: "Spliitake".to_string(),
-            description: "Activation: produces 2 spores, then activates three adjacent mushrooms in a T-shaped pattern."
+            description: "8 spores. Connect 3."
                 .to_string(),
-            base_production: 7.0,
+            base_production: 8.0,
             cooldown_time: 2.0,
             max_uses_per_turn: 2,
             sprite_row: 7,
@@ -349,7 +349,7 @@ fn initialize_definitions(mut definitions: ResMut<MushroomDefinitions>) {
         MushroomType::Surround,
         MushroomDefinition {
             name: "Umberella".to_string(),
-            description: "Activation: produces 2 spores, then activates all adjacent mushrooms."
+            description: "4 Spores. Connect 8."
                 .to_string(),
             base_production: 4.0,
             cooldown_time: 3.0,
@@ -366,7 +366,7 @@ fn initialize_definitions(mut definitions: ResMut<MushroomDefinitions>) {
         MushroomType::Skipper,
         MushroomDefinition {
             name: "Portini".to_string(),
-            description: "Activation: produces 2 spores, then activates a mushroom 2 tiles away."
+            description: "8 Spores. Connect 1."
                 .to_string(),
             base_production: 8.0,
             cooldown_time: 1.0,
@@ -417,8 +417,8 @@ fn initialize_definitions(mut definitions: ResMut<MushroomDefinitions>) {
         MushroomType::Burst,
         MushroomDefinition {
             name: "Puffball".to_string(),
-            description: "Activation: produces 50 spores when activated.".to_string(),
-            base_production: 50.0,
+            description: "25 Spores.".to_string(),
+            base_production: 25.0,
             cooldown_time: 5.0,
             max_uses_per_turn: 1,
             sprite_row: 5,
@@ -428,12 +428,12 @@ fn initialize_definitions(mut definitions: ResMut<MushroomDefinitions>) {
         },
     );
 
-    // Amplifier Mushroom - connects to all cardinal directions
+    // Amplifier Mushroom - connects to a single cardinal directions
     defs.insert(
         MushroomType::Amplifier,
         MushroomDefinition {
             name: "Amplicus".to_string(),
-            description: "Boosts energy by 50% and forwards to 1 adjacent mushroom.".to_string(),
+            description: "1 Spore. Connect 1. Energy Boost 2.".to_string(),
             base_production: 1.0,
             cooldown_time: 1.5,
             max_uses_per_turn: 1,
@@ -444,17 +444,17 @@ fn initialize_definitions(mut definitions: ResMut<MushroomDefinitions>) {
         },
     );
 
-    // Amplifier Mushroom - connects to all cardinal directions
+    // Four Way Amplifier Mushroom - connects to all cardinal directions
     defs.insert(
         MushroomType::FourwayAmplifier,
         MushroomDefinition {
             name: "Enoki".to_string(),
-            description: "Boosts energy by 50% and forwards to 4 adjacent mushrooms.".to_string(),
+            description: "1 Spore. Connect 4. Energy Boost 1.".to_string(),
             base_production: 1.0,
             cooldown_time: 1.5,
             max_uses_per_turn: 1,
             sprite_row: 16,
-            activation_behavior: ActivationBehavior::Amplifier { boost_factor: 6.0 },
+            activation_behavior: ActivationBehavior::Amplifier { boost_factor: 5.0 },
             unlock_requirement: UnlockRequirement::None,
             connection_points: connection_patterns::CARDINAL.to_vec(),
         },
@@ -465,14 +465,13 @@ fn initialize_definitions(mut definitions: ResMut<MushroomDefinitions>) {
         MushroomType::Splitter,
         MushroomDefinition {
             name: "Ink Cap".to_string(),
-            description:
-                "Splits energy equally to all adjacent mushrooms, creating branching chains."
+            description: "5 Spores. Connect 4. Energy Boost 2."
                     .to_string(),
             base_production: 5.0,
             cooldown_time: 3.0,
             max_uses_per_turn: 2,
             sprite_row: 17,
-            activation_behavior: ActivationBehavior::Basic,
+            activation_behavior: ActivationBehavior::Amplifier { boost_factor: 6.0 },
             unlock_requirement: UnlockRequirement::None,
             connection_points: connection_patterns::CARDINAL.to_vec(),
         },
@@ -483,7 +482,7 @@ fn initialize_definitions(mut definitions: ResMut<MushroomDefinitions>) {
         MushroomType::Chain,
         MushroomDefinition {
             name: "Mumbling Truffle".to_string(),
-            description: "Low activation threshold, optimized for creating long reaction chains."
+            description: "5 Spores. Connect 1. Rapid Fire."
                 .to_string(),
             base_production: 5.0,
             cooldown_time: 0.8,
@@ -495,28 +494,12 @@ fn initialize_definitions(mut definitions: ResMut<MushroomDefinitions>) {
         },
     );
 
-    // Burst Mushroom - no connections
-    defs.insert(
-        MushroomType::Burst,
-        MushroomDefinition {
-            name: "Burst Mushroom".to_string(),
-            description: "High produces massive spores when triggered.".to_string(),
-            base_production: 50.0,
-            cooldown_time: 5.0,
-            max_uses_per_turn: 1,
-            sprite_row: 5,
-            activation_behavior: ActivationBehavior::Basic,
-            unlock_requirement: UnlockRequirement::None,
-            connection_points: vec![], // No connections
-        },
-    );
-
     // Converter Mushroom
     defs.insert(
         MushroomType::Converter,
         MushroomDefinition {
             name: "False Broccoli".to_string(),
-            description: "Converts adjacent terrain to fertile soil while forwarding energy."
+            description: "8 Spores. Connect 1. Fertilise 1."
                 .to_string(),
             base_production: 8.0,
             cooldown_time: 2.5,
@@ -535,30 +518,14 @@ fn initialize_definitions(mut definitions: ResMut<MushroomDefinitions>) {
         MushroomType::Knight,
         MushroomDefinition {
             name: "Unicorn's Mane".to_string(),
-            description: "Jumps energy in an L-shape like a chess knight.".to_string(),
-            base_production: 6.0,
+            description: "15 Spores. Connect 1.".to_string(),
+            base_production: 10.0,
             cooldown_time: 1.8,
             max_uses_per_turn: 3,
             sprite_row: 12,
             activation_behavior: ActivationBehavior::Basic,
             unlock_requirement: UnlockRequirement::None,
             connection_points: connection_patterns::KNIGHT_FORWARD.to_vec(),
-        },
-    );
-
-    // Test Mushroom - Giga overpowered for testing
-    defs.insert(
-        MushroomType::Test,
-        MushroomDefinition {
-            name: "Giga Mushroom".to_string(),
-            description: "Activates everything.".to_string(),
-            base_production: 1000.0,
-            cooldown_time: 0.1,
-            max_uses_per_turn: 50,
-            sprite_row: 7,
-            activation_behavior: ActivationBehavior::Basic,
-            unlock_requirement: UnlockRequirement::None,
-            connection_points: vec![GridOffset::new(0, 1)],
         },
     );
 
