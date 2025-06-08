@@ -5,9 +5,9 @@
         {
           "Text": {
             "id": 1,
-            "text": "\nWhat mycelial mockery is this! Dare you test me, the great Agaricus?",
-            "speaker": "AGARICUS",
-            "portrait": "wizard"
+            "text": "\nDon't pull a muscle celebrating, old man. You've not beat me yet.",
+            "speaker": "ANDREAEA",
+            "portrait": "witch"
           }
         }
       ],
@@ -19,6 +19,6 @@
       "1": 0
     },
     "start_node": 1,
-    "name": "Failure"
+    "name": "Success 1"
   }
 }

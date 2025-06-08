@@ -19,11 +19,15 @@ pub struct DialogueAssets {
     #[dependency]
     pub level_2_intro: Handle<DialogueAsset>,
     #[dependency]
+    pub level_3_intro: Handle<DialogueAsset>,
+    #[dependency]
+    pub level_4_intro: Handle<DialogueAsset>,
+    #[dependency]
     pub final_level_intro: Handle<DialogueAsset>,
 
     // Pool of success dialogues
     #[dependency]
-    pub success_dialogues: Vec<Handle<DialogueAsset>>,
+    pub success_dialogues_1: Vec<Handle<DialogueAsset>>,
 
     // Pool of failure dialogues
     #[dependency]
@@ -49,11 +53,40 @@ impl FromWorld for DialogueAssets {
         Self {
             level_1_intro: asset_server.load("dialogues/intros/level_1.dialogue.json"),
             level_2_intro: asset_server.load("dialogues/intros/level_2.dialogue.json"),
+            level_3_intro: asset_server.load("dialogues/intros/level_3.dialogue.json"),
+            level_4_intro: asset_server.load("dialogues/intros/level_4.dialogue.json"),
             final_level_intro: asset_server.load("dialogues/intros/final_level.dialogue.json"),
 
-            success_dialogues: vec![asset_server.load("dialogues/success/success_1.dialogue.json")],
+            success_dialogues_1: vec![
+                asset_server.load("dialogues/success/success_1.dialogue.json"),
+                asset_server.load("dialogues/success/success_1.dialogue.2.json"),
+                asset_server.load("dialogues/success/success_1.dialogue.3.json"),
+                asset_server.load("dialogues/success/success_2.dialogue.json"),
+                asset_server.load("dialogues/success/success_2.dialogue.2.json"),
+                asset_server.load("dialogues/success/success_2.dialogue.3.json"),
+                asset_server.load("dialogues/success/success_3.dialogue.json"),
+                asset_server.load("dialogues/success/success_3.dialogue.2.json"),
+                asset_server.load("dialogues/success/success_3.dialogue.3.json"),
+                asset_server.load("dialogues/success/success_4.dialogue.json"),
+                asset_server.load("dialogues/success/success_4.dialogue.2.json"),
+                asset_server.load("dialogues/success/success_4.dialogue.3.json"),
+                ],
 
-            failure_dialogues: vec![asset_server.load("dialogues/failure/failure_1.dialogue.json")],
+            failure_dialogues: vec![
+                asset_server.load("dialogues/failure/failure_1.dialogue.json"),
+                asset_server.load("dialogues/failure/failure_1.dialogue.2.json"),
+                asset_server.load("dialogues/failure/failure_1.dialogue.3.json"),
+                asset_server.load("dialogues/failure/failure_2.dialogue.json"),
+                asset_server.load("dialogues/failure/failure_2.dialogue.2.json"),
+                asset_server.load("dialogues/failure/failure_2.dialogue.3.json"),
+                asset_server.load("dialogues/failure/failure_3.dialogue.json"),
+                asset_server.load("dialogues/failure/failure_3.dialogue.2.json"),
+                asset_server.load("dialogues/failure/failure_3.dialogue.3.json"),
+                asset_server.load("dialogues/failure/failure_4.dialogue.json"),
+                asset_server.load("dialogues/failure/failure_4.dialogue.2.json"),
+                asset_server.load("dialogues/failure/failure_4.dialogue.3.json"),
+
+                ],
 
             portraits: PortraitAssets {
                 wizard: asset_server.load("images/portraits/wizard.png"),
