@@ -20,6 +20,14 @@ pub struct ScreenAssets {
     pub witch: Handle<Image>,
     #[dependency]
     pub titlescreen: Handle<Image>,
+     #[dependency]
+    pub gametitle: Handle<Image>,
+     #[dependency]
+    pub spore1: Handle<Image>,
+     #[dependency]
+    pub spore2: Handle<Image>,
+     #[dependency]
+    pub spore3: Handle<Image>,
 }
 
 impl FromWorld for ScreenAssets {
@@ -36,11 +44,27 @@ impl FromWorld for ScreenAssets {
         let image_handle_titlescreen = world
             .resource::<AssetServer>()
             .load("images/Psychocybin.png");
+        let image_handle_gametitle = world
+            .resource::<AssetServer>()
+            .load("images/title.png");
+        let image_handle_spore1 = world
+            .resource::<AssetServer>()
+            .load("images/spore1.png");
+        let image_handle_spore2 = world
+            .resource::<AssetServer>()
+            .load("images/spore2.png");
+        let image_handle_spore3 = world
+            .resource::<AssetServer>()
+            .load("images/spore3.png");
         Self {
             music: music_handle,
             wizard: image_handle,
             witch: image_handle_witch,
             titlescreen: image_handle_titlescreen,
+            gametitle: image_handle_gametitle,
+            spore1: image_handle_spore1,
+            spore2: image_handle_spore2,
+            spore3: image_handle_spore3,
         }
     }
 }
