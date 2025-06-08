@@ -272,7 +272,7 @@ fn initialize_definitions(mut definitions: ResMut<MushroomDefinitions>) {
             description: "5 Spores. Connect 1.".to_string(),
             base_production: 5.0,
             cooldown_time: 0.1,
-            max_uses_per_turn: 2,
+            max_uses_per_turn: 3,
             sprite_row: 6,
             activation_behavior: ActivationBehavior::Basic,
             unlock_requirement: UnlockRequirement::None,
@@ -287,8 +287,8 @@ fn initialize_definitions(mut definitions: ResMut<MushroomDefinitions>) {
             name: "Dicholoma".to_string(),
             description: "2 Spores. Connect 2.".to_string(),
             base_production: 2.0,
-            cooldown_time: 1.0,
-            max_uses_per_turn: 2,
+            cooldown_time: 0.5,
+            max_uses_per_turn: 3,
             sprite_row: 19,
             activation_behavior: ActivationBehavior::Amplifier { boost_factor: 2.0 },
             unlock_requirement: UnlockRequirement::None,
@@ -351,7 +351,7 @@ fn initialize_definitions(mut definitions: ResMut<MushroomDefinitions>) {
             name: "Umberella".to_string(),
             description: "4 Spores. Connect 8.".to_string(),
             base_production: 4.0,
-            cooldown_time: 3.0,
+            cooldown_time: 1.0,
             max_uses_per_turn: 2,
             sprite_row: 1,
             activation_behavior: ActivationBehavior::Amplifier { boost_factor: 8.0 },
@@ -376,7 +376,7 @@ fn initialize_definitions(mut definitions: ResMut<MushroomDefinitions>) {
         },
     );
 
-    // Deleter - deletes a mushroom (currently dummy behaviour)
+    // Deleter - deletes a mushroom
     defs.insert(
         MushroomType::Deleter,
         MushroomDefinition {
@@ -394,7 +394,7 @@ fn initialize_definitions(mut definitions: ResMut<MushroomDefinitions>) {
         },
     );
 
-    // Bomb - deletes 4 mushrooms (currently dummy behaviour)
+    // Bomb - deletes 4 mushrooms
     defs.insert(
         MushroomType::Bomb,
         MushroomDefinition {
@@ -419,8 +419,8 @@ fn initialize_definitions(mut definitions: ResMut<MushroomDefinitions>) {
             name: "Puffball".to_string(),
             description: "25 Spores.".to_string(),
             base_production: 25.0,
-            cooldown_time: 5.0,
-            max_uses_per_turn: 1,
+            cooldown_time: 0.2,
+            max_uses_per_turn: 3,
             sprite_row: 5,
             activation_behavior: ActivationBehavior::Basic,
             unlock_requirement: UnlockRequirement::None,
@@ -483,8 +483,8 @@ fn initialize_definitions(mut definitions: ResMut<MushroomDefinitions>) {
             name: "Mumbling Truffle".to_string(),
             description: "5 Spores. Connect 1. Rapid Fire.".to_string(),
             base_production: 5.0,
-            cooldown_time: 0.8,
-            max_uses_per_turn: 5,
+            cooldown_time: 0.01,
+            max_uses_per_turn: 15,
             sprite_row: 14,
             activation_behavior: ActivationBehavior::Basic,
             unlock_requirement: UnlockRequirement::None,
@@ -499,7 +499,7 @@ fn initialize_definitions(mut definitions: ResMut<MushroomDefinitions>) {
             name: "False Broccoli".to_string(),
             description: "8 Spores. Connect 1. Fertilise 1.".to_string(),
             base_production: 8.0,
-            cooldown_time: 2.5,
+            cooldown_time: 0.3,
             max_uses_per_turn: 3,
             sprite_row: 18,
             activation_behavior: ActivationBehavior::Converter {
@@ -520,7 +520,7 @@ fn initialize_definitions(mut definitions: ResMut<MushroomDefinitions>) {
             name: "Unicorn's Mane".to_string(),
             description: "15 Spores. Connect 1.".to_string(),
             base_production: 10.0,
-            cooldown_time: 1.8,
+            cooldown_time: 0.2,
             max_uses_per_turn: 3,
             sprite_row: 12,
             activation_behavior: ActivationBehavior::Basic,
