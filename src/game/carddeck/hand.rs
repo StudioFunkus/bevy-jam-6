@@ -14,6 +14,7 @@ use crate::{
             events::{DrawEvent, HandChangeEvent},
             markers::Dragged,
         },
+        game_flow::LevelCompleteAction,
         level::assets::LevelAssets,
         mushrooms::MushroomDefinitions,
     },
@@ -27,7 +28,9 @@ pub(super) fn plugin(app: &mut App) {
 
     app.add_systems(OnEnter(Screen::Gameplay), spawn_hand_entity);
 
-    app.add_observer(update_card_origins).add_observer(draw_n);
+    app.add_observer(update_card_origins)
+        .add_observer(draw_n)
+        .add_observer(empty_hand_on_level_complete);
 }
 
 fn spawn_hand_entity(mut commands: Commands, window: Query<&Window>) -> Result {
@@ -202,6 +205,17 @@ fn update_card_origins(
             commands.entity(*entity).insert(Dragged::Released);
         }
     }
+
+    Ok(())
+}
+
+#[tracing::instrument(skip_all)]
+fn empty_hand_on_level_complete(
+    _: Trigger<LevelCompleteAction>,
+    commands: Commands,
+    mut hand: ResMut<Hand>,
+) -> Result {
+    hand.empty_hand(commands)?;
 
     Ok(())
 }
