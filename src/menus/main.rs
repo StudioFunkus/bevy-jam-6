@@ -2,13 +2,21 @@
 
 use bevy::prelude::*;
 
-use crate::{asset_tracking::ResourceHandles, menus::Menu, screens::{assets::ScreenAssets, Screen}, theme::widget};
+use crate::{
+    asset_tracking::ResourceHandles,
+    menus::Menu,
+    screens::{Screen, assets::ScreenAssets},
+    theme::widget,
+};
 
 pub(super) fn plugin(app: &mut App) {
-    app.add_systems(OnEnter(Menu::Main), (spawn_main_menu,spawn_main_menu_art_assets));
+    app.add_systems(
+        OnEnter(Menu::Main),
+        (spawn_main_menu, spawn_main_menu_art_assets),
+    );
 }
 
-fn spawn_main_menu(mut commands: Commands,screen_assets: Res<ScreenAssets>) {
+fn spawn_main_menu(mut commands: Commands, screen_assets: Res<ScreenAssets>) {
     commands.spawn((
         widget::ui_root("Main Menu"),
         GlobalZIndex(2),
@@ -23,14 +31,19 @@ fn spawn_main_menu(mut commands: Commands,screen_assets: Res<ScreenAssets>) {
     ));
 }
 
-fn spawn_main_menu_art_assets(mut commands: Commands,screen_assets: Res<ScreenAssets>) {
+fn spawn_main_menu_art_assets(mut commands: Commands, screen_assets: Res<ScreenAssets>) {
     commands.spawn((
         widget::ui_root("Main Menu"),
         GlobalZIndex(0),
         StateScoped(Menu::Main),
         #[cfg(not(target_family = "wasm"))]
         children![
-            widget::image(screen_assets.wizard.clone()),
+            widget::image(
+                screen_assets.titlescreen.clone(),
+                Val::Percent(100.),
+                Val::Percent(100.),
+                PositionType::Absolute,
+            ),
         ],
     ));
 }

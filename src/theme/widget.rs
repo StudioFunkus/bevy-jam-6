@@ -19,12 +19,12 @@ pub fn ui_root(name: impl Into<Cow<'static, str>>) -> impl Bundle {
             width: Percent(100.0),
             height: Percent(100.0),
             padding: UiRect{
-                left: Px(50.),
-                right: Px(10.),
+                left: Px(10.),
+                right: Px(50.),
                 top: Px(10.),
                 bottom: Px(10.),
             },
-            align_items: AlignItems::Baseline,
+            align_items: AlignItems::End,
             justify_content: JustifyContent::Center,
             flex_direction: FlexDirection::Column,
             row_gap: Px(20.0),
@@ -67,13 +67,18 @@ where
         action,
         (
             Node {
-                width: Px(380.0),
+                width: Px(250.0),
                 height: Px(80.0),
                 align_items: AlignItems::Center,
                 justify_content: JustifyContent::Center,
                 ..default()
             },
-            BorderRadius::MAX,
+            BorderRadius::new(
+                Val::Px(10.),
+                Val::Px(10.),
+                Val::Px(10.),
+                Val::Px(10.),
+            ),
         ),
     )
 }
@@ -143,36 +148,25 @@ where
 /// A simple button with text and an action defined as an [`Observer`]. The button's layout is provided by `button_bundle`.
 pub fn image(
     handle: Handle<Image>,
+    width: Val,
+    height: Val,
+    position_type: PositionType,
 ) -> impl Bundle
 {
     (
         Name::new("UI_image"),
-        Node::default(),
+        Node {
+            width: width,
+            position_type: position_type,
+            height: height,
+            ..default()
+        },
         Children::spawn(SpawnWith(|parent: &mut ChildSpawner| {
             parent
                 .spawn((
                     Name::new("Image Inner"),
                     Pickable::IGNORE,
-                    ImageNode::new(handle)
-                ));
-        })),
-    )
-}
-
-/// A simple button with text and an action defined as an [`Observer`]. The button's layout is provided by `button_bundle`.
-pub fn image2(
-    handle: Handle<Image>,
-) -> impl Bundle
-{
-    (
-        Name::new("UI_image2"),
-        Node::default(),
-        Children::spawn(SpawnWith(|parent: &mut ChildSpawner| {
-            parent
-                .spawn((
-                    Name::new("Image Inner2"),
-                    Pickable::IGNORE,
-                    ImageNode::new(handle)
+                    ImageNode::new(handle),
                 ));
         })),
     )

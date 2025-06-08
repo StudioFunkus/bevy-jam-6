@@ -16,6 +16,10 @@ pub struct ScreenAssets {
     pub music: Handle<AudioSource>,
     #[dependency]
     pub wizard: Handle<Image>,
+    #[dependency]
+    pub witch: Handle<Image>,
+    #[dependency]
+    pub titlescreen: Handle<Image>,
 }
 
 impl FromWorld for ScreenAssets {
@@ -25,10 +29,18 @@ impl FromWorld for ScreenAssets {
             .load("audio/music/title.ogg");
         let image_handle = world
             .resource::<AssetServer>()
-            .load("images/Wizard1.png");
+            .load("images/Wizard1b.png");
+        let image_handle_witch = world
+            .resource::<AssetServer>()
+            .load("images/Witch2.png");
+        let image_handle_titlescreen = world
+            .resource::<AssetServer>()
+            .load("images/Psychocybin.png");
         Self {
             music: music_handle,
             wizard: image_handle,
+            witch: image_handle_witch,
+            titlescreen: image_handle_titlescreen,
         }
     }
 }
