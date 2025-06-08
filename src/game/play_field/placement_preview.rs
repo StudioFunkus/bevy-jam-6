@@ -24,11 +24,15 @@ pub(super) fn plugin(app: &mut App) {
     // Events
     app.add_event::<CellHoverChanged>();
 
-    // Systems
+    app.add_systems(
+        Update,
+        detect_hover_changes
+            .run_if(in_state(TurnPhase::Planting).or(in_state(TurnPhase::Chain))),
+    );
+
     app.add_systems(
         Update,
         (
-            detect_hover_changes,
             update_placement_preview,
             handle_preview_rotation,
             update_preview_connections,
@@ -39,8 +43,16 @@ pub(super) fn plugin(app: &mut App) {
             .run_if(in_state(TurnPhase::Planting)),
     );
 
+    // Chain phase hover highlight
+    app.add_systems(
+        Update,
+        update_chain_hover
+            .run_if(in_state(TurnPhase::Chain)),
+    );
+
     // Cleanup
     app.add_systems(OnExit(TurnPhase::Planting), cleanup_preview);
+    app.add_systems(OnExit(TurnPhase::Chain), clear_preview_connections);
     app.add_systems(OnExit(LevelState::Playing), clear_preview_connections);
     app.add_systems(OnEnter(LevelState::Playing), clear_preview_connections);
 }
@@ -88,6 +100,27 @@ pub struct PlacementPreview;
 /// Marker for transparency handling
 #[derive(Component)]
 struct PreviewMarker;
+
+/// Update hover highlight during chain phase
+fn update_chain_hover(
+    mut preview_connections: ResMut<PreviewConnections>,
+    hovered_cell: Res<HoveredCell>,
+    game_state: Res<GameState>,
+) {
+    // Clear all highlights
+    preview_connections.connected_positions.clear();
+    preview_connections.empty_connection_points.clear();
+    preview_connections.existing_connection_targets.clear();
+    preview_connections.preview_position = None;
+    
+    // Only highlight if there's a mushroom at the hovered position
+    if let Some(position) = hovered_cell.position {
+        if game_state.play_field.get(position).is_some() {
+            // Use connected_positions for green highlight during chain phase
+            preview_connections.connected_positions.push(position);
+        }
+    }
+}
 
 /// Clear preview connections when changing levels
 fn clear_preview_connections(
