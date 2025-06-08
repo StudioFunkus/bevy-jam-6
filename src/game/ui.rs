@@ -272,7 +272,7 @@ fn spawn_mushroom_button(
                     move |_: Trigger<Pointer<Click>>,
                           mut selected: ResMut<SelectedMushroomType>| {
                         println!("Selected mushroom: {:?}", mushroom_type);
-                        selected.mushroom_type = mushroom_type;
+                        selected.mushroom_type = Some(mushroom_type);
                     },
                 );
         })),
@@ -436,7 +436,7 @@ fn update_mushroom_buttons(
         };
 
         // Update border to show selection
-        if selected.mushroom_type == button.mushroom_type {
+        if selected.mushroom_type == Some(button.mushroom_type) {
             border_color.0 = Color::WHITE;
         } else {
             border_color.0 = Color::srgba(0.5, 0.5, 0.5, 0.8);

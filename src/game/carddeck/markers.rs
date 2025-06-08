@@ -10,6 +10,7 @@ pub enum Dragged {
     #[default]
     Active,
     Released,
+    Played,
 }
 
 /// A marker component to indicate that a card is being hovered

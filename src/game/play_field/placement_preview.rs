@@ -161,7 +161,11 @@ fn update_placement_preview(
                     }
                 } else {
                     // Create new preview entity
-                    let Some(definition) = definitions.get(selected_type.mushroom_type) else {
+                    if selected_type.mushroom_type.is_none() {
+                        continue;
+                    }
+                    let Some(definition) = definitions.get(selected_type.mushroom_type.unwrap())
+                    else {
                         continue;
                     };
 
@@ -277,7 +281,10 @@ fn update_preview_connections(
     preview_connections.preview_position = Some(position);
 
     // Get mushroom definition
-    let Some(definition) = definitions.get(selected_type.mushroom_type) else {
+    if selected_type.mushroom_type.is_none() {
+        return;
+    }
+    let Some(definition) = definitions.get(selected_type.mushroom_type.unwrap()) else {
         return;
     };
 
