@@ -42,6 +42,7 @@ impl Plugin for AppPlugin {
                     primary_window: Window {
                         title: "Bevy Jam 6".to_string(),
                         fit_canvas_to_parent: true,
+                        resolution: (1280., 720.).into(),
                         ..default()
                     }
                     .into(),
@@ -139,6 +140,14 @@ fn spawn_camera(mut commands: Commands) {
     commands.spawn((
         Name::new("Camera"),
         Camera3d::default(),
+        DistanceFog {
+            color: Color::srgb(0.25, 0.25, 0.25),
+            falloff: FogFalloff::Linear {
+                start: 20.0,
+                end: 150.0,
+            },
+            ..default()
+        },
         Camera::default(),
         PanOrbitCamera::default(),
         Transform::from_xyz(0.0, 7.0, 14.0).looking_at(Vec3::new(0.0, 1.0, 0.0), Vec3::Y),

@@ -321,6 +321,7 @@ fn spawn_mushroom(
         .bundle_with_atlas(&mut sprite_params, atlas),
         FaceCamera,
         ChildOf(entity),
+        Pickable::IGNORE,
     ));
 
     // Update play field
