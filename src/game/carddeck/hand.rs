@@ -27,6 +27,7 @@ pub(super) fn plugin(app: &mut App) {
     app.init_resource::<Hand>();
 
     app.add_systems(OnEnter(Screen::Gameplay), spawn_hand_entity);
+    app.add_systems(OnExit(Screen::Gameplay), empty_hand_on_exit);
 
     app.add_observer(update_card_origins)
         .add_observer(draw_n)
@@ -45,6 +46,15 @@ fn spawn_hand_entity(mut commands: Commands, window: Query<&Window>) -> Result {
         StateScoped(Screen::Gameplay),
     ));
 
+    Ok(())
+}
+
+/// Empty the hand when exiting gameplay
+fn empty_hand_on_exit(
+    commands: Commands,
+    mut hand: ResMut<Hand>,
+) -> Result {
+    hand.empty_hand(commands)?;
     Ok(())
 }
 
