@@ -30,6 +30,12 @@ pub(super) fn plugin(app: &mut App) {
             .run_if(in_state(TurnPhase::Planting).or(in_state(TurnPhase::Chain))),
     );
 
+    // Add cleanup when level lifecycle ends
+    app.add_systems(
+        OnExit(crate::game::game_flow::LevelLifecycle::Active),
+        clear_preview_connections,
+    );
+
     app.add_systems(
         Update,
         (
@@ -126,12 +132,19 @@ fn update_chain_hover(
 fn clear_preview_connections(
     mut preview_connections: ResMut<PreviewConnections>,
     mut hovered_cell: ResMut<HoveredCell>,
+    mut preview_state: ResMut<PreviewState>,
+    mut commands: Commands,
 ) {
     preview_connections.connected_positions.clear();
     preview_connections.empty_connection_points.clear();
     preview_connections.existing_connection_targets.clear();
     preview_connections.preview_position = None;
     hovered_cell.position = None;
+
+    // Also clean up any preview entity
+    if let Some(entity) = preview_state.preview_entity.take() {
+        commands.entity(entity).despawn();
+    }
 
     info!("Cleared preview connections for level transition");
 }

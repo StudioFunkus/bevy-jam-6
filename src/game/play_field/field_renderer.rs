@@ -6,7 +6,7 @@
 
 use super::tile_atlas::TileSprite;
 use super::{GridPosition, PlayField, TileType};
-use crate::game::game_flow::LevelState;
+use crate::game::game_flow::{LevelState, LevelLifecycle};
 use crate::game::level::assets::LevelAssets;
 use crate::game::resources::GameState;
 use bevy::{
@@ -189,7 +189,7 @@ pub fn spawn_field_ground(
             Transform::from_xyz(0.0, -0.05, 0.0)
                 .with_rotation(Quat::from_rotation_x(-std::f32::consts::FRAC_PI_2)),
             FieldGround { material_handle },
-            StateScoped(LevelState::Playing),
+            StateScoped(LevelLifecycle::Active),
         ))
         .id()
 }

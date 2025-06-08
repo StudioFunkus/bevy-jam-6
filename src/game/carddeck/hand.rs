@@ -9,14 +9,14 @@ use std::collections::VecDeque;
 use crate::{
     game::{
         carddeck::{
-            card::{Card, CardTemplates, spawn_card},
+            card::{spawn_card, Card, CardTemplates},
             constants::{CARD_LAYER, CARD_SIZE, CARD_SPACING, HAND_SIZE_LIMIT},
             events::{DrawEvent, HandChangeEvent},
             markers::Dragged,
         },
         game_flow::LevelCompleteAction,
         level::assets::LevelAssets,
-        mushrooms::MushroomDefinitions,
+        mushrooms::MushroomDefinitions, ui::GameplayUI,
     },
     screens::Screen,
 };
@@ -43,6 +43,7 @@ fn spawn_hand_entity(mut commands: Commands, window: Query<&Window>) -> Result {
         Transform::from_xyz(0.0, -((window.height() / 2.0) - (CARD_SIZE.y / 2.0)), 0.0),
         CARD_LAYER,
         Visibility::Visible,
+        GameplayUI,
         StateScoped(Screen::Gameplay),
     ));
 

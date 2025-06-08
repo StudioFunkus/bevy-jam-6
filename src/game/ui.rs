@@ -14,7 +14,7 @@ use crate::{
 
 /// Marker for UI that should be hidden during dialogue
 #[derive(Component)]
-struct GameplayUI;
+pub struct GameplayUI;
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(OnEnter(Screen::Gameplay), spawn_game_ui);

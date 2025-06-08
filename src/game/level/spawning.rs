@@ -4,15 +4,13 @@ use super::super::play_field::events::on_grid_cell_click;
 use bevy::{pbr::ExtendedMaterial, prelude::*, render::storage::ShaderStorageBuffer};
 
 use crate::{
-    audio::{Music, music},
+    audio::{music, Music},
     game::{
-        game_flow::{CurrentLevel, LevelState},
-        level::definitions::LevelDefinitions,
-        mushrooms::{MushroomDefinitions, events::SpawnMushroomEvent},
+        game_flow::{CurrentLevel, LevelLifecycle, LevelState},
+        level::{definitions::LevelDefinitions, CurrentGameplayMusic},
+        mushrooms::{events::SpawnMushroomEvent, MushroomDefinitions},
         play_field::{
-            CELL_SIZE, GridPosition,
-            events::GridCell,
-            field_renderer::{FieldGroundExtension, spawn_field_ground},
+            events::GridCell, field_renderer::{spawn_field_ground, FieldGroundExtension}, GridPosition, CELL_SIZE
         },
         resources::GameState,
     },
@@ -41,6 +39,7 @@ pub fn spawn_level(
     mut images: ResMut<Assets<Image>>,
     mut buffers: ResMut<Assets<ShaderStorageBuffer>>,
     music_query: Query<&AudioPlayer, With<Music>>,
+    mut gameplay_music: ResMut<CurrentGameplayMusic>,
 ) {
     // Get level definition
     let level_def = level_definitions
@@ -72,7 +71,7 @@ pub fn spawn_level(
             Name::new("Level Background"),
             SceneRoot(level_assets.background_model_1.clone()),
             Transform::from_xyz(8.0, -6.1, 4.5), // Model isn't centered
-            StateScoped(LevelState::Playing),
+            StateScoped(LevelLifecycle::Active),
         ));
 
         for starting_mushroom in &level_def.starting_mushrooms {
@@ -106,24 +105,33 @@ pub fn spawn_level(
         }
     }
 
-    if let Ok(music_entity) = music_query.single() {
-        // Spawn background music
-        if music_entity.0 != level_assets.music {
-            commands.spawn((
-                Name::new("Gameplay Music"),
-                StateScoped(Screen::Gameplay),
-                music(level_assets.music.clone()),
-            ));
+    // Check if we need to change music
+    let mut current_music = music_query.iter().find(|player| {
+        player.0 == level_assets.music
+    }).is_some();
+    
+    // Only spawn new music if it's different from what's playing
+    if gameplay_music.current_track.as_ref() != Some(&level_assets.music) {
+        // Despawn old music if it exists
+        if let Some(entity) = gameplay_music.entity {
+            commands.entity(entity).despawn();
         }
-    } else {
-        commands.spawn((
+        
+        // Spawn new music
+        let music_entity = commands.spawn((
             Name::new("Gameplay Music"),
             StateScoped(Screen::Gameplay),
             music(level_assets.music.clone()),
-        ));
+        )).id();
+        
+        // Update tracking resource
+        gameplay_music.current_track = Some(level_assets.music.clone());
+        gameplay_music.entity = Some(music_entity);
+        
+        info!("Changed gameplay music track");
+    } else {
+        info!("Keeping current music track");
     }
-
-    // TODO: Spawn level name display that fades out?
 }
 
 /// Marker for the main game grid entity
@@ -159,7 +167,7 @@ pub fn spawn_game_grid(
             GameGrid,
             Transform::default(),
             Visibility::default(),
-            StateScoped(LevelState::Playing), // Grid cleaned up when level ends
+            StateScoped(LevelState::Playing), // Grid only exists during gameplay
         ))
         .id();
 
