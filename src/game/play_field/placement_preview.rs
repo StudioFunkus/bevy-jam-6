@@ -10,10 +10,7 @@ use crate::game::{
     game_flow::{LevelState, TurnPhase},
     level::assets::LevelAssets,
     mushrooms::{Mushroom, MushroomDefinitions, MushroomDirection, SelectedMushroomType},
-    play_field::{
-        GridPosition, PlayField,
-        events::GridCell,
-    },
+    play_field::{GridPosition, PlayField, events::GridCell},
     resources::GameState,
     visual_effects::FaceCamera,
 };
@@ -101,7 +98,7 @@ fn clear_preview_connections(
     preview_connections.existing_connection_targets.clear();
     preview_connections.preview_position = None;
     hovered_cell.position = None;
-    
+
     info!("Cleared preview connections for level transition");
 }
 

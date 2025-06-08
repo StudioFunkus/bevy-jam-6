@@ -15,6 +15,4 @@ pub(super) fn plugin(app: &mut App) {
     app.add_systems(Startup, spore_activation_effect);
 }
 
-fn spore_activation_effect(mut commands: Commands, mut effects: ResMut<Assets<EffectAsset>>) {
-
-}
+fn spore_activation_effect(mut commands: Commands, mut effects: ResMut<Assets<EffectAsset>>) {}

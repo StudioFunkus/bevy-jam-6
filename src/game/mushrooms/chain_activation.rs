@@ -6,7 +6,14 @@ use std::collections::VecDeque;
 use std::time::Duration;
 
 use crate::game::{
-    self, fixed_timestep::GameTime, game_flow::{CurrentLevel, TurnData}, mushrooms::events::SporeScoreEvent, particles::assets::activate_effect, play_field::GridPosition, resources::GameState, visual_effects::ActivationAnimation, DespawnTimer
+    self, DespawnTimer,
+    fixed_timestep::GameTime,
+    game_flow::{CurrentLevel, TurnData},
+    mushrooms::events::SporeScoreEvent,
+    particles::assets::activate_effect,
+    play_field::GridPosition,
+    resources::GameState,
+    visual_effects::ActivationAnimation,
 };
 
 use super::{
@@ -181,7 +188,7 @@ fn process_activation_queue(
         Option<&MushroomDirection>,
         &Transform,
     )>,
-    mut effects: ResMut<Assets<EffectAsset>>
+    mut effects: ResMut<Assets<EffectAsset>>,
 ) {
     // Update timers and collect ready activations
     let mut ready_activations = Vec::new();
@@ -326,8 +333,7 @@ fn process_single_activation(
         Name::new("Spore Effect"),
         ParticleEffect::new(activate_effect),
         Transform::from_translation(Vec3::new(world_pos.x, 0.7, -world_pos.z)),
-        DespawnTimer::new(1.0)
-
+        DespawnTimer::new(1.0),
     ));
 
     // Update chain

@@ -36,8 +36,8 @@ fn grid_pos_to_texture_index(
 }
 
 pub(super) fn plugin(app: &mut App) {
-    app.add_plugins(MaterialPlugin::
-        <ExtendedMaterial<StandardMaterial, FieldGroundExtension>,
+    app.add_plugins(MaterialPlugin::<
+        ExtendedMaterial<StandardMaterial, FieldGroundExtension>,
     >::default())
         .add_systems(Update, update_connection_data)
         .add_systems(Update, update_shader_highlights)
@@ -288,10 +288,10 @@ fn update_connection_data(
         if let Some(material) = materials.get_mut(&field_ground.material_handle) {
             // Get all connections from PlayField
             let connections = game_state.play_field.get_all_connections();
-            
+
             // Create buffer data
             let mut connection_data = Vec::with_capacity(connections.len().max(1));
-            
+
             for connection in connections {
                 // Convert grid positions to normalized UV coordinates
                 let grid_size = material.extension.grid_size;
@@ -303,9 +303,9 @@ fn update_connection_data(
                     (connection.to_pos.x as f32 + 0.5) / grid_size.x,
                     1.0 - ((connection.to_pos.y as f32 + 0.5) / grid_size.y), // Flip Y coordinate
                 );
-                
+
                 let distance = start_uv.distance(end_uv);
-                
+
                 connection_data.push(ConnectionBufferData {
                     start_pos: start_uv,
                     end_pos: end_uv,

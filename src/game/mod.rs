@@ -3,19 +3,18 @@
 use bevy::prelude::*;
 
 pub mod carddeck;
+pub(crate) mod dialogue;
 pub(crate) mod fixed_timestep;
 pub(crate) mod game_flow;
 pub(crate) mod level;
-pub(crate) mod dialogue;
 mod mushrooms;
+mod particles;
 pub(crate) mod play_field;
 mod resources;
 mod ui;
 mod visual_effects;
-mod particles;
 
 pub(super) fn plugin(app: &mut App) {
-
     app.add_systems(Update, despawn_timer_system);
 
     app.add_plugins((
@@ -58,7 +57,7 @@ pub fn despawn_timer_system(
     for (entity, mut despawn_timer) in &mut query {
         // Tick the timer with the time that has passed since the last frame
         despawn_timer.timer.tick(time.delta());
-        
+
         // If the timer has finished, despawn the entity
         if despawn_timer.timer.finished() {
             commands.entity(entity).despawn();
