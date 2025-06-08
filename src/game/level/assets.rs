@@ -22,6 +22,12 @@ pub struct LevelAssets {
     pub background_model_1: Handle<Scene>,
     #[dependency]
     pub sfx_activate: Handle<AudioSource>,
+    #[dependency]
+    pub card_common: Handle<Image>,
+    #[dependency]
+    pub card_uncommon: Handle<Image>,
+    #[dependency]
+    pub card_rare: Handle<Image>,
 }
 
 impl FromWorld for LevelAssets {
@@ -40,12 +46,23 @@ impl FromWorld for LevelAssets {
             .resource::<AssetServer>()
             .load("models/background1.gltf#Scene0");
 
+        let card_common = world
+            .resource::<AssetServer>()
+            .load("images/Card_Common.png");
+        let card_uncommon = world
+            .resource::<AssetServer>()
+            .load("images/Card_Uncommon.png");
+        let card_rare = world.resource::<AssetServer>().load("images/Card_Rare.png");
+
         Self {
             music: music_handle,
             sfx_activate: sfx_activate_handle,
             mushroom_texture: mushroom_texture_handle,
             tile_texture: tile_texture_handle,
             background_model_1: background_model_1_handle,
+            card_common: card_common,
+            card_uncommon: card_uncommon,
+            card_rare: card_rare,
         }
     }
 }
