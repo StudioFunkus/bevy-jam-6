@@ -1,0 +1,24 @@
+{
+  "graph": {
+    "graph": {
+      "nodes": [
+        {
+          "Text": {
+            "id": 1,
+            "text": "\nYou're no mushroom mogul! Why, you're nothing but a fungus fraud!",
+            "speaker": "AGARICUS",
+            "portrait": "wizard"
+          }
+        }
+      ],
+      "node_holes": [],
+      "edge_property": "directed",
+      "edges": []
+    },
+    "node_indices": {
+      "1": 0
+    },
+    "start_node": 1,
+    "name": "Failure"
+  }
+}

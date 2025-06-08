@@ -2,7 +2,7 @@
 //! Add this as a new file: src/game/mushrooms/visual_info.rs
 
 use bevy::prelude::*;
-use bevy_rich_text3d::{Text3d, Text3dBounds, Text3dStyling, TextAlign, TextAnchor, TextAtlas};
+use bevy_rich_text3d::{Text3d, TextAtlas};
 
 use crate::game::{
     game_flow::LevelState,
@@ -14,7 +14,7 @@ use crate::game::{
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(
         Update,
-        (animate_spore_popups,).run_if(in_state(LevelState::Playing)),
+        (animate_spore_popups, update_uses_display).run_if(in_state(LevelState::Playing)),
     );
 
     app.add_observer(spawn_spore_popup);
@@ -33,10 +33,45 @@ pub struct SporePopup {
 }
 
 impl SporePopup {
-    pub fn new(duration: f32, start_y: f32, text_span_entity: Entity) -> Self {
+    #[allow(dead_code)]
+    pub fn new(duration: f32, start_y: f32, _text_span_entity: Entity) -> Self {
         Self {
             timer: Timer::from_seconds(duration, TimerMode::Once),
             start_y,
+        }
+    }
+}
+
+/// Update uses display when mushroom activation state changes
+fn update_uses_display(
+    mushrooms: Query<
+        (Entity, &Mushroom, &MushroomActivationState),
+        Changed<MushroomActivationState>,
+    >,
+    definitions: Res<MushroomDefinitions>,
+    mut uses_displays: Query<(Entity, &ChildOf), With<UsesDisplay>>,
+    mut commands: Commands,
+) {
+    for (entity, mushroom, state) in mushrooms.iter() {
+        // Get the mushroom definition
+        let Some(definition) = definitions.get(mushroom.0) else {
+            warn!("No definition found for mushroom type {:?}", mushroom.0);
+            continue;
+        };
+
+        // Calculate remaining uses
+        let remaining_uses = definition
+            .max_uses_per_turn
+            .saturating_sub(state.activations_this_turn);
+
+        // Find uses displays that are children of this mushroom
+        for (display_entity, child_of) in uses_displays.iter_mut() {
+            if child_of.parent() == entity {
+                // Replace the Text3d component with updated text
+                commands
+                    .entity(display_entity)
+                    .insert(Text3d::new(format!("{remaining_uses}")));
+            }
         }
     }
 }
@@ -73,7 +108,7 @@ fn spawn_uses_display(
         Name::new("Uses Display Billboard"),
         Text3d::new(format!("{remaining_uses}")),
         Mesh3d::default(),
-        Transform::from_xyz(-0.25, 0.5, 0.0).with_scale(Vec3::splat(0.012)),
+        Transform::from_xyz(-0.25, 0.5, 0.0).with_scale(Vec3::splat(0.019)),
         MeshMaterial3d(mat.clone()),
         StateScoped(LevelState::Playing),
         UsesDisplay,
@@ -103,7 +138,7 @@ pub fn spawn_spore_popup(
         Text3d::new(format!("+{:.0}", trigger.event().production)),
         Mesh3d::default(),
         MeshMaterial3d(mat.clone()),
-        Transform::from_xyz(world_pos.x, 1.0, -world_pos.z).with_scale(Vec3::splat(0.012)),
+        Transform::from_xyz(world_pos.x, 1.0, -world_pos.z).with_scale(Vec3::splat(0.022)),
         FaceCamera,
         StateScoped(LevelState::Playing),
         SporePopup {

@@ -1,13 +1,13 @@
 //! Level spawning systems
 
 use super::super::play_field::events::on_grid_cell_click;
-use bevy::{pbr::ExtendedMaterial, prelude::*};
+use bevy::{pbr::ExtendedMaterial, prelude::*, render::storage::ShaderStorageBuffer};
 
 use crate::{
-    audio::music,
+    audio::{Music, music},
     game::{
-        game_flow::{CurrentLevel, LevelState},
-        level::definitions::LevelDefinitions,
+        game_flow::{CurrentLevel, LevelLifecycle, LevelState},
+        level::{CurrentGameplayMusic, definitions::LevelDefinitions},
         mushrooms::{MushroomDefinitions, events::SpawnMushroomEvent},
         play_field::{
             CELL_SIZE, GridPosition,
@@ -23,7 +23,7 @@ use super::assets::LevelAssets;
 
 pub(super) fn plugin(app: &mut App) {
     // Spawn grid when entering Playing state
-    app.add_systems(OnEnter(LevelState::Playing), spawn_level);
+    app.add_systems(OnEnter(LevelState::StartDialogue), spawn_level);
 }
 
 /// Spawn the main game level
@@ -39,6 +39,9 @@ pub fn spawn_level(
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut field_materials: ResMut<Assets<ExtendedMaterial<StandardMaterial, FieldGroundExtension>>>,
     mut images: ResMut<Assets<Image>>,
+    mut buffers: ResMut<Assets<ShaderStorageBuffer>>,
+    _music_query: Query<&AudioPlayer, With<Music>>,
+    mut gameplay_music: ResMut<CurrentGameplayMusic>,
 ) {
     // Get level definition
     let level_def = level_definitions
@@ -60,6 +63,7 @@ pub fn spawn_level(
         &mut materials,
         &mut field_materials,
         &mut images,
+        &mut buffers,
         &level_assets,
     );
 
@@ -69,7 +73,7 @@ pub fn spawn_level(
             Name::new("Level Background"),
             SceneRoot(level_assets.background_model_1.clone()),
             Transform::from_xyz(8.0, -6.1, 4.5), // Model isn't centered
-            StateScoped(LevelState::Playing),
+            StateScoped(LevelLifecycle::Active),
         ));
 
         for starting_mushroom in &level_def.starting_mushrooms {
@@ -103,14 +107,30 @@ pub fn spawn_level(
         }
     }
 
-    // Spawn background music
-    commands.spawn((
-        Name::new("Gameplay Music"),
-        StateScoped(Screen::Gameplay),
-        music(level_assets.music.clone()),
-    ));
+    // Only spawn new music if it's different from what's playing
+    if gameplay_music.current_track.as_ref() != Some(&level_assets.music) {
+        // Despawn old music if it exists
+        if let Some(entity) = gameplay_music.entity {
+            commands.entity(entity).despawn();
+        }
 
-    // TODO: Spawn level name display that fades out?
+        // Spawn new music
+        let music_entity = commands
+            .spawn((
+                Name::new("Gameplay Music"),
+                StateScoped(Screen::Gameplay),
+                music(level_assets.music.clone()),
+            ))
+            .id();
+
+        // Update tracking resource
+        gameplay_music.current_track = Some(level_assets.music.clone());
+        gameplay_music.entity = Some(music_entity);
+
+        info!("Changed gameplay music track");
+    } else {
+        info!("Keeping current music track");
+    }
 }
 
 /// Marker for the main game grid entity
@@ -126,6 +146,7 @@ pub fn spawn_game_grid(
     materials: &mut ResMut<Assets<StandardMaterial>>,
     field_materials: &mut ResMut<Assets<ExtendedMaterial<StandardMaterial, FieldGroundExtension>>>,
     images: &mut ResMut<Assets<Image>>,
+    buffers: &mut ResMut<Assets<ShaderStorageBuffer>>,
     level_assets: &Res<LevelAssets>,
 ) {
     // Spawn the custom field ground that handles tile and mycelium rendering
@@ -134,6 +155,7 @@ pub fn spawn_game_grid(
         meshes,
         field_materials,
         images,
+        buffers,
         level_assets,
         &game_state.play_field,
     );
@@ -144,7 +166,7 @@ pub fn spawn_game_grid(
             GameGrid,
             Transform::default(),
             Visibility::default(),
-            StateScoped(LevelState::Playing), // Grid cleaned up when level ends
+            StateScoped(LevelState::Playing), // Grid only exists during gameplay
         ))
         .id();
 

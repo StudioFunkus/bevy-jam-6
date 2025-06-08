@@ -20,13 +20,13 @@ pub struct ScreenAssets {
     pub witch: Handle<Image>,
     #[dependency]
     pub titlescreen: Handle<Image>,
-     #[dependency]
+    #[dependency]
     pub gametitle: Handle<Image>,
-     #[dependency]
+    #[dependency]
     pub spore1: Handle<Image>,
-     #[dependency]
+    #[dependency]
     pub spore2: Handle<Image>,
-     #[dependency]
+    #[dependency]
     pub spore3: Handle<Image>,
 }
 
@@ -35,27 +35,15 @@ impl FromWorld for ScreenAssets {
         let music_handle = world
             .resource::<AssetServer>()
             .load("audio/music/title.ogg");
-        let image_handle = world
-            .resource::<AssetServer>()
-            .load("images/Wizard1b.png");
-        let image_handle_witch = world
-            .resource::<AssetServer>()
-            .load("images/Witch2.png");
+        let image_handle = world.resource::<AssetServer>().load("images/Wizard1b.png");
+        let image_handle_witch = world.resource::<AssetServer>().load("images/Witch2.png");
         let image_handle_titlescreen = world
             .resource::<AssetServer>()
             .load("images/Psychocybin.png");
-        let image_handle_gametitle = world
-            .resource::<AssetServer>()
-            .load("images/title.png");
-        let image_handle_spore1 = world
-            .resource::<AssetServer>()
-            .load("images/spore1.png");
-        let image_handle_spore2 = world
-            .resource::<AssetServer>()
-            .load("images/spore2.png");
-        let image_handle_spore3 = world
-            .resource::<AssetServer>()
-            .load("images/spore3.png");
+        let image_handle_gametitle = world.resource::<AssetServer>().load("images/title.png");
+        let image_handle_spore1 = world.resource::<AssetServer>().load("images/spore1.png");
+        let image_handle_spore2 = world.resource::<AssetServer>().load("images/spore2.png");
+        let image_handle_spore3 = world.resource::<AssetServer>().load("images/spore3.png");
         Self {
             music: music_handle,
             wizard: image_handle,

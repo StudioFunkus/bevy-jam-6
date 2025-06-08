@@ -1,0 +1,24 @@
+{
+  "graph": {
+    "graph": {
+      "nodes": [
+        {
+          "Text": {
+            "id": 1,
+            "text": "\nWe're so close to success I can almost taste it! It's a bit like a stroganoff...",
+            "speaker": "AGARICUS",
+            "portrait": "wizard"
+          }
+        }
+      ],
+      "node_holes": [],
+      "edge_property": "directed",
+      "edges": []
+    },
+    "node_indices": {
+      "1": 0
+    },
+    "start_node": 1,
+    "name": "Success 1"
+  }
+}

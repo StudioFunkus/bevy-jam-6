@@ -4,21 +4,16 @@
 //! including highlighting potential connections in the shader.
 
 use bevy::{pbr::NotShadowReceiver, prelude::*};
-use bevy_sprite3d::{Sprite3d, Sprite3dBuilder, Sprite3dParams};
+use bevy_sprite3d::{Sprite3dBuilder, Sprite3dParams};
 
 use crate::game::{
     game_flow::{LevelState, TurnPhase},
     level::assets::LevelAssets,
     mushrooms::{Mushroom, MushroomDefinitions, MushroomDirection, SelectedMushroomType},
-    play_field::{
-        GridPosition, PlayField,
-        events::GridCell,
-        field_renderer::{FieldGround, FieldGroundExtension},
-    },
+    play_field::{GridPosition, PlayField, events::GridCell},
     resources::GameState,
     visual_effects::FaceCamera,
 };
-use bevy::pbr::ExtendedMaterial;
 
 pub(super) fn plugin(app: &mut App) {
     // Resources
@@ -29,24 +24,41 @@ pub(super) fn plugin(app: &mut App) {
     // Events
     app.add_event::<CellHoverChanged>();
 
-    // Systems
+    app.add_systems(
+        Update,
+        detect_hover_changes.run_if(in_state(TurnPhase::Planting).or(in_state(TurnPhase::Chain))),
+    );
+
+    // Add cleanup when level lifecycle ends
+    app.add_systems(
+        OnExit(crate::game::game_flow::LevelLifecycle::Active),
+        clear_preview_connections,
+    );
+
     app.add_systems(
         Update,
         (
-            detect_hover_changes,
             update_placement_preview,
             handle_preview_rotation,
             update_preview_connections,
             update_existing_mushroom_connections,
-            update_shader_highlights,
             apply_preview_transparency,
         )
             .chain()
             .run_if(in_state(TurnPhase::Planting)),
     );
 
+    // Chain phase hover highlight
+    app.add_systems(
+        Update,
+        update_chain_hover.run_if(in_state(TurnPhase::Chain)),
+    );
+
     // Cleanup
     app.add_systems(OnExit(TurnPhase::Planting), cleanup_preview);
+    app.add_systems(OnExit(TurnPhase::Chain), clear_preview_connections);
+    app.add_systems(OnExit(LevelState::Playing), clear_preview_connections);
+    app.add_systems(OnEnter(LevelState::Playing), clear_preview_connections);
 }
 
 /// Resource tracking the currently hovered grid cell
@@ -79,6 +91,7 @@ pub struct PreviewState {
 
 /// Event fired when the hovered cell changes
 #[derive(Event, Debug)]
+#[allow(dead_code)]
 pub struct CellHoverChanged {
     pub old_position: Option<GridPosition>,
     pub new_position: Option<GridPosition>,
@@ -91,6 +104,48 @@ pub struct PlacementPreview;
 /// Marker for transparency handling
 #[derive(Component)]
 struct PreviewMarker;
+
+/// Update hover highlight during chain phase
+fn update_chain_hover(
+    mut preview_connections: ResMut<PreviewConnections>,
+    hovered_cell: Res<HoveredCell>,
+    game_state: Res<GameState>,
+) {
+    // Clear all highlights
+    preview_connections.connected_positions.clear();
+    preview_connections.empty_connection_points.clear();
+    preview_connections.existing_connection_targets.clear();
+    preview_connections.preview_position = None;
+
+    // Only highlight if there's a mushroom at the hovered position
+    if let Some(position) = hovered_cell.position {
+        if game_state.play_field.get(position).is_some() {
+            // Use connected_positions for green highlight during chain phase
+            preview_connections.connected_positions.push(position);
+        }
+    }
+}
+
+/// Clear preview connections when changing levels
+fn clear_preview_connections(
+    mut preview_connections: ResMut<PreviewConnections>,
+    mut hovered_cell: ResMut<HoveredCell>,
+    mut preview_state: ResMut<PreviewState>,
+    mut commands: Commands,
+) {
+    preview_connections.connected_positions.clear();
+    preview_connections.empty_connection_points.clear();
+    preview_connections.existing_connection_targets.clear();
+    preview_connections.preview_position = None;
+    hovered_cell.position = None;
+
+    // Also clean up any preview entity
+    if let Some(entity) = preview_state.preview_entity.take() {
+        commands.entity(entity).despawn();
+    }
+
+    info!("Cleared preview connections for level transition");
+}
 
 /// Detect when the cursor hovers over different grid cells
 fn detect_hover_changes(
@@ -161,7 +216,11 @@ fn update_placement_preview(
                     }
                 } else {
                     // Create new preview entity
-                    let Some(definition) = definitions.get(selected_type.mushroom_type) else {
+                    if selected_type.mushroom_type.is_none() {
+                        continue;
+                    }
+                    let Some(definition) = definitions.get(selected_type.mushroom_type.unwrap())
+                    else {
                         continue;
                     };
 
@@ -183,7 +242,7 @@ fn update_placement_preview(
                     };
 
                     // Create the sprite builder with transparency settings
-                    let mut sprite_builder = Sprite3dBuilder {
+                    let sprite_builder = Sprite3dBuilder {
                         image: level_assets.mushroom_texture.clone(),
                         pixels_per_metre: 16.0,
                         double_sided: true,
@@ -277,7 +336,10 @@ fn update_preview_connections(
     preview_connections.preview_position = Some(position);
 
     // Get mushroom definition
-    let Some(definition) = definitions.get(selected_type.mushroom_type) else {
+    if selected_type.mushroom_type.is_none() {
+        return;
+    }
+    let Some(definition) = definitions.get(selected_type.mushroom_type.unwrap()) else {
         return;
     };
 
@@ -326,7 +388,7 @@ fn update_existing_mushroom_connections(
     preview_connections.existing_connection_targets.clear();
 
     // Calculate connection targets for all placed mushrooms
-    for (entity, pos, mushroom, direction) in all_mushrooms.iter() {
+    for (_entity, pos, mushroom, direction) in all_mushrooms.iter() {
         let Some(definition) = definitions.get(mushroom.0) else {
             continue;
         };
@@ -367,121 +429,6 @@ fn update_existing_mushroom_connections(
                 preview_connections
                     .existing_connection_targets
                     .push(target_pos);
-            }
-        }
-    }
-}
-
-/// Update the shader with highlight information
-fn update_shader_highlights(
-    preview_connections: Res<PreviewConnections>,
-    field_grounds: Query<&FieldGround>,
-    mut materials: ResMut<Assets<ExtendedMaterial<StandardMaterial, FieldGroundExtension>>>,
-) {
-    // Only update if connections have changed
-    if !preview_connections.is_changed() {
-        return;
-    }
-
-    for field_ground in field_grounds.iter() {
-        if let Some(material) = materials.get_mut(&field_ground.material_handle) {
-            // Update preview highlights in shader
-            // We'll use the last slots of the connection arrays for preview data
-            let preview_start_idx = 20; // Reserve more slots for all highlight types
-
-            // Clear preview slots
-            for i in preview_start_idx..32 {
-                material.extension.connection_starts[i] = Vec4::ZERO;
-                material.extension.connection_ends[i] = Vec4::ZERO;
-            }
-
-            let mut slot_idx = preview_start_idx;
-
-            // Add preview position highlight (cyan)
-            if let Some(preview_pos) = preview_connections.preview_position {
-                let grid_size = material.extension.grid_size;
-                let preview_uv = Vec2::new(
-                    (preview_pos.x as f32 + 0.5) / grid_size.x,
-                    1.0 - ((preview_pos.y as f32 + 0.5) / grid_size.y),
-                );
-
-                material.extension.connection_starts[slot_idx] = Vec4::new(
-                    preview_uv.x,
-                    preview_uv.y,
-                    -1.0, // Preview position marker
-                    0.0,
-                );
-                slot_idx += 1;
-            }
-
-            // Add connected position highlights (green)
-            for connected_pos in preview_connections.connected_positions.iter().take(5)
-            // Limit to available slots
-            {
-                if slot_idx >= 32 {
-                    break;
-                }
-
-                let grid_size = material.extension.grid_size;
-                let connected_uv = Vec2::new(
-                    (connected_pos.x as f32 + 0.5) / grid_size.x,
-                    1.0 - ((connected_pos.y as f32 + 0.5) / grid_size.y),
-                );
-
-                material.extension.connection_starts[slot_idx] = Vec4::new(
-                    connected_uv.x,
-                    connected_uv.y,
-                    -2.0, // Connected tile marker
-                    0.0,
-                );
-                slot_idx += 1;
-            }
-
-            // Add empty connection point highlights (red)
-            for empty_pos in preview_connections.empty_connection_points.iter().take(4)
-            // Limit to available slots
-            {
-                if slot_idx >= 32 {
-                    break;
-                }
-
-                let grid_size = material.extension.grid_size;
-                let empty_uv = Vec2::new(
-                    (empty_pos.x as f32 + 0.5) / grid_size.x,
-                    1.0 - ((empty_pos.y as f32 + 0.5) / grid_size.y),
-                );
-
-                material.extension.connection_starts[slot_idx] = Vec4::new(
-                    empty_uv.x, empty_uv.y, -3.0, // Empty connection point marker
-                    0.0,
-                );
-                slot_idx += 1;
-            }
-
-            // Add existing mushroom connection targets (blue outline)
-            for existing_target in preview_connections
-                .existing_connection_targets
-                .iter()
-                .take(6)
-            // Limit to available slots
-            {
-                if slot_idx >= 32 {
-                    break;
-                }
-
-                let grid_size = material.extension.grid_size;
-                let target_uv = Vec2::new(
-                    (existing_target.x as f32 + 0.5) / grid_size.x,
-                    1.0 - ((existing_target.y as f32 + 0.5) / grid_size.y),
-                );
-
-                material.extension.connection_starts[slot_idx] = Vec4::new(
-                    target_uv.x,
-                    target_uv.y,
-                    -4.0, // Existing connection target marker
-                    0.0,
-                );
-                slot_idx += 1;
             }
         }
     }

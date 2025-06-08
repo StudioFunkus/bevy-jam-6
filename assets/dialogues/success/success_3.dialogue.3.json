@@ -1,0 +1,24 @@
+{
+  "graph": {
+    "graph": {
+      "nodes": [
+        {
+          "Text": {
+            "id": 1,
+            "text": "\nDon't pull a muscle celebrating, old man. You've not beat me yet.",
+            "speaker": "ANDREAEA",
+            "portrait": "witch"
+          }
+        }
+      ],
+      "node_holes": [],
+      "edge_property": "directed",
+      "edges": []
+    },
+    "node_indices": {
+      "1": 0
+    },
+    "start_node": 1,
+    "name": "Success 1"
+  }
+}

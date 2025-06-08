@@ -12,6 +12,10 @@ use crate::{
     theme::{interaction::InteractionPalette, palette as ui_palette},
 };
 
+/// Marker for UI that should be hidden during dialogue
+#[derive(Component)]
+pub struct GameplayUI;
+
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(OnEnter(Screen::Gameplay), spawn_game_ui);
     app.add_systems(
@@ -23,6 +27,7 @@ pub(super) fn plugin(app: &mut App) {
             update_level_progress_display,
             update_phase_button,
             update_chain_info,
+            control_ui_visibility,
         )
             .run_if(in_state(Screen::Gameplay)),
     );
@@ -58,7 +63,7 @@ struct MushroomButton {
 #[derive(Component)]
 struct ChainInfoDisplay;
 
-fn spawn_game_ui(mut commands: Commands, definitions: Res<MushroomDefinitions>) {
+fn spawn_game_ui(mut commands: Commands, _definitions: Res<MushroomDefinitions>) {
     // Top bar for game stats
     commands
         .spawn((
@@ -71,8 +76,10 @@ fn spawn_game_ui(mut commands: Commands, definitions: Res<MushroomDefinitions>) 
                 padding: UiRect::all(Val::Px(20.0)),
                 flex_direction: FlexDirection::Column,
                 row_gap: Val::Px(10.0),
+                width: Val::Percent(30.0),
                 ..default()
             },
+            GameplayUI,
             BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.8)),
             StateScoped(Screen::Gameplay),
         ))
@@ -127,8 +134,8 @@ fn spawn_game_ui(mut commands: Commands, definitions: Res<MushroomDefinitions>) 
             Name::new("Phase Control"),
             Node {
                 position_type: PositionType::Absolute,
-                bottom: Val::Px(20.0),
-                left: Val::Percent(50.0),
+                bottom: Val::Px(280.0),
+                left: Val::Percent(73.0),
                 width: Val::Px(200.0),
                 height: Val::Px(60.0),
                 align_items: AlignItems::Center,
@@ -141,6 +148,7 @@ fn spawn_game_ui(mut commands: Commands, definitions: Res<MushroomDefinitions>) 
             BorderRadius::all(Val::Px(10.0)),
             StateScoped(Screen::Gameplay),
             PhaseAdvanceButton,
+            GameplayUI,
             InteractionPalette {
                 none: Color::srgb(0.2, 0.5, 0.2),
                 hovered: Color::srgb(0.3, 0.6, 0.3),
@@ -150,7 +158,8 @@ fn spawn_game_ui(mut commands: Commands, definitions: Res<MushroomDefinitions>) 
         .with_children(|parent| {
             parent.spawn((
                 Name::new("Button Text"),
-                Text::new("Next Phase (Space)"),
+                Text::new("Next Phase"),
+                TextLayout::new_with_justify(JustifyText::Center),
                 TextFont::from_font_size(20.0),
                 TextColor(Color::WHITE),
                 Pickable::IGNORE,
@@ -159,47 +168,57 @@ fn spawn_game_ui(mut commands: Commands, definitions: Res<MushroomDefinitions>) 
         .observe(advance_phase_on_click);
 
     // Side panel for mushroom selection
-    commands
-        .spawn((
-            Name::new("Game UI - Side Panel"),
-            Node {
-                position_type: PositionType::Absolute,
-                top: Val::Px(100.0),
-                right: Val::Px(10.0),
-                width: Val::Px(300.0),
-                padding: UiRect::all(Val::Px(20.0)),
-                flex_direction: FlexDirection::Column,
-                row_gap: Val::Px(15.0),
-                ..default()
-            },
-            BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.8)),
-            StateScoped(Screen::Gameplay),
-            children![
-                (
-                    Name::new("Mushroom Selection Header"),
-                    Text::new("Mushrooms"),
-                    TextFont::from_font_size(28.0),
-                    TextColor(ui_palette::HEADER_TEXT),
-                ),
-                (
-                    Name::new("Instructions"),
-                    Text::new("Hover to preview placement\nPress R to rotate preview\nClick to place mushroom\nRight-click to delete"),
-                    TextFont::from_font_size(16.0),
-                    TextColor(ui_palette::LABEL_TEXT),
-                ),
-                spawn_mushroom_button(MushroomType::Test, &definitions),
-                spawn_mushroom_button(MushroomType::Basic, &definitions),
-                spawn_mushroom_button(MushroomType::Pulse, &definitions),
-                spawn_mushroom_button(MushroomType::Amplifier, &definitions),
-                spawn_mushroom_button(MushroomType::Splitter, &definitions),
-                spawn_mushroom_button(MushroomType::Chain, &definitions),
-                spawn_mushroom_button(MushroomType::Burst, &definitions),
-                spawn_mushroom_button(MushroomType::Converter, &definitions),
-                spawn_mushroom_button(MushroomType::Knight, &definitions),
-            ],
-        ));
+    //     commands
+    //         .spawn((
+    //             Name::new("Game UI - Side Panel"),
+    //             Node {
+    //                 position_type: PositionType::Absolute,
+    //                 top: Val::Px(100.0),
+    //                 right: Val::Px(10.0),
+    //                 width: Val::Px(300.0),
+    //                 padding: UiRect::all(Val::Px(20.0)),
+    //                 flex_direction: FlexDirection::Column,
+    //                 row_gap: Val::Px(15.0),
+    //                 ..default()
+    //             },
+    //             BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.8)),
+    //             StateScoped(Screen::Gameplay),
+    //             GameplayUI,
+    //             children![
+    //                 (
+    //                     Name::new("Mushroom Selection Header"),
+    //                     Text::new("Mushrooms"),
+    //                     TextFont::from_font_size(28.0),
+    //                     TextColor(ui_palette::HEADER_TEXT),
+    //                 ),
+    //                 (
+    //                     Name::new("Instructions"),
+    //                     Text::new("Hover to preview placement\nPress R to rotate preview\nClick to place mushroom\nRight-click to delete"),
+    //                     TextFont::from_font_size(16.0),
+    //                     TextColor(ui_palette::LABEL_TEXT),
+    //                 ),
+    //                 spawn_mushroom_button(MushroomType::Basic, &definitions),
+    //                 spawn_mushroom_button(MushroomType::Pulse, &definitions),
+    //                 spawn_mushroom_button(MushroomType::Fork, &definitions),
+    //                 spawn_mushroom_button(MushroomType::Sideways, &definitions),
+    //                 spawn_mushroom_button(MushroomType::Threeway, &definitions),
+    //                 spawn_mushroom_button(MushroomType::Diagonal, &definitions),
+    //                 spawn_mushroom_button(MushroomType::Surround, &definitions),
+    //                 spawn_mushroom_button(MushroomType::Skipper, &definitions),
+    // //                spawn_mushroom_button(MushroomType::Deleter, &definitions),
+    // //                spawn_mushroom_button(MushroomType::Bomb, &definitions),
+    // //                spawn_mushroom_button(MushroomType::Burst, &definitions),
+    //                 spawn_mushroom_button(MushroomType::Amplifier, &definitions),
+    //                 spawn_mushroom_button(MushroomType::Fourway_amplifier, &definitions),
+    // //                spawn_mushroom_button(MushroomType::Splitter, &definitions),
+    // //                spawn_mushroom_button(MushroomType::Chain, &definitions),
+    // //                spawn_mushroom_button(MushroomType::Converter, &definitions),
+    // //                spawn_mushroom_button(MushroomType::Knight, &definitions),
+    //             ],
+    //         ));
 }
 
+#[allow(dead_code)]
 fn spawn_mushroom_button(
     mushroom_type: MushroomType,
     definitions: &MushroomDefinitions,
@@ -264,7 +283,7 @@ fn spawn_mushroom_button(
                     move |_: Trigger<Pointer<Click>>,
                           mut selected: ResMut<SelectedMushroomType>| {
                         println!("Selected mushroom: {:?}", mushroom_type);
-                        selected.mushroom_type = mushroom_type;
+                        selected.mushroom_type = Some(mushroom_type);
                     },
                 );
         })),
@@ -295,6 +314,8 @@ fn update_turn_phase_display(
             }
             LevelState::Failed => "LEVEL COMPLETE (FAILURE)!",
             LevelState::Success => "LEVEL COMPLETE (SUCCESS)!",
+            LevelState::StartDialogue => "Start Dialogue",
+            LevelState::EndDialogue => "End Dialogue",
             LevelState::NotPlaying => "Not in game",
         };
 
@@ -428,7 +449,7 @@ fn update_mushroom_buttons(
         };
 
         // Update border to show selection
-        if selected.mushroom_type == button.mushroom_type {
+        if selected.mushroom_type == Some(button.mushroom_type) {
             border_color.0 = Color::WHITE;
         } else {
             border_color.0 = Color::srgba(0.5, 0.5, 0.5, 0.8);
@@ -437,7 +458,7 @@ fn update_mushroom_buttons(
         // Update text content if we have a definition
         if let Some(def) = definition {
             // Update name (first child)
-            if let Some(name_entity) = children.iter().nth(0) {
+            if let Some(name_entity) = children.iter().next() {
                 if let Ok(mut text) = texts.get_mut(name_entity) {
                     text.0 = def.name.clone();
                 }
@@ -488,5 +509,23 @@ fn update_chain_info(
                 text.0 = String::new();
             }
         }
+    }
+}
+
+fn control_ui_visibility(
+    level_state: Res<State<LevelState>>,
+    mut ui_query: Query<&mut Visibility, With<GameplayUI>>,
+) {
+    let should_hide = matches!(
+        level_state.get(),
+        LevelState::StartDialogue | LevelState::EndDialogue
+    );
+
+    for mut visibility in ui_query.iter_mut() {
+        *visibility = if should_hide {
+            Visibility::Hidden
+        } else {
+            Visibility::Inherited
+        };
     }
 }

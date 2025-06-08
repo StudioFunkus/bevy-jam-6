@@ -1,0 +1,24 @@
+{
+  "graph": {
+    "graph": {
+      "nodes": [
+        {
+          "Text": {
+            "id": 1,
+            "text": "\nHm, I suppose you've done a decent job. But this shaggy old ink-cap is far past his prime...",
+            "speaker": "ANDREAEA",
+            "portrait": "witch"
+          }
+        }
+      ],
+      "node_holes": [],
+      "edge_property": "directed",
+      "edges": []
+    },
+    "node_indices": {
+      "1": 0
+    },
+    "start_node": 1,
+    "name": "Success 1"
+  }
+}

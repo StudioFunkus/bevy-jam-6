@@ -5,8 +5,8 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-bevy = { version = "0.16", features = ["wayland"] }
-rand = "0.8"
+bevy = { version = "0.16", features = ["wayland", "webgpu"] }
+rand = "0.9.1"
 # Compile low-severity logs out of native builds for performance.
 log = { version = "0.4", features = [
     "max_level_debug",
@@ -19,20 +19,24 @@ tracing = { version = "0.1", features = [
 ] }
 bevy-inspector-egui = "0.31"
 bevy_sprite3d = "5.0.0"
-bevy_panorbit_camera = { version = "0.26.0", features = ["bevy_egui"] }
+bevy_panorbit_camera = { version = "0.26.0", default-features = false }
 bevy_rich_text3d = "0.3"
+bevy_hanabi =  { version = "0.16.0", default-features = false, features = ["2d", "3d"] }
+funkus_dialogue_core = { git = "https://github.com/StudioFunkus/funkus_dialogue", branch = "bevy-jam-6" }
+funkus_dialogue_ui = { git = "https://github.com/StudioFunkus/funkus_dialogue", branch = "bevy-jam-6" }
+bevy_tweening = "0.13.0"
 
 # Your web builds will start failing if you add a dependency that pulls in `getrandom` v0.3+.
 # To fix this, you should tell `getrandom` to use the `wasm_js` backend on Wasm.
 # See: <https://docs.rs/getrandom/0.3.3/getrandom/#webassembly-support>.
-#[target.wasm32-unknown-unknown.dependencies]
-#getrandom = { version = "0.3", features = ["wasm_js"] }
+[target.wasm32-unknown-unknown.dependencies]
+getrandom = { version = "0.3", features = ["wasm_js"] }
 # In addition to enabling the `wasm_js` feature, you need to include `--cfg 'getrandom_backend="wasm_js"'`
 # in your rustflags for both local and CI/CD web builds, taking into account that rustflags specified in
 # multiple places are NOT combined (see <https://github.com/rust-lang/cargo/issues/5376>).
 # Alternatively, you can opt out of the rustflags check with this patch:
-#[patch.crates-io]
-#getrandom = { git = "https://github.com/benfrankel/getrandom" }
+[patch.crates-io]
+getrandom = { git = "https://github.com/benfrankel/getrandom" }
 
 [features]
 # Default to a native dev build.
@@ -52,7 +56,6 @@ dev_native = [
     # Enable embedded asset hot reloading for native dev builds.
     "bevy/embedded_watcher",
 ]
-
 
 [package.metadata.bevy_cli.release]
 # Disable dev features for release builds.

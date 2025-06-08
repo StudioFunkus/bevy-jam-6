@@ -15,13 +15,17 @@ mod theme;
 use bevy::{
     asset::AssetMetaCheck, pbr::light_consts, picking::mesh_picking::MeshPickingPlugin, prelude::*,
 };
-use bevy_panorbit_camera::PanOrbitCameraPlugin;
-use bevy_rich_text3d::Text3dPlugin;
+use bevy_hanabi::HanabiPlugin;
+use bevy_panorbit_camera::{FocusBoundsShape, PanOrbitCameraPlugin};
+use bevy_rich_text3d::{LoadFonts, Text3dPlugin};
 use bevy_sprite3d::Sprite3dPlugin;
 
 fn main() -> AppExit {
     App::new().add_plugins(AppPlugin).run()
 }
+
+// Embed the font at compile time
+const DEFAULT_FONT: &[u8] = include_bytes!("../assets/fonts/PixelOperatorMonoHB.ttf");
 
 pub struct AppPlugin;
 
@@ -41,6 +45,7 @@ impl Plugin for AppPlugin {
                     primary_window: Window {
                         title: "Bevy Jam 6".to_string(),
                         fit_canvas_to_parent: true,
+                        resolution: (1280., 720.).into(),
                         ..default()
                     }
                     .into(),
@@ -50,20 +55,29 @@ impl Plugin for AppPlugin {
             Sprite3dPlugin,
             PanOrbitCameraPlugin,
             MeshPickingPlugin,
-            Text3dPlugin {
-                default_atlas_dimension: (1024, 1024),
-                load_system_fonts: true,
-                ..default()
-            },
+            HanabiPlugin,
+            DialoguePlugin,
+            DialogueUIPlugin,
+            // DialogueDebugPlugin,
         ));
+
+        app.insert_resource(LoadFonts {
+            font_embedded: vec![DEFAULT_FONT],
+            ..Default::default()
+        });
+
+        app.add_plugins(Text3dPlugin {
+            default_atlas_dimension: (1024, 1024),
+            ..default()
+        });
 
         // Add other plugins.
         app.add_plugins((
             asset_tracking::plugin,
             audio::plugin,
             game::plugin,
-            #[cfg(feature = "dev")]
-            dev_tools::plugin,
+            // #[cfg(feature = "dev")]
+            // dev_tools::plugin,
             menus::plugin,
             screens::plugin,
             theme::plugin,
@@ -110,18 +124,54 @@ enum AppSystems {
 #[states(scoped_entities)]
 struct Pause(pub bool);
 
+#[derive(Component)]
+/// A marker component for the main camera entity.
+pub struct MainCamera;
+
 /// A system set for systems that shouldn't run while the game is paused.
 #[derive(SystemSet, Copy, Clone, Eq, PartialEq, Hash, Debug)]
 struct PausableSystems;
 
 use bevy_panorbit_camera::PanOrbitCamera;
+use funkus_dialogue_core::DialoguePlugin;
+use funkus_dialogue_ui::DialogueUIPlugin;
+use game::carddeck::constants::CARD_LAYER;
 
 fn spawn_camera(mut commands: Commands) {
+    // Hand Camera
+    commands.spawn((
+        CARD_LAYER,
+        Camera2d,
+        Camera {
+            order: 1,
+            ..default()
+        },
+    ));
+
+    // Main Camera
     commands.spawn((
         Name::new("Camera"),
         Camera3d::default(),
+        DistanceFog {
+            color: Color::srgb(0.25, 0.25, 0.25),
+            falloff: FogFalloff::Linear {
+                start: 20.0,
+                end: 150.0,
+            },
+            ..default()
+        },
+        MainCamera,
         Camera::default(),
-        PanOrbitCamera::default(),
+        PanOrbitCamera {
+            button_orbit: MouseButton::Middle,
+            pitch_upper_limit: Some(1.0),
+            pitch_lower_limit: Some(0.25),
+            zoom_upper_limit: Some(20.0),
+            zoom_lower_limit: 5.0,
+            focus_bounds_origin: Vec3::ZERO,
+            focus_bounds_shape: Some(FocusBoundsShape::Cuboid(Cuboid::new(12.0, 0.0, 12.0))),
+            ..default()
+        },
         Transform::from_xyz(0.0, 7.0, 14.0).looking_at(Vec3::new(0.0, 1.0, 0.0), Vec3::Y),
     ));
 }

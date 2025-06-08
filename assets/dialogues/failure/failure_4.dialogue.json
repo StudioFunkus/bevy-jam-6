@@ -1,0 +1,24 @@
+{
+  "graph": {
+    "graph": {
+      "nodes": [
+        {
+          "Text": {
+            "id": 1,
+            "text": "\nAre you sure bog magic is really your calling? Because I hear the local supermarket needs a trolley boy...",
+            "speaker": "ANDREAEA",
+            "portrait": "witch"
+          }
+        }
+      ],
+      "node_holes": [],
+      "edge_property": "directed",
+      "edges": []
+    },
+    "node_indices": {
+      "1": 0
+    },
+    "start_node": 1,
+    "name": "Failure"
+  }
+}

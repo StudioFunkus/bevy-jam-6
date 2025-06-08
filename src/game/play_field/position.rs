@@ -71,7 +71,7 @@ impl GridPosition {
     }
 
     /// Convert grid position to world coordinates using PlayField reference
-    pub fn to_world_in(&self, field: &PlayField) -> Vec3 {
+    pub fn to_world_in(self, field: &PlayField) -> Vec3 {
         self.to_world(field.width, field.height)
     }
 }

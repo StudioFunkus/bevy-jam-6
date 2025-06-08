@@ -2,6 +2,7 @@ use bevy::{pbr::NotShadowReceiver, prelude::*};
 use bevy_sprite3d::{Sprite3dBuilder, Sprite3dParams};
 
 use crate::game::{
+    carddeck::{card::Card, hand::Hand, markers::Dragged},
     game_flow::{LevelState, TurnPhase},
     level::assets::LevelAssets,
     play_field::{
@@ -77,7 +78,7 @@ impl MushroomDirection {
 fn handle_grid_clicks(
     trigger: Trigger<GridClickEvent>,
     commands: Commands,
-    selected_type: Res<SelectedMushroomType>,
+    selected_type: ResMut<SelectedMushroomType>,
     keyboard: Res<ButtonInput<KeyCode>>,
     mushrooms: Query<(&Mushroom, Option<&MushroomDirection>)>,
     chain_manager: ResMut<ChainManager>,
@@ -129,7 +130,7 @@ fn handle_grid_clicks(
 fn handle_planting_click(
     event: &GridClickEvent,
     mut commands: Commands,
-    selected_type: Res<SelectedMushroomType>,
+    mut selected_type: ResMut<SelectedMushroomType>,
     _keyboard: Res<ButtonInput<KeyCode>>,
     _mushrooms: Query<(&Mushroom, Option<&MushroomDirection>)>,
     definitions: Res<MushroomDefinitions>,
@@ -150,6 +151,12 @@ fn handle_planting_click(
 
     // Only handle left clicks from here
     if event.button != bevy::picking::pointer::PointerButton::Primary {
+        return;
+    }
+
+    // Check if selected mushroom is not None
+    if selected_type.mushroom_type.is_none() {
+        info!("Attempted planting but no mushroom selected, returning");
         return;
     }
 
@@ -180,7 +187,14 @@ fn handle_planting_click(
     }
 
     // Check if mushroom type is unlocked
-    if !definitions.is_unlocked(selected_type.mushroom_type, &game_state, current_level) {
+    if selected_type.mushroom_type.is_none() {
+        return;
+    }
+    if !definitions.is_unlocked(
+        selected_type.mushroom_type.unwrap(),
+        &game_state,
+        current_level,
+    ) {
         info!(
             "Mushroom type {:?} is not unlocked",
             selected_type.mushroom_type
@@ -196,9 +210,12 @@ fn handle_planting_click(
 
     commands.trigger(SpawnMushroomEvent {
         position: event.position,
-        mushroom_type: selected_type.mushroom_type,
+        mushroom_type: selected_type.mushroom_type.unwrap(),
         direction: Some(preview_state.direction),
     });
+
+    // Set selected mushroom back to none
+    selected_type.mushroom_type = None;
 }
 
 /// Handle clicks during chain phase
@@ -242,13 +259,15 @@ fn spawn_mushroom(
     level_assets: Res<LevelAssets>,
     definitions: Res<MushroomDefinitions>,
     preview_state: Res<PreviewState>,
-) {
+    cards_query: Query<(Entity, &Dragged), With<Card>>,
+    mut hand: ResMut<Hand>,
+) -> Result {
     let Some(definition) = definitions.get(trigger.mushroom_type) else {
         warn!(
             "No definition for mushroom type {:?}",
             trigger.mushroom_type
         );
-        return;
+        return Ok(());
     };
 
     let world_pos = trigger.position.to_world_in(&game_state.play_field);
@@ -272,19 +291,21 @@ fn spawn_mushroom(
     let direction = trigger.event().direction.unwrap_or(preview_state.direction);
 
     // Spawn mushroom entity
-    let entity = commands.spawn((
-        Name::new(format!(
-            "{} at ({}, {})",
-            definition.name, trigger.position.x, trigger.position.y
-        )),
-        Mushroom(trigger.mushroom_type),
-        trigger.position,
-        direction, // Use the direction from preview
-        Transform::from_xyz(world_pos.x, 0.5, -world_pos.z),
-        NotShadowReceiver,
-        StateScoped(LevelState::Playing),
-        Pickable::IGNORE,
-    )).id();
+    let entity = commands
+        .spawn((
+            Name::new(format!(
+                "{} at ({}, {})",
+                definition.name, trigger.position.x, trigger.position.y
+            )),
+            Mushroom(trigger.mushroom_type),
+            trigger.position,
+            direction, // Use the direction from preview
+            Transform::from_xyz(world_pos.x, 0.5, -world_pos.z),
+            NotShadowReceiver,
+            StateScoped(LevelState::Playing),
+            Pickable::IGNORE,
+        ))
+        .id();
 
     // Add mushroom sprite
     commands.spawn((
@@ -300,6 +321,7 @@ fn spawn_mushroom(
         .bundle_with_atlas(&mut sprite_params, atlas),
         FaceCamera,
         ChildOf(entity),
+        Pickable::IGNORE,
     ));
 
     // Update play field
@@ -312,6 +334,15 @@ fn spawn_mushroom(
         "Spawned {} entity {:?} with direction {:?}",
         definition.name, entity, direction
     );
+
+    // Despawn active card
+    for (entity, dragged_component) in cards_query {
+        if dragged_component == &Dragged::Played {
+            hand.despawn_card(commands.reborrow(), entity)?;
+        }
+    }
+
+    Ok(())
 }
 
 /// Reset systems when entering chain phase

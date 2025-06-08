@@ -1,0 +1,73 @@
+{
+  "graph": {
+    "graph": {
+      "nodes": [
+        {
+          "Text": {
+            "id": 1,
+            "text": "\nJust one last push and my magical mushroom master plan will be realised! How does it feel to be a loser, Andreaea?",
+            "speaker": "AGARICUS",
+            "portrait": "wizard"
+          }
+        },
+        {
+          "Text": {
+            "id": 2,
+            "text": "\nIt's not over 'til it's over, you pompous toad. I won't give up until I've turned every last inch of your rotten mushroom patch into risotto.",
+            "speaker": "ANDREAEA",
+            "portrait": "witch"
+          }
+        },
+        {
+          "Text": {
+            "id": 3,
+            "text": "\nOh, go boil your head in the bog, you bitter bolete. I'll be the talk of the Guild, and you'll be a withered old witch.",
+            "speaker": "AGARICUS",
+            "portrait": "wizard"
+          }
+        },
+        {
+          "Text": {
+            "id": 4,
+            "text": "\nDelightful as it is to watch you crash and burn, I've got the Lichen sisters coming round for tea in a minute. Ta-ta, Agaricus! I look forward to turning your murky lair into a beautiful moss garden.",
+            "speaker": "ANDREAEA",
+            "portrait": "witch"
+          }
+        }
+      ],
+      "node_holes": [],
+      "edge_property": "directed",
+      "edges": [
+        [
+          0,
+          1,
+          {
+            "label": null
+          }
+        ],
+        [
+          1,
+          2,
+          {
+            "label": null
+          }
+        ],
+        [
+          2,
+          3,
+          {
+            "label": null
+          }
+        ]
+      ]
+    },
+    "node_indices": {
+      "2": 1,
+      "4": 3,
+      "3": 2,
+      "1": 0
+    },
+    "start_node": 1,
+    "name": "Final Level"
+  }
+}

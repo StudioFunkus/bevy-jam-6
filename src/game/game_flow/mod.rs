@@ -4,16 +4,22 @@ use bevy::prelude::*;
 
 use crate::{
     game::{
-        level::definitions::{LevelDefinitions, load_level_config},
+        carddeck::events::DrawEvent,
+        level::{
+            CurrentGameplayMusic,
+            definitions::{LevelDefinitions, load_level_config},
+        },
         mushrooms::{ChainManager, chain_activation::reset_mushroom_states},
+        play_field::placement_preview::PreviewConnections,
         resources::GameState,
     },
     screens::Screen,
 };
 
 pub(super) fn plugin(app: &mut App) {
-    // Initialise states
+    // Initialize states
     app.init_state::<LevelState>();
+    app.init_state::<LevelLifecycle>();
     app.add_sub_state::<TurnPhase>();
 
     // Add events
@@ -24,7 +30,7 @@ pub(super) fn plugin(app: &mut App) {
     app.add_systems(OnExit(Screen::Gameplay), cleanup_gameplay_state);
     app.add_systems(
         Update,
-        (manual_phase_advance, check_phase_completion).run_if(in_state(Screen::Gameplay)),
+        check_phase_completion.run_if(in_state(Screen::Gameplay)),
     );
 
     // Handle level complete actions
@@ -41,7 +47,19 @@ pub(super) fn plugin(app: &mut App) {
     app.add_systems(OnEnter(LevelState::Success), spawn_level_success_ui);
     app.add_systems(OnEnter(LevelState::Failed), spawn_level_failed_ui);
 
-    // Initialise resources
+    // Level lifecycle management
+    app.add_systems(OnEnter(LevelState::StartDialogue), activate_level_lifecycle);
+    app.add_systems(
+        OnEnter(LevelState::Success),
+        deactivate_level_lifecycle.after(spawn_level_success_ui),
+    );
+    app.add_systems(
+        OnEnter(LevelState::Failed),
+        deactivate_level_lifecycle.after(spawn_level_failed_ui),
+    );
+    app.add_systems(OnEnter(LevelState::NotPlaying), deactivate_level_lifecycle);
+
+    // Initialize resources
     app.init_resource::<TurnData>();
     app.init_resource::<CurrentLevel>();
 }
@@ -52,9 +70,20 @@ pub(super) fn plugin(app: &mut App) {
 pub enum LevelState {
     #[default]
     NotPlaying,
+    StartDialogue,
     Playing,
+    EndDialogue,
     Success,
     Failed,
+}
+
+/// State tracking if a level is currently active (from start dialogue through completion)
+#[derive(States, Default, Clone, Eq, PartialEq, Hash, Debug)]
+#[states(scoped_entities)]
+pub enum LevelLifecycle {
+    #[default]
+    Inactive,
+    Active,
 }
 
 /// Turn phases - these substates only exist when in LevelState::Playing
@@ -85,6 +114,7 @@ pub struct CurrentLevel {
     pub target_score: f64,
     pub max_turns: u32,
     pub total_spores_earned: f64,
+    pub level_completed_successfully: Option<bool>, // None = still playing, Some(true) = won, Some(false) = lost
 }
 
 /// Actions available when a level is complete
@@ -93,6 +123,18 @@ pub enum LevelCompleteAction {
     NextLevel,
     RetryLevel,
     MainMenu,
+}
+
+/// Activate level lifecycle when starting a level
+fn activate_level_lifecycle(mut next_state: ResMut<NextState<LevelLifecycle>>) {
+    info!("Activating level lifecycle");
+    next_state.set(LevelLifecycle::Active);
+}
+
+/// Deactivate level lifecycle when level ends
+fn deactivate_level_lifecycle(mut next_state: ResMut<NextState<LevelLifecycle>>) {
+    info!("Deactivating level lifecycle");
+    next_state.set(LevelLifecycle::Inactive);
 }
 
 /// Load a specific level by index
@@ -111,6 +153,7 @@ fn load_level(
             target_score: level_def.target_score,
             max_turns: level_def.max_turns,
             total_spores_earned: 0.0,
+            level_completed_successfully: None,
         };
 
         *turn_data = TurnData {
@@ -118,8 +161,7 @@ fn load_level(
             ..default()
         };
 
-        // Starting spores - irrelevant later when we switch to bag system
-        game_state.spores = if level_index == 0 { 25.0 } else { 50.0 };
+        game_state.spores = 0.0;
 
         info!(
             "Loaded level {}: {} ({}x{} grid, {} turns, {} spore target)",
@@ -155,7 +197,7 @@ fn enter_first_level(
         &mut game_state,
     ) {
         Ok(_) => {
-            level_state.set(LevelState::Playing);
+            level_state.set(LevelState::StartDialogue);
         }
         Err(e) => {
             error!("{}", e);
@@ -164,22 +206,25 @@ fn enter_first_level(
 }
 
 /// Draw phase - player draws mushrooms from bag
-fn enter_draw_phase(mut turn_data: ResMut<TurnData>, current_level: Res<CurrentLevel>) {
+fn enter_draw_phase(
+    mut commands: Commands,
+    mut turn_data: ResMut<TurnData>,
+    current_level: Res<CurrentLevel>,
+    mut phase_state: ResMut<NextState<TurnPhase>>,
+) {
     info!("=== DRAW PHASE ===");
     info!(
         "Turn {}/{}",
         turn_data.current_turn, current_level.max_turns
     );
 
-    // TODO: Implement bag system integration
-    // - Draw mushrooms from bag into hand
-    // - Show drawn mushrooms in UI
-    // - Different draw amounts for first turn vs subsequent turns
-
     let draw_amount = if turn_data.current_turn == 1 { 6 } else { 4 };
     turn_data.mushrooms_drawn_this_turn = draw_amount;
 
     info!("Drawing {} mushrooms from bag", draw_amount);
+    commands.trigger(DrawEvent(draw_amount));
+
+    phase_state.set(TurnPhase::Planting);
 }
 
 /// Planting phase - player places mushrooms on grid
@@ -238,14 +283,16 @@ fn enter_score_phase(
     // Check win condition
     if current_level.total_spores_earned >= current_level.target_score {
         info!("Level complete - SUCCESS!");
-        level_state.set(LevelState::Success);
+        current_level.level_completed_successfully = Some(true);
+        level_state.set(LevelState::EndDialogue);
         return;
     }
 
     // Check loss condition (out of turns)
     if turn_data.current_turn >= current_level.max_turns {
         info!("Level complete - FAILED (out of turns)");
-        level_state.set(LevelState::Failed);
+        current_level.level_completed_successfully = Some(false);
+        level_state.set(LevelState::EndDialogue);
         return;
     }
 
@@ -275,9 +322,9 @@ fn handle_level_complete_action(
             )
             .is_ok()
             {
-                // Transition from Success/Failed -> Playing directly
-                // StateScoped entities will be cleaned up automatically
-                level_state.set(LevelState::Playing);
+                // Transition from Success/Failed -> StartDialogue
+                // The lifecycle will be handled by state transitions
+                level_state.set(LevelState::StartDialogue);
             }
         }
 
@@ -293,13 +340,10 @@ fn handle_level_complete_action(
                 &mut game_state,
             ) {
                 Ok(_) => {
-                    // Transition from Success/Failed -> Playing directly
-                    // StateScoped entities will be cleaned up automatically
-                    level_state.set(LevelState::Playing);
+                    level_state.set(LevelState::StartDialogue);
                 }
                 Err(_) => {
                     info!("No more levels! Game complete!");
-                    // TODO: Show game complete screen
                     next_screen.set(Screen::Title);
                 }
             }
@@ -315,22 +359,26 @@ fn handle_level_complete_action(
 /// Clean up game state when exiting gameplay
 fn cleanup_gameplay_state(
     mut level_state: ResMut<NextState<LevelState>>,
+    mut level_lifecycle: ResMut<NextState<LevelLifecycle>>,
     mut turn_data: ResMut<TurnData>,
     mut current_level: ResMut<CurrentLevel>,
     mut game_state: ResMut<GameState>,
     mut chain_manager: ResMut<ChainManager>,
+    mut preview_connections: ResMut<PreviewConnections>,
+    mut gameplay_music: ResMut<CurrentGameplayMusic>,
 ) {
     info!("Cleaning up gameplay state");
 
-    // Reset to not playing - this will trigger StateScoped cleanup
+    // Reset states - this will trigger StateScoped cleanup
     level_state.set(LevelState::NotPlaying);
+    level_lifecycle.set(LevelLifecycle::Inactive);
 
     // Clear resources
     *turn_data = TurnData::default();
     *current_level = CurrentLevel::default();
 
     // Reset game state
-    game_state.spores = 25.0; // Reset to starting spores
+    game_state.spores = 0.0;
     game_state.total_activations = 0;
     game_state.chain_activations = 0;
 
@@ -339,42 +387,16 @@ fn cleanup_gameplay_state(
     chain_manager.activation_queue.clear();
     chain_manager.current_chain = None;
     chain_manager.chain_started_this_turn = false;
-}
 
-/// Manual state advancement for testing
-fn manual_phase_advance(
-    keyboard: Res<ButtonInput<KeyCode>>,
-    current_phase: Option<Res<State<TurnPhase>>>,
-    current_level_state: Res<State<LevelState>>,
-    mut next_phase: ResMut<NextState<TurnPhase>>,
-    mut turn_data: ResMut<TurnData>,
-) {
-    if !keyboard.just_pressed(KeyCode::Space) {
-        return;
-    }
+    // Clear preview connections
+    preview_connections.connected_positions.clear();
+    preview_connections.empty_connection_points.clear();
+    preview_connections.existing_connection_targets.clear();
+    preview_connections.preview_position = None;
 
-    if *current_level_state.get() != LevelState::Playing {
-        return;
-    }
-
-    // Only proceed if we have a valid phase state
-    let Some(phase_state) = current_phase else {
-        return;
-    };
-
-    let next = match phase_state.get() {
-        TurnPhase::Draw => TurnPhase::Planting,
-        TurnPhase::Planting => TurnPhase::Chain,
-        TurnPhase::Chain => TurnPhase::Score,
-        TurnPhase::Score => {
-            // Increment turn counter when going from Score to Draw
-            turn_data.current_turn += 1;
-            TurnPhase::Draw
-        }
-    };
-
-    info!("Manual advance: {:?} -> {:?}", phase_state.get(), next);
-    next_phase.set(next);
+    // Clear music tracking
+    gameplay_music.current_track = None;
+    gameplay_music.entity = None;
 }
 
 /// Automatically advance phases based on completion conditions
@@ -383,18 +405,16 @@ fn check_phase_completion(
     mut next_phase: ResMut<NextState<TurnPhase>>,
     chain_manager: Res<ChainManager>,
 ) {
-    // Only check if we're actually in a game phase
     let Some(phase_state) = current_phase else {
         return;
     };
 
     match phase_state.get() {
         TurnPhase::Draw => {
-            // TODO: Auto-advance when all mushrooms drawn?
+            // Auto-advance handled by draw system
         }
         TurnPhase::Planting => {
-            // TODO: Auto-advance when player clicks "End Turn" button
-            // or when all mushrooms placed?
+            // Handled by player action
         }
         TurnPhase::Chain => {
             if !chain_manager.has_active_chains() && chain_manager.chain_started_this_turn {
@@ -403,8 +423,7 @@ fn check_phase_completion(
             }
         }
         TurnPhase::Score => {
-            // TODO: Auto-advance when score phase animation is complete
-            // or if user interacts with score UI?
+            // Handled by score phase logic
         }
     }
 }

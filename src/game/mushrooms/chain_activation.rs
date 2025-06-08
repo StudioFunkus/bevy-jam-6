@@ -1,13 +1,16 @@
 //! Chain activation system
 
 use bevy::prelude::*;
+use bevy_hanabi::{EffectAsset, ParticleEffect};
 use std::collections::VecDeque;
 use std::time::Duration;
 
 use crate::game::{
+    DespawnTimer,
     fixed_timestep::GameTime,
     game_flow::{CurrentLevel, TurnData},
     mushrooms::events::SporeScoreEvent,
+    particles::assets::activate_effect,
     play_field::GridPosition,
     resources::GameState,
     visual_effects::ActivationAnimation,
@@ -24,6 +27,7 @@ pub struct Chain {
     /// Unique ID for this chain
     pub id: u32,
     /// The mushroom that started this chain
+    #[allow(dead_code)]
     pub starter: Entity,
     /// All activations in this chain
     pub activations: Vec<ChainActivation>,
@@ -37,6 +41,7 @@ pub struct Chain {
 /// This is for storing the information about each activation, it is not functional
 /// may be used in future for replay system or debugging purposes
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub struct ChainActivation {
     pub entity: Entity,
     pub position: GridPosition,
@@ -139,6 +144,7 @@ impl ChainManager {
     }
 
     /// Get the currently active chain
+    #[allow(dead_code)]
     pub fn get_chain(&self, chain_id: u32) -> Option<&Chain> {
         self.chains.iter().find(|c| c.id == chain_id)
     }
@@ -185,6 +191,7 @@ fn process_activation_queue(
         Option<&MushroomDirection>,
         &Transform,
     )>,
+    mut effects: ResMut<Assets<EffectAsset>>,
 ) {
     // Update timers and collect ready activations
     let mut ready_activations = Vec::new();
@@ -212,6 +219,7 @@ fn process_activation_queue(
             &mut turn_data,
             &mut current_level,
             &definitions,
+            &mut effects,
             &mut mushrooms,
             activation,
         );
@@ -251,6 +259,7 @@ fn process_single_activation(
     turn_data: &mut TurnData,
     current_level: &mut CurrentLevel,
     definitions: &MushroomDefinitions,
+    effects: &mut ResMut<Assets<EffectAsset>>,
     mushrooms: &mut Query<(
         &Mushroom,
         &mut MushroomActivationState,
@@ -302,9 +311,7 @@ fn process_single_activation(
         definition.base_production * activation.energy_packet.energy as f64 * tile_modifier as f64;
 
     // Apply behavior-specific modifications
-    match &definition.activation_behavior {
-        _ => {}
-    }
+    {}
 
     // Add spores
     game_state.add_spores(production);
@@ -317,6 +324,18 @@ fn process_single_activation(
         position: *position,
         production,
     });
+
+    //Spawn particle effect
+    let activate_effect = effects.add(activate_effect());
+
+    let world_pos = position.to_world_in(&game_state.play_field);
+
+    commands.spawn((
+        Name::new("Spore Effect"),
+        ParticleEffect::new(activate_effect),
+        Transform::from_translation(Vec3::new(world_pos.x, 0.7, -world_pos.z)),
+        DespawnTimer::new(1.0),
+    ));
 
     // Update chain
     if let Some(chain) = chain_manager.get_chain_mut(activation.chain_id) {
@@ -376,7 +395,7 @@ fn process_propagation(
 
     // Process based on behavior type (for special modifications)
     match behavior {
-        ActivationBehavior::Basic { .. } => {
+        ActivationBehavior::Basic => {
             // No behaviour modification, just propagate if there are connection points
         }
 
