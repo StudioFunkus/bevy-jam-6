@@ -223,8 +223,8 @@ pub enum MushroomType {
     Deleter,
     Bomb,
     Amplifier,
-    FourwayAmplifier,
-    Splitter,
+    TwoWayAmplifier,
+    ThreeWayAmplifier,
     Chain,
     Burst,
     Converter,
@@ -300,7 +300,7 @@ fn initialize_definitions(mut definitions: ResMut<MushroomDefinitions>) {
             cooldown_time: 1.0,
             max_uses_per_turn: 2,
             sprite_row: 9,
-            activation_behavior: ActivationBehavior::Amplifier { boost_factor: 3.0 },
+            activation_behavior: ActivationBehavior::Amplifier { boost_factor: 2.0 },
             unlock_requirement: UnlockRequirement::None,
             connection_points: connection_patterns::FORK.to_vec(),
         },
@@ -332,7 +332,7 @@ fn initialize_definitions(mut definitions: ResMut<MushroomDefinitions>) {
             cooldown_time: 2.0,
             max_uses_per_turn: 2,
             sprite_row: 7,
-            activation_behavior: ActivationBehavior::Amplifier { boost_factor: 2.0 },
+            activation_behavior: ActivationBehavior::Amplifier { boost_factor: 3.0 },
             unlock_requirement: UnlockRequirement::None,
             connection_points: connection_patterns::THREEWAY.to_vec(),
         },
@@ -425,7 +425,7 @@ fn initialize_definitions(mut definitions: ResMut<MushroomDefinitions>) {
         MushroomType::Amplifier,
         MushroomDefinition {
             name: "Amplicus".to_string(),
-            description: "1 Spore. Connect 1. Energy Boost 2.".to_string(),
+            description: "3 Spores. Connect 1. Energy Boost 2.".to_string(),
             base_production: 1.0,
             cooldown_time: 1.5,
             max_uses_per_turn: 1,
@@ -438,33 +438,33 @@ fn initialize_definitions(mut definitions: ResMut<MushroomDefinitions>) {
 
     // Four Way Amplifier Mushroom - connects to all cardinal directions
     defs.insert(
-        MushroomType::FourwayAmplifier,
+        MushroomType::TwoWayAmplifier,
         MushroomDefinition {
             name: "Enoki".to_string(),
-            description: "1 Spore. Connect 4. Energy Boost 1.".to_string(),
-            base_production: 1.0,
+            description: "2 Spores. Connect 2. Energy Boost 1.".to_string(),
+            base_production: 2.0,
             cooldown_time: 1.5,
             max_uses_per_turn: 1,
             sprite_row: 16,
-            activation_behavior: ActivationBehavior::Amplifier { boost_factor: 5.0 },
+            activation_behavior: ActivationBehavior::Amplifier { boost_factor: 2.5 },
             unlock_requirement: UnlockRequirement::None,
-            connection_points: connection_patterns::CARDINAL.to_vec(),
+            connection_points: connection_patterns::SIDEWAYS.to_vec(),
         },
     );
 
     // Splitter Mushroom - connects to cardinal directions (can be configured for diagonals)
     defs.insert(
-        MushroomType::Splitter,
+        MushroomType::ThreeWayAmplifier,
         MushroomDefinition {
             name: "Ink Cap".to_string(),
-            description: "5 Spores. Connect 4. Energy Boost 2.".to_string(),
-            base_production: 5.0,
+            description: "1 Spore. Connect 3. Energy Boost 1.".to_string(),
+            base_production: 1.0,
             cooldown_time: 3.0,
-            max_uses_per_turn: 2,
+            max_uses_per_turn: 1,
             sprite_row: 17,
-            activation_behavior: ActivationBehavior::Amplifier { boost_factor: 6.0 },
+            activation_behavior: ActivationBehavior::Amplifier { boost_factor: 3.75 },
             unlock_requirement: UnlockRequirement::None,
-            connection_points: connection_patterns::CARDINAL.to_vec(),
+            connection_points: connection_patterns::THREEWAY.to_vec(),
         },
     );
 
