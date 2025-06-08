@@ -105,7 +105,7 @@ fn spawn_uses_display(
         Name::new("Uses Display Billboard"),
         Text3d::new(format!("{remaining_uses}")),
         Mesh3d::default(),
-        Transform::from_xyz(-0.25, 0.5, 0.0).with_scale(Vec3::splat(0.012)),
+        Transform::from_xyz(-0.25, 0.5, 0.0).with_scale(Vec3::splat(0.019)),
         MeshMaterial3d(mat.clone()),
         StateScoped(LevelState::Playing),
         UsesDisplay,
@@ -135,7 +135,7 @@ pub fn spawn_spore_popup(
         Text3d::new(format!("+{:.0}", trigger.event().production)),
         Mesh3d::default(),
         MeshMaterial3d(mat.clone()),
-        Transform::from_xyz(world_pos.x, 1.0, -world_pos.z).with_scale(Vec3::splat(0.012)),
+        Transform::from_xyz(world_pos.x, 1.0, -world_pos.z).with_scale(Vec3::splat(0.022)),
         FaceCamera,
         StateScoped(LevelState::Playing),
         SporePopup {

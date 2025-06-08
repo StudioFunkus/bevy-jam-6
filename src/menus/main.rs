@@ -32,6 +32,12 @@ fn spawn_main_menu(mut commands: Commands, screen_assets: Res<ScreenAssets>) {
             widget::button("Credits", open_credits_menu),
             widget::button("Exit", exit_app),
         ],
+        #[cfg(target_family = "wasm")]
+        children![
+            widget::button("Play", enter_loading_or_gameplay_screen),
+            widget::button("Settings", open_settings_menu),
+            widget::button("Credits", open_credits_menu),
+        ],
     ));
 }
 
@@ -42,7 +48,6 @@ fn spawn_main_menu_art_assets(mut commands: Commands, screen_assets: Res<ScreenA
         widget::ui_root("Main Menu"),
         GlobalZIndex(0),
         StateScoped(Menu::Main),
-        #[cfg(not(target_family = "wasm"))]
         children![
             // splash art
             widget::image(

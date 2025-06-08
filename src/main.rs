@@ -68,7 +68,6 @@ impl Plugin for AppPlugin {
 
         app.add_plugins(Text3dPlugin {
             default_atlas_dimension: (1024, 1024),
-            // load_system_fonts: true,
             ..default()
         });
 
