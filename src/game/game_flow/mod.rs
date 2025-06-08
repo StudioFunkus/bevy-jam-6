@@ -174,6 +174,7 @@ fn enter_draw_phase(
     mut commands: Commands,
     mut turn_data: ResMut<TurnData>,
     current_level: Res<CurrentLevel>,
+    mut phase_state: ResMut<NextState<TurnPhase>>,
 ) {
     info!("=== DRAW PHASE ===");
     info!(
@@ -191,6 +192,8 @@ fn enter_draw_phase(
 
     info!("Drawing {} mushrooms from bag", draw_amount);
     commands.trigger(DrawEvent(draw_amount));
+
+    phase_state.set(TurnPhase::Planting);
 }
 
 /// Planting phase - player places mushrooms on grid
