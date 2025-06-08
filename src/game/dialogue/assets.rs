@@ -58,6 +58,7 @@ impl FromWorld for DialogueAssets {
             level_3_intro: asset_server.load("dialogues/intros/level_3.dialogue.json"),
             level_4_intro: asset_server.load("dialogues/intros/level_4.dialogue.json"),
             final_level_intro: asset_server.load("dialogues/intros/final_level.dialogue.json"),
+            final_level_success: asset_server.load("dialogues/success/success_final.dialogue.json"),
 
             success_dialogues: vec![
                 asset_server.load("dialogues/success/success_1.dialogue.json"),
