@@ -1,6 +1,6 @@
 //! Visual effects and feedback for game interactions
 
-use crate::game::mushrooms::{Mushroom, MushroomDefinitions, MushroomSprite};
+use crate::{game::mushrooms::{Mushroom, MushroomDefinitions, MushroomSprite}, MainCamera};
 use bevy::prelude::*;
 use bevy_sprite3d::Sprite3d;
 
@@ -39,7 +39,7 @@ impl ActivationAnimation {
 
 /// Make entities face the camera (billboard rotation)
 fn face_camera(
-    cam_transform: Query<&Transform, With<Camera>>,
+    cam_transform: Query<&Transform, (With<Camera>, With<MainCamera>)>,
     mut query: Query<&mut Transform, (With<FaceCamera>, Without<Camera>)>,
 ) {
     let Ok(camera_transform) = cam_transform.single() else {
@@ -56,7 +56,7 @@ fn face_camera(
 
 /// Update mushroom sprite direction based on camera angle
 fn update_mushroom_sprite_direction(
-    cam_transform: Query<&Transform, With<Camera>>,
+    cam_transform: Query<&Transform, (With<Camera>, With<MainCamera>)>,
     definitions: Res<MushroomDefinitions>,
     mut sprites: Query<
         (&mut Transform, &mut Sprite3d, &ChildOf),
