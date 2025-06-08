@@ -63,7 +63,7 @@ struct MushroomButton {
 #[derive(Component)]
 struct ChainInfoDisplay;
 
-fn spawn_game_ui(mut commands: Commands, definitions: Res<MushroomDefinitions>) {
+fn spawn_game_ui(mut commands: Commands, _definitions: Res<MushroomDefinitions>) {
     // Top bar for game stats
     commands
         .spawn((
@@ -217,6 +217,7 @@ fn spawn_game_ui(mut commands: Commands, definitions: Res<MushroomDefinitions>) 
     //         ));
 }
 
+#[allow(dead_code)]
 fn spawn_mushroom_button(
     mushroom_type: MushroomType,
     definitions: &MushroomDefinitions,

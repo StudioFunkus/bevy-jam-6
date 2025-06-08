@@ -18,7 +18,7 @@ pub struct ConnectionBuilder {
 
 /// Build mycelium connections in PlayField based on mushroom positions and types
 pub fn build_playfield_connections(
-    commands: Commands,
+    _commands: Commands,
     new_mushrooms: Query<
         (Entity, &GridPosition, &Mushroom, Option<&MushroomDirection>),
         Added<Mushroom>,

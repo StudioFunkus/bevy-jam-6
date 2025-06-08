@@ -1,6 +1,6 @@
 //! Mmushroom definitions
 
-use bevy::{color::palettes::tailwind, prelude::*};
+use bevy::prelude::*;
 use std::collections::HashMap;
 
 use crate::game::play_field::TileType;
@@ -135,6 +135,7 @@ pub enum ActivationBehavior {
 
 /// Requirements to unlock a mushroom type
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub enum UnlockRequirement {
     /// Always unlocked
     None,
@@ -187,6 +188,7 @@ impl MushroomDefinitions {
     }
 
     /// Get all mushroom types
+    #[allow(dead_code)]
     pub fn all_types(&self) -> Vec<MushroomType> {
         self.definitions.keys().copied().collect()
     }
@@ -221,29 +223,13 @@ pub enum MushroomType {
     Deleter,
     Bomb,
     Amplifier,
-    Fourway_amplifier,
+    FourwayAmplifier,
     Splitter,
     Chain,
     Burst,
     Converter,
     Knight,
     Test,
-}
-
-impl MushroomType {
-    pub fn color(self) -> Srgba {
-        match self {
-            MushroomType::Amplifier => tailwind::AMBER_400,
-            MushroomType::Basic => tailwind::YELLOW_950,
-            MushroomType::Burst => tailwind::CYAN_600,
-            MushroomType::Chain => tailwind::LIME_400,
-            MushroomType::Converter => tailwind::GREEN_700,
-            MushroomType::Knight => tailwind::SLATE_500,
-            MushroomType::Pulse => tailwind::VIOLET_500,
-            MushroomType::Splitter => tailwind::FUCHSIA_400,
-            _ => tailwind::RED_600,
-        }
-    }
 }
 
 /// Plugin to initialize mushroom definitions
@@ -460,7 +446,7 @@ fn initialize_definitions(mut definitions: ResMut<MushroomDefinitions>) {
 
     // Amplifier Mushroom - connects to all cardinal directions
     defs.insert(
-        MushroomType::Fourway_amplifier,
+        MushroomType::FourwayAmplifier,
         MushroomDefinition {
             name: "Enoki".to_string(),
             description: "Boosts energy by 50% and forwards to 4 adjacent mushrooms.".to_string(),

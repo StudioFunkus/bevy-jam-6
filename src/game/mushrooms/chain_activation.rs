@@ -27,6 +27,7 @@ pub struct Chain {
     /// Unique ID for this chain
     pub id: u32,
     /// The mushroom that started this chain
+    #[allow(dead_code)]
     pub starter: Entity,
     /// All activations in this chain
     pub activations: Vec<ChainActivation>,
@@ -40,6 +41,7 @@ pub struct Chain {
 /// This is for storing the information about each activation, it is not functional
 /// may be used in future for replay system or debugging purposes
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub struct ChainActivation {
     pub entity: Entity,
     pub position: GridPosition,
@@ -142,6 +144,7 @@ impl ChainManager {
     }
 
     /// Get the currently active chain
+    #[allow(dead_code)]
     pub fn get_chain(&self, chain_id: u32) -> Option<&Chain> {
         self.chains.iter().find(|c| c.id == chain_id)
     }

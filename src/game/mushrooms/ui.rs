@@ -33,7 +33,8 @@ pub struct SporePopup {
 }
 
 impl SporePopup {
-    pub fn new(duration: f32, start_y: f32, text_span_entity: Entity) -> Self {
+    #[allow(dead_code)]
+    pub fn new(duration: f32, start_y: f32, _text_span_entity: Entity) -> Self {
         Self {
             timer: Timer::from_seconds(duration, TimerMode::Once),
             start_y,

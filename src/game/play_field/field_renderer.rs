@@ -244,8 +244,6 @@ fn create_tile_indices_texture(play_field: &PlayField) -> Image {
         }
     }
 
-    
-
     Image::new(
         bevy::render::render_resource::Extent3d {
             width,

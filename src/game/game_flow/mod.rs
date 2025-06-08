@@ -364,6 +364,7 @@ fn cleanup_gameplay_state(
 }
 
 /// Manual state advancement for testing
+#[allow(dead_code)]
 fn manual_phase_advance(
     keyboard: Res<ButtonInput<KeyCode>>,
     current_phase: Option<Res<State<TurnPhase>>>,

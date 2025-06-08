@@ -2,6 +2,7 @@
 
 /// Available tile sprites in the atlas
 #[derive(Debug, Clone, Copy)]
+#[allow(dead_code)]
 pub enum TileSprite {
     // Rocky terrain variants
     Rock1 = 0,
@@ -45,6 +46,7 @@ impl TileSprite {
 }
 
 /// Configuration for the tile atlas texture
+#[allow(dead_code)]
 pub struct TileAtlasConfig {
     pub tile_size: u32,
     pub tiles_per_row: u32,

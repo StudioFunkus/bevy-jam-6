@@ -75,6 +75,7 @@ pub struct PreviewState {
 
 /// Event fired when the hovered cell changes
 #[derive(Event, Debug)]
+#[allow(dead_code)]
 pub struct CellHoverChanged {
     pub old_position: Option<GridPosition>,
     pub new_position: Option<GridPosition>,
@@ -343,7 +344,7 @@ fn update_existing_mushroom_connections(
     preview_connections.existing_connection_targets.clear();
 
     // Calculate connection targets for all placed mushrooms
-    for (entity, pos, mushroom, direction) in all_mushrooms.iter() {
+    for (_entity, pos, mushroom, direction) in all_mushrooms.iter() {
         let Some(definition) = definitions.get(mushroom.0) else {
             continue;
         };
