@@ -88,12 +88,12 @@ pub fn create_card_definitions(mut card_templates: ResMut<CardTemplates>) -> Res
         CardTemplate {
             name: "Threeway".into(),
             mushroom_type: MushroomType::Threeway,
-            rarity: Rarity::Common,
+            rarity: Rarity::Rare,
         },
         CardTemplate {
             name: "Diagonal".into(),
             mushroom_type: MushroomType::Diagonal,
-            rarity: Rarity::Common,
+            rarity: Rarity::Uncommon,
         },
         CardTemplate {
             name: "Surround".into(),
@@ -103,52 +103,52 @@ pub fn create_card_definitions(mut card_templates: ResMut<CardTemplates>) -> Res
         CardTemplate {
             name: "Skipper".into(),
             mushroom_type: MushroomType::Skipper,
-            rarity: Rarity::Common,
+            rarity: Rarity::Uncommon,
         },
-        CardTemplate {
-            name: "Deleter".into(),
-            mushroom_type: MushroomType::Deleter,
-            rarity: Rarity::Common,
-        },
-        CardTemplate {
-            name: "Bomb".into(),
-            mushroom_type: MushroomType::Bomb,
-            rarity: Rarity::Common,
-        },
+//       CardTemplate {
+//            name: "Deleter".into(),
+//            mushroom_type: MushroomType::Deleter,
+//            rarity: Rarity::Common,
+//        },
+//        CardTemplate {
+//            name: "Bomb".into(),
+//            mushroom_type: MushroomType::Bomb,
+//            rarity: Rarity::Common,
+//        },
         CardTemplate {
             name: "Amplifier".into(),
             mushroom_type: MushroomType::Amplifier,
-            rarity: Rarity::Common,
+            rarity: Rarity::Uncommon,
         },
         CardTemplate {
             name: "Fourway_amplifier".into(),
             mushroom_type: MushroomType::FourwayAmplifier,
-            rarity: Rarity::Common,
+            rarity: Rarity::Rare,
         },
         CardTemplate {
             name: "Splitter".into(),
             mushroom_type: MushroomType::Splitter,
-            rarity: Rarity::Uncommon,
+            rarity: Rarity::Rare,
         },
         CardTemplate {
             name: "Chain".into(),
             mushroom_type: MushroomType::Chain,
-            rarity: Rarity::Common,
+            rarity: Rarity::Uncommon,
         },
         CardTemplate {
             name: "Burst".into(),
             mushroom_type: MushroomType::Burst,
-            rarity: Rarity::Common,
+            rarity: Rarity::Uncommon,
         },
         CardTemplate {
             name: "Converter".into(),
             mushroom_type: MushroomType::Converter,
-            rarity: Rarity::Common,
+            rarity: Rarity::Uncommon,
         },
         CardTemplate {
             name: "Knight".into(),
             mushroom_type: MushroomType::Knight,
-            rarity: Rarity::Common,
+            rarity: Rarity::Rare,
         },
     ];
     info!("Done creating templates");
