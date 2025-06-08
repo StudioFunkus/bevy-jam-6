@@ -1,0 +1,50 @@
+{
+  "graph": {
+    "graph": {
+      "nodes": [
+        {
+          "Text": {
+            "id": 1,
+            "text": "\nWhat mycelial mockery is this! Dare you test me, the great Agaricus?",
+            "speaker": "AGARICUS",
+            "portrait": "wizard"
+          }
+        },
+        {
+          "Text": {
+            "id": 2,
+            "text": "\nYou're no mushroom mogul! Why, you're nothing but a fungus fraud!",
+            "speaker": "AGARICUS",
+            "portrait": "wizard"
+          }
+        },
+                {
+          "Text": {
+            "id": 3,
+            "text": "\nWhat a load of old boletes...!!",
+            "speaker": "AGARICUS",
+            "portrait": "wizard"
+          }
+        }
+      ],
+      "node_holes": [],
+      "edge_property": "directed",
+      "edges": [
+        [
+          0,
+          1,
+          {
+            "label": null
+          }
+        ]
+      ]
+    },
+    "node_indices": {
+      "1": 0,
+      "2": 1,
+      "3": 2
+    },
+    "start_node": 1,
+    "name": "New Dialogue"
+  }
+}

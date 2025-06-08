@@ -185,7 +185,7 @@ pub fn spawn_field_ground(
             connections: connections_buffer,
             preview_count: 0,
             preview_highlights: preview_buffer,
-            mycelium_color_low: LinearRgba::new(0.2, 0.8, 0.4, 1.0),
+            mycelium_color_low: LinearRgba::new(0.2, 0.4, 0.2, 1.0),
             mycelium_color_high: LinearRgba::new(0.4, 1.0, 0.6, 1.0),
             pulse_speed: 2.0,
             glow_intensity: 0.8,
