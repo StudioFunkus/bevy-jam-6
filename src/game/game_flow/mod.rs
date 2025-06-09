@@ -9,7 +9,7 @@ use crate::{
             CurrentGameplayMusic,
             definitions::{LevelDefinitions, load_level_config},
         },
-        mushrooms::{ChainManager, chain_activation::reset_mushroom_states},
+        mushrooms::{ChainManager, SelectedMushroomType, chain_activation::reset_mushroom_states},
         play_field::placement_preview::PreviewConnections,
         resources::GameState,
     },
@@ -59,10 +59,144 @@ pub(super) fn plugin(app: &mut App) {
     );
     app.add_systems(OnEnter(LevelState::NotPlaying), deactivate_level_lifecycle);
 
+    app.add_systems(
+        OnEnter(LevelState::GameComplete),
+        spawn_game_complete_screen,
+    );
+
+    app.add_systems(
+        Update,
+        (update_game_complete_timer, handle_game_complete_click)
+            .run_if(in_state(LevelState::GameComplete)),
+    );
+
     // Initialize resources
     app.init_resource::<TurnData>();
     app.init_resource::<CurrentLevel>();
 }
+
+/// Component for the game complete screen
+#[derive(Component)]
+struct GameCompleteScreen {
+    click_timer: Timer,
+}
+
+fn update_game_complete_timer(
+    time: Res<Time>,
+    mut query: Query<&mut GameCompleteScreen>,
+    mut hint_query: Query<&mut TextColor, With<GameCompleteClickHint>>,
+) {
+    for mut screen in query.iter_mut() {
+        screen.click_timer.tick(time.delta());
+
+        if screen.click_timer.finished() {
+            for mut text_color in hint_query.iter_mut() {
+                let current_alpha = text_color.0.alpha();
+                let new_alpha = (current_alpha + time.delta_secs() * 0.5).min(0.8);
+                text_color.0.set_alpha(new_alpha);
+            }
+        }
+    }
+}
+
+fn handle_game_complete_click(
+    mouse_buttons: Res<ButtonInput<MouseButton>>,
+    query: Query<&GameCompleteScreen>,
+    mut next_screen: ResMut<NextState<Screen>>,
+    mut commands: Commands,
+    mut game_state: ResMut<GameState>,
+    mut current_level: ResMut<CurrentLevel>,
+    mut turn_data: ResMut<TurnData>,
+    mut chain_manager: ResMut<ChainManager>,
+    mut preview_connections: ResMut<PreviewConnections>,
+    mut selected_mushroom: ResMut<SelectedMushroomType>,
+) {
+    // Check if we can accept clicks yet
+    let Ok(screen) = query.single() else {
+        return;
+    };
+
+    if !screen.click_timer.finished() {
+        return;
+    }
+
+    // Check for click
+    if mouse_buttons.just_pressed(MouseButton::Left) {
+        info!("Game complete! Returning to title and resetting state.");
+
+        // Reset all game state
+        *game_state = GameState::default();
+        *current_level = CurrentLevel::default();
+        *turn_data = TurnData::default();
+        chain_manager.chains.clear();
+        chain_manager.activation_queue.clear();
+        chain_manager.current_chain = None;
+        chain_manager.chain_started_this_turn = false;
+        preview_connections.connected_positions.clear();
+        preview_connections.empty_connection_points.clear();
+        preview_connections.existing_connection_targets.clear();
+        preview_connections.preview_position = None;
+        selected_mushroom.mushroom_type = None;
+
+        // Return to title screen
+        next_screen.set(Screen::Title);
+    }
+}
+
+fn spawn_game_complete_screen(mut commands: Commands, asset_server: Res<AssetServer>) {
+    use bevy::ui::Val::*;
+
+    commands
+        .spawn((
+            Name::new("Game Complete Screen"),
+            Node {
+                position_type: PositionType::Absolute,
+                width: Percent(100.0),
+                height: Percent(100.0),
+                align_items: AlignItems::Center,
+                justify_content: JustifyContent::Center,
+                ..default()
+            },
+            BackgroundColor(Color::BLACK),
+            StateScoped(LevelState::GameComplete),
+            GameCompleteScreen {
+                click_timer: Timer::from_seconds(1.0, TimerMode::Once),
+            },
+        ))
+        .with_children(|parent| {
+            parent.spawn((
+                Name::new("Ending Image"),
+                ImageNode::new(asset_server.load("images/you_win.png")),
+                Node {
+                    width: Percent(80.0),
+                    max_width: Px(800.0),
+                    ..default()
+                },
+            ));
+
+            // Add instruction text
+            parent.spawn((
+                Name::new("Click Instruction"),
+                Text::new("Click anywhere to continue..."),
+                TextFont {
+                    font: asset_server.load("fonts/PixelOperatorMonoHB.ttf"),
+                    font_size: 24.0,
+                    ..default()
+                },
+                TextColor(Color::srgba(1.0, 1.0, 1.0, 0.0)), // Start invisible
+                Node {
+                    position_type: PositionType::Absolute,
+                    bottom: Px(50.0),
+                    ..default()
+                },
+                GameCompleteClickHint,
+            ));
+        });
+}
+
+// Add a marker component for the click hint
+#[derive(Component)]
+struct GameCompleteClickHint;
 
 /// High-level state of the current level
 #[derive(States, Default, Clone, Eq, PartialEq, Hash, Debug)]
@@ -75,6 +209,7 @@ pub enum LevelState {
     EndDialogue,
     Success,
     Failed,
+    GameComplete,
 }
 
 /// State tracking if a level is currently active (from start dialogue through completion)

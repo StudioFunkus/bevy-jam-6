@@ -369,15 +369,26 @@ fn handle_end_dialogue_end(
     mut level_state: ResMut<NextState<LevelState>>,
     current_level: Res<CurrentLevel>,
     current_state: Res<State<LevelState>>,
+    level_definitions: Res<crate::game::level::definitions::LevelDefinitions>,
 ) {
     if *current_state.get() != LevelState::EndDialogue {
         return;
     }
 
+    let total_levels = level_definitions.levels.len();
+    let is_final_level = current_level.level_index == total_levels - 1;
+
     for _ in dialogue_ended_events.read() {
         info!("End dialogue finished");
         match current_level.level_completed_successfully {
-            Some(true) => level_state.set(LevelState::Success),
+            Some(true) => {
+                // Check if this is the final level
+                if is_final_level {
+                    level_state.set(LevelState::GameComplete);
+                } else {
+                    level_state.set(LevelState::Success);
+                }
+            }
             Some(false) => level_state.set(LevelState::Failed),
             None => {
                 warn!("EndDialogue reached without completion status");

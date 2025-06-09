@@ -347,6 +347,7 @@ fn update_turn_phase_display(
             LevelState::StartDialogue => "",
             LevelState::EndDialogue => "",
             LevelState::NotPlaying => "",
+            LevelState::GameComplete => "",
         };
 
         text.0 = format!("{phase_text}");
