@@ -69,14 +69,14 @@ fn settings_grid(font: Handle<Font>) -> impl Bundle {
                 }
             ),
             global_volume_widget(font.clone()),
-            (
-                widget::label("Game Speed (Hz)", Some(font.clone())),
-                Node {
-                    justify_self: JustifySelf::End,
-                    ..default()
-                }
-            ),
-            timestep_widget(font.clone()),
+            // (
+            //     widget::label("Game Speed (Hz)", Some(font.clone())),
+            //     Node {
+            //         justify_self: JustifySelf::End,
+            //         ..default()
+            //     }
+            // ),
+            // timestep_widget(font.clone()),
         ],
     )
 }

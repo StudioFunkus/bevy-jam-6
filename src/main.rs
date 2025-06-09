@@ -13,7 +13,7 @@ mod screens;
 mod theme;
 
 use bevy::{
-    asset::AssetMetaCheck, pbr::light_consts, picking::mesh_picking::MeshPickingPlugin, prelude::*,
+    asset::AssetMetaCheck, audio::Volume, pbr::light_consts, picking::mesh_picking::MeshPickingPlugin, prelude::*
 };
 use bevy_hanabi::HanabiPlugin;
 use bevy_panorbit_camera::{FocusBoundsShape, PanOrbitCameraPlugin};
@@ -64,6 +64,10 @@ impl Plugin for AppPlugin {
         app.insert_resource(LoadFonts {
             font_embedded: vec![DEFAULT_FONT],
             ..Default::default()
+        });
+
+        app.insert_resource(GlobalVolume {
+            volume: Volume::Linear(0.3),
         });
 
         app.add_plugins(Text3dPlugin {
