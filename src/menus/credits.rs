@@ -43,8 +43,10 @@ fn created_by(font: Handle<Font>) -> impl Bundle {
 fn assets(font: Handle<Font>) -> impl Bundle {
     grid(vec![
         ["Button SFX", "CC0 by Jaszunio15"],
+        ["Font", "Pixel Operator CC0 by Jayvee Enaguas"],
         ["Art", "by darwinscoat, narlantweed"],
         ["Music", "by sazzles"],
+        ["Writing", "by Lolly"],
         ["Programming", "whompratt, sazzles, rolypoly, drif, narlantweed"],
         [
             "Bevy logo",
