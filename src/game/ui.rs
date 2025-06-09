@@ -28,11 +28,14 @@ pub(super) fn plugin(app: &mut App) {
             update_mushroom_buttons,
             update_turn_phase_display,
             update_level_progress_display,
-            update_phase_button,
             update_chain_info,
-            control_ui_visibility,
         )
             .run_if(in_state(Screen::Gameplay)),
+    );
+
+    app.add_systems(
+        Update,
+        (control_ui_visibility, update_phase_button).chain().run_if(in_state(Screen::Gameplay)),
     );
 }
 
@@ -407,11 +410,19 @@ fn advance_phase_on_click(
     current_phase: Option<Res<State<TurnPhase>>>,
     mut next_phase: ResMut<NextState<TurnPhase>>,
     mut turn_data: ResMut<TurnData>,
+    game_state: Res<GameState>,
 ) {
     if let Some(ref phase) = current_phase {
         let next = match phase.get() {
             TurnPhase::Draw => TurnPhase::Planting,
-            TurnPhase::Planting => TurnPhase::Chain,
+            TurnPhase::Planting => {
+                // Check if there are any mushrooms on the board
+                if game_state.play_field.entities.is_empty() {
+                    info!("Cannot start chain phase - no mushrooms on the board!");
+                    return; // Don't advance the phase
+                }
+                TurnPhase::Chain
+            },
             TurnPhase::Chain => TurnPhase::Score,
             TurnPhase::Score => {
                 turn_data.current_turn += 1;
