@@ -49,7 +49,7 @@ impl Default for FixedTimestepConfig {
 
 impl FixedTimestepConfig {
     /// Set the target Hz, clamping to valid range
-    pub fn set_hz(&mut self, hz: f64) {
+    pub fn _set_hz(&mut self, hz: f64) {
         self.target_hz = hz.clamp(self.min_hz, self.max_hz);
     }
 

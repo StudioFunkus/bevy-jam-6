@@ -149,7 +149,7 @@ fn go_back(screen: Res<State<Screen>>, mut next_menu: ResMut<NextState<Menu>>) {
     });
 }
 
-fn timestep_widget(font: Handle<Font>) -> impl Bundle {
+fn _timestep_widget(font: Handle<Font>) -> impl Bundle {
     (
         Name::new("Timestep Widget"),
         Node {
@@ -157,7 +157,7 @@ fn timestep_widget(font: Handle<Font>) -> impl Bundle {
             ..default()
         },
         children![
-            widget::button_small("-", lower_timestep),
+            widget::button_small("-", _lower_timestep),
             (
                 Name::new("Current Timestep"),
                 Node {
@@ -168,19 +168,19 @@ fn timestep_widget(font: Handle<Font>) -> impl Bundle {
                 },
                 children![(widget::label("", Some(font.clone())), TimestepLabel)],
             ),
-            widget::button_small("+", raise_timestep),
+            widget::button_small("+", _raise_timestep),
         ],
     )
 }
 
-fn lower_timestep(_: Trigger<Pointer<Click>>, mut config: ResMut<FixedTimestepConfig>) {
+fn _lower_timestep(_: Trigger<Pointer<Click>>, mut config: ResMut<FixedTimestepConfig>) {
     let new_hz = (config.target_hz - 5.0).max(config.min_hz);
-    config.set_hz(new_hz);
+    config._set_hz(new_hz);
 }
 
-fn raise_timestep(_: Trigger<Pointer<Click>>, mut config: ResMut<FixedTimestepConfig>) {
+fn _raise_timestep(_: Trigger<Pointer<Click>>, mut config: ResMut<FixedTimestepConfig>) {
     let new_hz = (config.target_hz + 5.0).min(config.max_hz);
-    config.set_hz(new_hz);
+    config._set_hz(new_hz);
 }
 
 #[derive(Component, Reflect)]
