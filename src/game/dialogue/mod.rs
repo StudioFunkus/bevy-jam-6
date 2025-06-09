@@ -18,6 +18,7 @@ use crate::game::{
 };
 use crate::theme::assets::ThemeAssets;
 use crate::theme::widget::slice_2_slicer;
+use crate::PausableSystems;
 
 pub mod assets;
 
@@ -43,7 +44,8 @@ pub(super) fn plugin(app: &mut App) {
             handle_end_dialogue_end,
         )
             .chain()
-            .run_if(in_state(LevelState::StartDialogue).or(in_state(LevelState::EndDialogue))),
+            .run_if(in_state(LevelState::StartDialogue).or(in_state(LevelState::EndDialogue)))
+            .in_set(PausableSystems),
     );
 
     app.add_systems(
