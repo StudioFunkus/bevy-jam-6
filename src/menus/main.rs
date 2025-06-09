@@ -11,7 +11,7 @@ use crate::{
     screens::{Screen, assets::ScreenAssets},
     theme::{
         assets::ThemeAssets,
-        widget::{self, slice_1_slicer, slice_2_slicer},
+        widget::{self, slice_2_slicer},
     },
 };
 

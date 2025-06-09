@@ -8,7 +8,7 @@ use crate::{
     game::fixed_timestep::FixedTimestepConfig,
     menus::Menu,
     screens::Screen,
-    theme::{self, assets::ThemeAssets, prelude::*, widget::slice_2_slicer},
+    theme::{assets::ThemeAssets, prelude::*, widget::slice_2_slicer},
 };
 
 pub(super) fn plugin(app: &mut App) {

@@ -6,6 +6,9 @@ use funkus_dialogue_core::{
     AdvanceDialogue, DialogueAsset, DialogueEnded, DialogueNode, DialogueRunner, DialogueState,
     SelectDialogueChoice, StartDialogue as StartDialogueEvent,
 };
+use funkus_dialogue_ui::DialogueDisplay;
+use funkus_dialogue_ui::DialogueText;
+use funkus_dialogue_ui::SpeakerText;
 use rand::prelude::*;
 use rand::rng;
 
@@ -13,6 +16,8 @@ use crate::game::{
     dialogue::assets::DialogueAssets,
     game_flow::{CurrentLevel, LevelState},
 };
+use crate::theme::assets::ThemeAssets;
+use crate::theme::widget::slice_2_slicer;
 
 pub mod assets;
 
@@ -39,6 +44,11 @@ pub(super) fn plugin(app: &mut App) {
         )
             .chain()
             .run_if(in_state(LevelState::StartDialogue).or(in_state(LevelState::EndDialogue))),
+    );
+
+    app.add_systems(
+        Update,
+        style_dialogue_ui.run_if(resource_exists::<ThemeAssets>),
     );
 }
 
@@ -481,5 +491,40 @@ fn update_dialogue_portrait(
                 _ => Visibility::Hidden,
             };
         }
+    }
+}
+
+fn style_dialogue_ui(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    theme_assets: Res<ThemeAssets>,
+    dialogue_displays: Query<Entity, Added<DialogueDisplay>>,
+    mut speaker_texts: Query<&mut TextFont, Added<SpeakerText>>,
+    mut dialogue_texts: Query<&mut TextFont, (Added<DialogueText>, Without<SpeakerText>)>,
+) {
+    let font = asset_server.load("fonts/PixelOperatorMonoHB.ttf");
+
+    for entity in dialogue_displays.iter() {
+        commands.entity(entity).insert((
+            ImageNode {
+                image: theme_assets.slice_2.clone(),
+                image_mode: NodeImageMode::Sliced(slice_2_slicer()),
+                color: Color::WHITE,
+                ..default()
+            },
+            BackgroundColor(Color::NONE),
+        ));
+    }
+
+    for mut text_font in speaker_texts.iter_mut() {
+        text_font.font = font.clone();
+        text_font.font_size = 24.0;
+        text_font.font_smoothing = FontSmoothing::AntiAliased;
+    }
+
+    for mut text_font in dialogue_texts.iter_mut() {
+        text_font.font = font.clone();
+        text_font.font_size = 22.0;
+        text_font.font_smoothing = FontSmoothing::AntiAliased;
     }
 }

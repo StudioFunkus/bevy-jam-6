@@ -8,7 +8,7 @@ use bevy::{
     ui::Val::*,
 };
 
-use crate::theme::{assets::ThemeAssets, interaction::InteractionPalette, palette::*};
+use crate::theme::{interaction::InteractionPalette, palette::*};
 
 /// A root UI node that fills the window and centers its content.
 pub fn ui_root(name: impl Into<Cow<'static, str>>, font: Option<Handle<Font>>) -> impl Bundle {

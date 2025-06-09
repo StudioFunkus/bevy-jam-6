@@ -5,7 +5,7 @@
         {
           "Text": {
             "id": 1,
-            "text": "\r\nWelcome, you who are learned in the ways of mushrooms, to my fantastical fungi farm. You must be wondering why I've brought you here today. Well, the answer is quite simple...\r",
+            "text": "\nWelcome, you who are learned in the ways of mushrooms, to my fantastical fungi farm. You must be wondering why I've brought you here today. Well, the answer is quite simple...\r",
             "speaker": "AGARICUS",
             "portrait": "wizard"
           }
