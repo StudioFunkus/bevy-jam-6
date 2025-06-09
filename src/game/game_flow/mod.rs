@@ -1,6 +1,6 @@
 //! Turn-based gameplay state management
 
-use bevy::prelude::*;
+use bevy::{prelude::*, text::FontSmoothing};
 
 use crate::{
     game::{
@@ -14,6 +14,7 @@ use crate::{
         resources::GameState,
     },
     screens::Screen,
+    theme::{assets::ThemeAssets, widget::slice_1_slicer},
 };
 
 pub(super) fn plugin(app: &mut App) {
@@ -377,13 +378,23 @@ fn enter_chain_phase(mut turn_data: ResMut<TurnData>) {
 }
 
 /// Spawn success UI
-fn spawn_level_success_ui(commands: Commands) {
-    spawn_level_complete_ui(commands, true);
+fn spawn_level_success_ui(
+    commands: Commands,
+    asset_server: Res<AssetServer>,
+    theme_assets: Res<ThemeAssets>,
+) {
+    let font_asset = asset_server.load("fonts/PixelOperatorMonoHB.ttf");
+    spawn_level_complete_ui(commands, true, font_asset, theme_assets);
 }
 
 /// Spawn failure UI
-fn spawn_level_failed_ui(commands: Commands) {
-    spawn_level_complete_ui(commands, false);
+fn spawn_level_failed_ui(
+    commands: Commands,
+    asset_server: Res<AssetServer>,
+    theme_assets: Res<ThemeAssets>,
+) {
+    let font_asset = asset_server.load("fonts/PixelOperatorMonoHB.ttf");
+    spawn_level_complete_ui(commands, false, font_asset, theme_assets);
 }
 
 /// Score phase - check win/loss conditions
@@ -563,7 +574,12 @@ fn check_phase_completion(
     }
 }
 
-fn spawn_level_complete_ui(mut commands: Commands, success: bool) {
+fn spawn_level_complete_ui(
+    mut commands: Commands,
+    success: bool,
+    font_asset: Handle<Font>,
+    theme_assets: Res<ThemeAssets>,
+) {
     use bevy::ui::Val::*;
 
     commands
@@ -594,7 +610,12 @@ fn spawn_level_complete_ui(mut commands: Commands, success: bool) {
                 } else {
                     "LEVEL FAILED!"
                 }),
-                TextFont::from_font_size(48.0),
+                TextFont {
+                    font: font_asset.clone(),
+                    font_size: 48.0,
+                    font_smoothing: FontSmoothing::AntiAliased,
+                    ..default()
+                },
                 TextColor(if success {
                     Color::srgb(0.2, 0.8, 0.2)
                 } else {
@@ -618,9 +639,23 @@ fn spawn_level_complete_ui(mut commands: Commands, success: bool) {
                                 padding: UiRect::all(Px(20.0)),
                                 ..default()
                             },
-                            BackgroundColor(Color::srgb(0.3, 0.3, 0.3)),
+                            ImageNode {
+                                image: theme_assets.slice_1.clone(),
+                                image_mode: NodeImageMode::Sliced(slice_1_slicer()),
+                                color: Color::WHITE,
+                                ..default()
+                            },
                         ))
-                        .with_child((Text::new("Retry Level"), TextFont::from_font_size(24.0)))
+                        .with_child((
+                            Text::new("Retry Level"),
+                            TextFont {
+                                font: font_asset.clone(),
+                                font_size: 48.0,
+                                font_smoothing: FontSmoothing::AntiAliased,
+                                ..default()
+                            },
+                            Pickable::IGNORE,
+                        ))
                         .observe(|_: Trigger<Pointer<Click>>, mut commands: Commands| {
                             commands.trigger(LevelCompleteAction::RetryLevel);
                         });
@@ -634,9 +669,23 @@ fn spawn_level_complete_ui(mut commands: Commands, success: bool) {
                                     padding: UiRect::all(Px(20.0)),
                                     ..default()
                                 },
-                                BackgroundColor(Color::srgb(0.2, 0.5, 0.2)),
+                                ImageNode {
+                                    image: theme_assets.slice_1.clone(),
+                                    image_mode: NodeImageMode::Sliced(slice_1_slicer()),
+                                    color: Color::WHITE,
+                                    ..default()
+                                },
                             ))
-                            .with_child((Text::new("Next Level"), TextFont::from_font_size(24.0)))
+                            .with_child((
+                                Text::new("Next Level"),
+                                TextFont {
+                                    font: font_asset.clone(),
+                                    font_size: 48.0,
+                                    font_smoothing: FontSmoothing::AntiAliased,
+                                    ..default()
+                                },
+                                Pickable::IGNORE,
+                            ))
                             .observe(|_: Trigger<Pointer<Click>>, mut commands: Commands| {
                                 commands.trigger(LevelCompleteAction::NextLevel);
                             });
@@ -650,9 +699,23 @@ fn spawn_level_complete_ui(mut commands: Commands, success: bool) {
                                 padding: UiRect::all(Px(20.0)),
                                 ..default()
                             },
-                            BackgroundColor(Color::srgb(0.3, 0.3, 0.3)),
+                            ImageNode {
+                                image: theme_assets.slice_1.clone(),
+                                image_mode: NodeImageMode::Sliced(slice_1_slicer()),
+                                color: Color::WHITE,
+                                ..default()
+                            },
                         ))
-                        .with_child((Text::new("Main Menu"), TextFont::from_font_size(24.0)))
+                        .with_child((
+                            Text::new("Main Menu"),
+                            TextFont {
+                                font: font_asset.clone(),
+                                font_size: 48.0,
+                                font_smoothing: FontSmoothing::AntiAliased,
+                                ..default()
+                            },
+                            Pickable::IGNORE,
+                        ))
                         .observe(|_: Trigger<Pointer<Click>>, mut commands: Commands| {
                             commands.trigger(LevelCompleteAction::MainMenu);
                         });
