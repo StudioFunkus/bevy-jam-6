@@ -481,7 +481,7 @@ fn initialize_definitions(mut definitions: ResMut<MushroomDefinitions>) {
             description: "5 Spores.\nConnect 1.\nRapid Fire.".to_string(),
             base_production: 5.0,
             cooldown_time: 0.01,
-            max_uses_per_turn: 15,
+            max_uses_per_turn: 10,
             sprite_row: 14,
             activation_behavior: ActivationBehavior::Basic,
             unlock_requirement: UnlockRequirement::None,
