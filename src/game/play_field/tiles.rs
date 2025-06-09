@@ -23,7 +23,7 @@ impl TileType {
     pub fn production_multiplier(&self) -> f32 {
         match self {
             TileType::Empty => 1.0,
-            TileType::Fertile => 1.5,
+            TileType::Fertile => 1.25,
             TileType::BlockedRock | TileType::BlockedWater | TileType::BlockedMoss => 0.0,
         }
     }

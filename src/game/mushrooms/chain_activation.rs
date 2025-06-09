@@ -432,6 +432,10 @@ fn process_single_activation(
 
     // Process propagation based on behavior
     if should_propagate {
+        // Apply tile modifier to outgoing energy
+        let mut modified_energy_packet = activation.energy_packet.clone();
+        modified_energy_packet.energy *= tile_modifier;
+
         process_propagation(
             chain_manager,
             &definition.activation_behavior,
@@ -439,7 +443,7 @@ fn process_single_activation(
             activation.entity,
             *position,
             direction.copied(),
-            activation.energy_packet,
+            modified_energy_packet,
             activation.chain_id,
             game_state,
         );

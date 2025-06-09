@@ -166,7 +166,7 @@ pub fn spawn_game_grid(
             GameGrid,
             Transform::default(),
             Visibility::default(),
-            StateScoped(LevelState::Playing), // Grid only exists during gameplay
+            StateScoped(LevelLifecycle::Active), // Grid only exists during gameplay
         ))
         .id();
 
