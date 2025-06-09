@@ -4,7 +4,10 @@ use bevy::{
     ecs::spawn::SpawnIter, input::common_conditions::input_just_pressed, prelude::*, ui::Val::*,
 };
 
-use crate::{menus::Menu, theme::{assets::ThemeAssets, prelude::*, widget::slice_2_slicer}};
+use crate::{
+    menus::Menu,
+    theme::{assets::ThemeAssets, prelude::*, widget::slice_2_slicer},
+};
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(OnEnter(Menu::Credits), spawn_credits_menu);
@@ -14,7 +17,11 @@ pub(super) fn plugin(app: &mut App) {
     );
 }
 
-fn spawn_credits_menu(mut commands: Commands, asset_server: Res<AssetServer>, theme_assets: Res<ThemeAssets>) {
+fn spawn_credits_menu(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    theme_assets: Res<ThemeAssets>,
+) {
     let font_handle = asset_server.load("fonts/PixelOperatorMonoHB.ttf");
     commands.spawn((
         widget::ui_root("Credits Menu", Some(font_handle.clone())),
@@ -41,18 +48,24 @@ fn created_by(font: Handle<Font>) -> impl Bundle {
 }
 
 fn assets(font: Handle<Font>) -> impl Bundle {
-    grid(vec![
-        ["Button SFX", "CC0 by Jaszunio15"],
-        ["Font", "Pixel Operator CC0 by Jayvee Enaguas"],
-        ["Art", "by darwinscoat, narlantweed"],
-        ["Music", "by sazzles"],
-        ["Writing", "by Lolly"],
-        ["Programming", "whompratt, sazzles, rolypoly, drif, narlantweed"],
-        [
-            "Bevy logo",
-            "All rights reserved by the Bevy Foundation, permission granted for splash screen use when unmodified",
+    grid(
+        vec![
+            ["Button SFX", "CC0 by Jaszunio15"],
+            ["Font", "Pixel Operator CC0 by Jayvee Enaguas"],
+            ["Art", "by darwinscoat, narlantweed"],
+            ["Music", "by sazzles"],
+            ["Writing", "by Lolly"],
+            [
+                "Programming",
+                "whompratt, sazzles, rolypoly, drif, narlantweed",
+            ],
+            [
+                "Bevy logo",
+                "All rights reserved by the Bevy Foundation, permission granted for splash screen use when unmodified",
+            ],
         ],
-    ], font.clone())
+        font.clone(),
+    )
 }
 
 fn grid(content: Vec<[&'static str; 2]>, font: Handle<Font>) -> impl Bundle {

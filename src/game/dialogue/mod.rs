@@ -12,13 +12,13 @@ use funkus_dialogue_ui::SpeakerText;
 use rand::prelude::*;
 use rand::rng;
 
+use crate::PausableSystems;
 use crate::game::{
     dialogue::assets::DialogueAssets,
     game_flow::{CurrentLevel, LevelState},
 };
 use crate::theme::assets::ThemeAssets;
 use crate::theme::widget::slice_2_slicer;
-use crate::PausableSystems;
 
 pub mod assets;
 
@@ -36,12 +36,20 @@ pub(super) fn plugin(app: &mut App) {
     app.add_systems(
         Update,
         (
-            update_dialogue_advance_timer,
-            handle_dialogue_input,
-            handle_dialogue_click,
             handle_start_dialogue_end,
             update_dialogue_portrait,
             handle_end_dialogue_end,
+        )
+            .chain()
+            .run_if(in_state(LevelState::StartDialogue).or(in_state(LevelState::EndDialogue))),
+    );
+
+    app.add_systems(
+        Update,
+        (
+            update_dialogue_advance_timer,
+            handle_dialogue_input,
+            handle_dialogue_click,
         )
             .chain()
             .run_if(in_state(LevelState::StartDialogue).or(in_state(LevelState::EndDialogue)))

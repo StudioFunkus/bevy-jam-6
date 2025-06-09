@@ -5,6 +5,7 @@ use crate::game::{
     carddeck::{card::Card, hand::Hand, markers::Dragged},
     game_flow::{LevelState, TurnPhase},
     level::assets::LevelAssets,
+    mushrooms::chain_activation::reset_mushroom_states,
     play_field::{
         GridClickEvent, GridPosition, observers::find_entity_at, placement_preview::PreviewState,
     },
@@ -44,6 +45,9 @@ pub(super) fn plugin(app: &mut App) {
 
     // Add turn phase transitions
     app.add_systems(OnEnter(TurnPhase::Chain), reset_chain_phase);
+
+    // Reset mushroom states when entering Draw phase (when new cards are drawn)
+    app.add_systems(OnEnter(TurnPhase::Draw), reset_mushroom_states);
 }
 
 /// Marker component for mushroom entities

@@ -539,8 +539,12 @@ fn initialize_definitions(mut definitions: ResMut<MushroomDefinitions>) {
             activation_behavior: ActivationBehavior::Converter {
                 convert_to: TileType::Empty,
                 convert_count: 1,
-                can_convert_from: Some(vec![TileType::BlockedMoss, TileType::BlockedRock, TileType::BlockedWater]), // converts blockers
-                search_radius: 2,                              // Searches within 2 tiles
+                can_convert_from: Some(vec![
+                    TileType::BlockedMoss,
+                    TileType::BlockedRock,
+                    TileType::BlockedWater,
+                ]), // converts blockers
+                search_radius: 2, // Searches within 2 tiles
             },
             unlock_requirement: UnlockRequirement::None,
             connection_points: vec![],

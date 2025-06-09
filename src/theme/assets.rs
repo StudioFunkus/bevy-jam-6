@@ -1,5 +1,5 @@
-use bevy::prelude::*;
 use crate::asset_tracking::LoadResource;
+use bevy::prelude::*;
 
 pub(super) fn plugin(app: &mut App) {
     app.register_type::<ThemeAssets>();
@@ -18,7 +18,7 @@ pub struct ThemeAssets {
 impl FromWorld for ThemeAssets {
     fn from_world(world: &mut World) -> Self {
         let asset_server = world.resource::<AssetServer>();
-        
+
         Self {
             slice_1: asset_server.load("images/ui_slices/slice1.png"),
             slice_2: asset_server.load("images/ui_slices/slice2.png"),

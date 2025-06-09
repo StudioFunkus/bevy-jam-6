@@ -51,6 +51,7 @@ fn update_uses_display(
     definitions: Res<MushroomDefinitions>,
     mut uses_displays: Query<(Entity, &ChildOf), With<UsesDisplay>>,
     mut commands: Commands,
+    mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     for (entity, mushroom, state) in mushrooms.iter() {
         // Get the mushroom definition
@@ -71,6 +72,24 @@ fn update_uses_display(
                 commands
                     .entity(display_entity)
                     .insert(Text3d::new(format!("{remaining_uses}")));
+
+                // Update color based on remaining uses
+                let color = if remaining_uses == 0 {
+                    Color::srgb(1.0, 0.2, 0.2) // Red when exhausted
+                } else {
+                    Color::WHITE // White when uses remain
+                };
+
+                // Create new material with the appropriate color
+                let mat = materials.add(StandardMaterial {
+                    base_color_texture: Some(TextAtlas::DEFAULT_IMAGE.clone()),
+                    alpha_mode: AlphaMode::Blend,
+                    unlit: true,
+                    base_color: color,
+                    ..Default::default()
+                });
+
+                commands.entity(display_entity).insert(MeshMaterial3d(mat));
             }
         }
     }

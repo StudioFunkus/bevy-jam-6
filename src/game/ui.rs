@@ -9,7 +9,10 @@ use crate::{
         resources::GameState,
     },
     screens::Screen,
-    theme::{assets::ThemeAssets, interaction::InteractionPalette, palette as ui_palette, widget::slice_1_slicer},
+    theme::{
+        assets::ThemeAssets, interaction::InteractionPalette, palette as ui_palette,
+        widget::slice_1_slicer,
+    },
 };
 
 /// Marker for UI that should be hidden during dialogue
@@ -63,7 +66,12 @@ struct MushroomButton {
 #[derive(Component)]
 struct ChainInfoDisplay;
 
-fn spawn_game_ui(mut commands: Commands, _definitions: Res<MushroomDefinitions>, asset_server: Res<AssetServer>, theme_assets: Res<ThemeAssets>) {
+fn spawn_game_ui(
+    mut commands: Commands,
+    _definitions: Res<MushroomDefinitions>,
+    asset_server: Res<AssetServer>,
+    theme_assets: Res<ThemeAssets>,
+) {
     // Top bar for game stats
     commands
         .spawn((

@@ -2,7 +2,14 @@
 
 use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 
-use crate::{menus::Menu, screens::Screen, theme::{assets::ThemeAssets, widget::{self, slice_2_slicer}}};
+use crate::{
+    menus::Menu,
+    screens::Screen,
+    theme::{
+        assets::ThemeAssets,
+        widget::{self, slice_2_slicer},
+    },
+};
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(OnEnter(Menu::Pause), spawn_pause_menu);
