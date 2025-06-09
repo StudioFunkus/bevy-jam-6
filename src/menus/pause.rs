@@ -2,7 +2,7 @@
 
 use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 
-use crate::{menus::Menu, screens::Screen, theme::widget};
+use crate::{menus::Menu, screens::Screen, theme::{assets::ThemeAssets, widget::{self, slice_2_slicer}}};
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(OnEnter(Menu::Pause), spawn_pause_menu);
@@ -12,16 +12,39 @@ pub(super) fn plugin(app: &mut App) {
     );
 }
 
-fn spawn_pause_menu(mut commands: Commands) {
+fn spawn_pause_menu(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    theme_assets: Res<ThemeAssets>,
+) {
+    let font_handle = asset_server.load("fonts/PixelOperatorMonoHB.ttf");
     commands.spawn((
-        widget::ui_root("Pause Menu"),
+        widget::ui_root("Pause Menu", Some(font_handle.clone())),
         GlobalZIndex(2),
         StateScoped(Menu::Pause),
         children![
-            widget::header("Game paused"),
-            widget::button("Continue", close_menu),
-            widget::button("Settings", open_settings_menu),
-            widget::button("Quit to title", quit_to_title),
+            widget::header("Game paused", Some(font_handle.clone())),
+            widget::button_sliced(
+                "Continue",
+                close_menu,
+                theme_assets.slice_2.clone(),
+                slice_2_slicer(),
+                font_handle.clone()
+            ),
+            widget::button_sliced(
+                "Settings",
+                open_settings_menu,
+                theme_assets.slice_2.clone(),
+                slice_2_slicer(),
+                font_handle.clone()
+            ),
+            widget::button_sliced(
+                "Quit",
+                quit_to_title,
+                theme_assets.slice_2.clone(),
+                slice_2_slicer(),
+                font_handle.clone()
+            ),
         ],
     ));
 }

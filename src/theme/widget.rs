@@ -8,51 +8,107 @@ use bevy::{
     ui::Val::*,
 };
 
-use crate::theme::{interaction::InteractionPalette, palette::*};
+use crate::theme::{assets::ThemeAssets, interaction::InteractionPalette, palette::*};
 
 /// A root UI node that fills the window and centers its content.
-pub fn ui_root(name: impl Into<Cow<'static, str>>) -> impl Bundle {
-    (
-        Name::new(name),
-        Node {
-            position_type: PositionType::Absolute,
-            width: Percent(100.0),
-            height: Percent(100.0),
-            padding: UiRect {
-                left: Px(10.),
-                right: Px(50.),
-                top: Px(10.),
-                bottom: Px(10.),
+pub fn ui_root(name: impl Into<Cow<'static, str>>, font: Option<Handle<Font>>) -> impl Bundle {
+    if let Some(font) = font {
+        (
+            Name::new(name),
+            Node {
+                position_type: PositionType::Absolute,
+                width: Percent(100.0),
+                height: Percent(100.0),
+                padding: UiRect {
+                    left: Px(10.),
+                    right: Px(50.),
+                    top: Px(10.),
+                    bottom: Px(10.),
+                },
+                align_items: AlignItems::End,
+                justify_content: JustifyContent::Center,
+                flex_direction: FlexDirection::Column,
+                row_gap: Px(20.0),
+                ..default()
             },
-            align_items: AlignItems::End,
-            justify_content: JustifyContent::Center,
-            flex_direction: FlexDirection::Column,
-            row_gap: Px(20.0),
-            ..default()
-        },
-        // Don't block picking events for other UI roots.
-        Pickable::IGNORE,
-    )
+            TextFont {
+                font: font.clone(),
+                font_size: 40.0,
+                ..default()
+            },
+            // Don't block picking events for other UI roots.
+            Pickable::IGNORE,
+        )
+    } else {
+        (
+            Name::new(name),
+            Node {
+                position_type: PositionType::Absolute,
+                width: Percent(100.0),
+                height: Percent(100.0),
+                padding: UiRect {
+                    left: Px(10.),
+                    right: Px(50.),
+                    top: Px(10.),
+                    bottom: Px(10.),
+                },
+                align_items: AlignItems::End,
+                justify_content: JustifyContent::Center,
+                flex_direction: FlexDirection::Column,
+                row_gap: Px(20.0),
+                ..default()
+            },
+            TextFont::from_font_size(40.0),
+            // Don't block picking events for other UI roots.
+            Pickable::IGNORE,
+        )
+    }
 }
 
 /// A simple header label. Bigger than [`label`].
-pub fn header(text: impl Into<String>) -> impl Bundle {
-    (
-        Name::new("Header"),
-        Text(text.into()),
-        TextFont::from_font_size(40.0),
-        TextColor(HEADER_TEXT),
-    )
+pub fn header(text: impl Into<String>, font: Option<Handle<Font>>) -> impl Bundle {
+    if let Some(font) = font {
+        (
+            Name::new("Header"),
+            Text(text.into()),
+            TextFont {
+                font: font.clone(),
+                font_size: 40.0,
+                ..default()
+            },
+            TextColor(HEADER_TEXT),
+        )
+    } else {
+        (
+            Name::new("Header"),
+            Text(text.into()),
+            TextFont::from_font_size(40.0),
+            TextColor(HEADER_TEXT),
+        )
+    }
 }
 
 /// A simple text label.
-pub fn label(text: impl Into<String>) -> impl Bundle {
-    (
-        Name::new("Label"),
-        Text(text.into()),
-        TextFont::from_font_size(24.0),
-        TextColor(LABEL_TEXT),
-    )
+pub fn label(text: impl Into<String>, font: Option<Handle<Font>>) -> impl Bundle {
+    if let Some(font) = font {
+        (
+            Name::new("Label"),
+            Text(text.into()),
+            TextFont {
+                font: font.clone(),
+                font_size: 24.0,
+                ..default()
+            },
+            TextColor(LABEL_TEXT),
+        )
+    } else {
+        (
+            Name::new("Label"),
+            Text(text.into()),
+            TextFont::from_font_size(24.0),
+            TextColor(LABEL_TEXT),
+        )
+    }
 }
 
 /// A large rounded button with text and an action defined as an [`Observer`].
@@ -169,6 +225,104 @@ pub fn image(
                 Pickable::IGNORE,
                 ImageNode::new(handle),
             ));
+        })),
+    )
+}
+
+pub fn slice_1_slicer() -> TextureSlicer {
+    TextureSlicer {
+        // Adjust these values based on your button texture's border size
+        border: BorderRect::all(16.0),
+        center_scale_mode: SliceScaleMode::Stretch,
+        sides_scale_mode: SliceScaleMode::Stretch,
+        max_corner_scale: 1.0,
+    }
+}
+
+pub fn slice_2_slicer() -> TextureSlicer {
+    TextureSlicer {
+        // Adjust these values based on your button texture's border size
+        border: BorderRect::all(16.0),
+        center_scale_mode: SliceScaleMode::Stretch,
+        sides_scale_mode: SliceScaleMode::Stretch,
+        max_corner_scale: 1.0,
+    }
+}
+
+/// A large rounded button with nine-slice texture
+pub fn button_sliced<E, B, M, I>(
+    text: impl Into<String>,
+    action: I,
+    slice_handle: Handle<Image>,
+    slicer: TextureSlicer,
+    font: Handle<Font>,
+) -> impl Bundle
+where
+    E: Event,
+    B: Bundle,
+    I: IntoObserverSystem<E, B, M>,
+{
+    button_base_sliced(
+        text,
+        action,
+        slice_handle,
+        Node {
+            width: Px(250.0),
+            height: Px(80.0),
+            align_items: AlignItems::Center,
+            justify_content: JustifyContent::Center,
+            ..default()
+        },
+        slicer,
+        font,
+    )
+}
+
+/// Base function for sliced buttons
+fn button_base_sliced<E, B, M, I>(
+    text: impl Into<String>,
+    action: I,
+    slice_handle: Handle<Image>,
+    node_bundle: Node,
+    slicer: TextureSlicer,
+    font: Handle<Font>,
+) -> impl Bundle
+where
+    E: Event,
+    B: Bundle,
+    I: IntoObserverSystem<E, B, M>,
+{
+    let text = text.into();
+    let action = IntoObserverSystem::into_system(action);
+
+    (
+        Name::new("Button"),
+        Node::default(),
+        Children::spawn(SpawnWith(move |parent: &mut ChildSpawner| {
+            parent
+                .spawn((
+                    Name::new("Button Inner"),
+                    Button,
+                    ImageNode {
+                        image: slice_handle.clone(),
+                        image_mode: NodeImageMode::Sliced(slicer.clone()),
+                        color: Color::WHITE,
+                        ..default()
+                    },
+                    node_bundle,
+                    children![(
+                        Name::new("Button Text"),
+                        Text(text),
+                        TextFont {
+                            font: font.clone(),
+                            font_size: 40.0,
+                            ..default()
+                        },
+                        TextColor(Color::WHITE),
+                        Pickable::IGNORE,
+                    )],
+                ))
+                .observe(action);
         })),
     )
 }

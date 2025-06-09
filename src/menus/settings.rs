@@ -5,7 +5,10 @@
 use bevy::{audio::Volume, input::common_conditions::input_just_pressed, prelude::*, ui::Val::*};
 
 use crate::{
-    game::fixed_timestep::FixedTimestepConfig, menus::Menu, screens::Screen, theme::prelude::*,
+    game::fixed_timestep::FixedTimestepConfig,
+    menus::Menu,
+    screens::Screen,
+    theme::{self, assets::ThemeAssets, prelude::*, widget::slice_2_slicer},
 };
 
 pub(super) fn plugin(app: &mut App) {
@@ -23,20 +26,31 @@ pub(super) fn plugin(app: &mut App) {
     );
 }
 
-fn spawn_settings_menu(mut commands: Commands) {
+fn spawn_settings_menu(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    theme_assets: Res<ThemeAssets>,
+) {
+    let font_handle = asset_server.load("fonts/PixelOperatorMonoHB.ttf");
     commands.spawn((
-        widget::ui_root("Settings Menu"),
+        widget::ui_root("Settings Menu", Some(font_handle.clone())),
         GlobalZIndex(2),
         StateScoped(Menu::Settings),
         children![
-            widget::header("Settings"),
-            settings_grid(),
-            widget::button("Back", go_back_on_click),
+            widget::header("Settings", Some(font_handle.clone())),
+            settings_grid(font_handle.clone()),
+            widget::button_sliced(
+                "Back",
+                go_back_on_click,
+                theme_assets.slice_2.clone(),
+                slice_2_slicer(),
+                font_handle.clone()
+            ),
         ],
     ));
 }
 
-fn settings_grid() -> impl Bundle {
+fn settings_grid(font: Handle<Font>) -> impl Bundle {
     (
         Name::new("Settings Grid"),
         Node {
@@ -48,26 +62,26 @@ fn settings_grid() -> impl Bundle {
         },
         children![
             (
-                widget::label("Master Volume"),
+                widget::label("Master Volume", Some(font.clone())),
                 Node {
                     justify_self: JustifySelf::End,
                     ..default()
                 }
             ),
-            global_volume_widget(),
+            global_volume_widget(font.clone()),
             (
-                widget::label("Game Speed (Hz)"),
+                widget::label("Game Speed (Hz)", Some(font.clone())),
                 Node {
                     justify_self: JustifySelf::End,
                     ..default()
                 }
             ),
-            timestep_widget(),
+            timestep_widget(font.clone()),
         ],
     )
 }
 
-fn global_volume_widget() -> impl Bundle {
+fn global_volume_widget(font: Handle<Font>) -> impl Bundle {
     (
         Name::new("Global Volume Widget"),
         Node {
@@ -83,7 +97,7 @@ fn global_volume_widget() -> impl Bundle {
                     justify_content: JustifyContent::Center,
                     ..default()
                 },
-                children![(widget::label(""), GlobalVolumeLabel)],
+                children![(widget::label("", Some(font.clone())), GlobalVolumeLabel)],
             ),
             widget::button_small("+", raise_global_volume),
         ],
@@ -135,7 +149,7 @@ fn go_back(screen: Res<State<Screen>>, mut next_menu: ResMut<NextState<Menu>>) {
     });
 }
 
-fn timestep_widget() -> impl Bundle {
+fn timestep_widget(font: Handle<Font>) -> impl Bundle {
     (
         Name::new("Timestep Widget"),
         Node {
@@ -152,7 +166,7 @@ fn timestep_widget() -> impl Bundle {
                     min_width: Val::Px(60.0),
                     ..default()
                 },
-                children![(widget::label(""), TimestepLabel)],
+                children![(widget::label("", Some(font.clone())), TimestepLabel)],
             ),
             widget::button_small("+", raise_timestep),
         ],

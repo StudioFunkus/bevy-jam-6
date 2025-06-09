@@ -9,7 +9,7 @@ use crate::{
         resources::GameState,
     },
     screens::Screen,
-    theme::{interaction::InteractionPalette, palette as ui_palette},
+    theme::{assets::ThemeAssets, interaction::InteractionPalette, palette as ui_palette, widget::slice_1_slicer},
 };
 
 /// Marker for UI that should be hidden during dialogue
@@ -63,7 +63,7 @@ struct MushroomButton {
 #[derive(Component)]
 struct ChainInfoDisplay;
 
-fn spawn_game_ui(mut commands: Commands, _definitions: Res<MushroomDefinitions>, asset_server: Res<AssetServer>) {
+fn spawn_game_ui(mut commands: Commands, _definitions: Res<MushroomDefinitions>, asset_server: Res<AssetServer>, theme_assets: Res<ThemeAssets>) {
     // Top bar for game stats
     commands
         .spawn((
@@ -147,7 +147,7 @@ fn spawn_game_ui(mut commands: Commands, _definitions: Res<MushroomDefinitions>,
             Node {
                 position_type: PositionType::Absolute,
                 bottom: Val::Px(280.0),
-                left: Val::Percent(73.0),
+                right: Val::Percent(5.0),
                 width: Val::Px(200.0),
                 height: Val::Px(60.0),
                 align_items: AlignItems::Center,
@@ -165,6 +165,12 @@ fn spawn_game_ui(mut commands: Commands, _definitions: Res<MushroomDefinitions>,
                 none: Color::srgb(0.2, 0.5, 0.2),
                 hovered: Color::srgb(0.3, 0.6, 0.3),
                 pressed: Color::srgb(0.4, 0.7, 0.4),
+            },
+            ImageNode {
+                image: theme_assets.slice_1.clone(),
+                image_mode: NodeImageMode::Sliced(slice_1_slicer()),
+                color: Color::WHITE,
+                ..default()
             },
         ))
         .with_children(|parent| {

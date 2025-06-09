@@ -327,7 +327,7 @@ pub fn spawn_card(
                 TextLayout::new(JustifyText::Left, LineBreak::WordBoundary),
                 TextFont {
                     font: asset_server.load("fonts/PixelOperatorMonoHB.ttf"),
-                    font_size: 12.0,
+                    font_size: 14.0,
                     font_smoothing: FontSmoothing::AntiAliased,
                     ..default()
                 },

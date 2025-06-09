@@ -9,7 +9,10 @@ use crate::{
     asset_tracking::ResourceHandles,
     menus::Menu,
     screens::{Screen, assets::ScreenAssets},
-    theme::widget,
+    theme::{
+        assets::ThemeAssets,
+        widget::{self, slice_1_slicer, slice_2_slicer},
+    },
 };
 
 pub(super) fn plugin(app: &mut App) {
@@ -25,23 +28,72 @@ struct Spore;
 
 // spawn all menu widgets
 
-fn spawn_main_menu(mut commands: Commands, _screen_assets: Res<ScreenAssets>) {
+fn spawn_main_menu(
+    mut commands: Commands,
+    _screen_assets: Res<ScreenAssets>,
+    theme_assets: Res<ThemeAssets>,
+    asset_server: Res<AssetServer>,
+) {
+    let font_handle = asset_server.load("fonts/PixelOperatorMonoHB.ttf");
+
     commands.spawn((
-        widget::ui_root("Main Menu"),
+        widget::ui_root("Main Menu", Some(font_handle.clone())),
         GlobalZIndex(2),
         StateScoped(Menu::Main),
         #[cfg(not(target_family = "wasm"))]
         children![
-            widget::button("Play", enter_loading_or_gameplay_screen),
-            widget::button("Settings", open_settings_menu),
-            widget::button("Credits", open_credits_menu),
-            widget::button("Exit", exit_app),
+            widget::button_sliced(
+                "Play",
+                enter_loading_or_gameplay_screen,
+                theme_assets.slice_2.clone(),
+                slice_2_slicer(),
+                font_handle.clone()
+            ),
+            widget::button_sliced(
+                "Settings",
+                open_settings_menu,
+                theme_assets.slice_2.clone(),
+                slice_2_slicer(),
+                font_handle.clone()
+            ),
+            widget::button_sliced(
+                "Credits",
+                open_credits_menu,
+                theme_assets.slice_2.clone(),
+                slice_2_slicer(),
+                font_handle.clone()
+            ),
+            widget::button_sliced(
+                "Exit",
+                exit_app,
+                theme_assets.slice_2.clone(),
+                slice_2_slicer(),
+                font_handle.clone()
+            ),
         ],
         #[cfg(target_family = "wasm")]
         children![
-            widget::button("Play", enter_loading_or_gameplay_screen),
-            widget::button("Settings", open_settings_menu),
-            widget::button("Credits", open_credits_menu),
+            widget::button_sliced(
+                "Play",
+                enter_loading_or_gameplay_screen,
+                theme_assets.slice_2.clone(),
+                slice_2_slicer(),
+                font_handle.clone()
+            ),
+            widget::button_sliced(
+                "Settings",
+                open_settings_menu,
+                theme_assets.slice_2.clone(),
+                slice_2_slicer(),
+                font_handle.clone()
+            ),
+            widget::button_sliced(
+                "Credits",
+                open_credits_menu,
+                theme_assets.slice_2.clone(),
+                slice_2_slicer(),
+                font_handle.clone()
+            ),
         ],
     ));
 }

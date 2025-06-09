@@ -14,11 +14,12 @@ pub(super) fn plugin(app: &mut App) {
     );
 }
 
-fn spawn_loading_screen(mut commands: Commands) {
+fn spawn_loading_screen(mut commands: Commands, asset_server: Res<AssetServer>) {
+    let font_handle = asset_server.load("fonts/PixelOperatorMonoHB.ttf");
     commands.spawn((
-        widget::ui_root("Loading Screen"),
+        widget::ui_root("Loading Screen", Some(font_handle.clone())),
         StateScoped(Screen::Loading),
-        children![widget::label("Loading...")],
+        children![widget::label("Loading...", Some(font_handle.clone()))],
     ));
 }
 

@@ -49,8 +49,9 @@ const SPLASH_DURATION_SECS: f32 = 1.8;
 const SPLASH_FADE_DURATION_SECS: f32 = 0.6;
 
 fn spawn_splash_screen(mut commands: Commands, asset_server: Res<AssetServer>) {
+    let font_handle = asset_server.load("fonts/PixelOperatorMonoHB.ttf");
     commands.spawn((
-        widget::ui_root("Splash Screen"),
+        widget::ui_root("Splash Screen", Some(font_handle.clone())),
         BackgroundColor(SPLASH_BACKGROUND_COLOR),
         StateScoped(Screen::Splash),
         children![(
