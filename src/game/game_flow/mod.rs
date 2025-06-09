@@ -104,7 +104,7 @@ fn handle_game_complete_click(
     mouse_buttons: Res<ButtonInput<MouseButton>>,
     query: Query<&GameCompleteScreen>,
     mut next_screen: ResMut<NextState<Screen>>,
-    mut commands: Commands,
+    _commands: Commands,
     mut game_state: ResMut<GameState>,
     mut current_level: ResMut<CurrentLevel>,
     mut turn_data: ResMut<TurnData>,
