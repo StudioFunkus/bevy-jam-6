@@ -1,4 +1,5 @@
-# Bevy Jam 6
+# Bevy Jam 6 - Psychocybin
 
-This project was generated using the [Bevy New 2D](https://github.com/TheBevyFlock/bevy_new_2d) template.
-Check out the [documentation](https://github.com/TheBevyFlock/bevy_new_2d/blob/main/README.md) to get started!
+Game made in 9 days for Bevy Jam 6.
+
+See: https://0xd21f.itch.io/psychocybin
